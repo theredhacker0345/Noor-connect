@@ -18,7 +18,7 @@ const KAABA_COORDINATES = { latitude: 21.4225, longitude: 39.8262 };
 
 export default function QiblaCompassNative() {
   const { t: ti18n } = useI18n();
-  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [qiblaData, setQiblaData] = useState<QiblaDirectionData | null>(null);
@@ -45,9 +45,6 @@ export default function QiblaCompassNative() {
   }, []);
 
   useEffect(() => {
-    // Auto-start on mount
-    startCompass();
-
     const unsubscribe = nativeQiblaService.onQiblaDirectionChange((data) => {
       setQiblaData(data);
       if (data.latitude && data.longitude) {
@@ -77,7 +74,7 @@ export default function QiblaCompassNative() {
     }
   }, [isAligned, hasVibrated, compassState]);
 
-  if (isLoadingLocation) {
+  if (isLoadingLocation && compassState === "activating") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="relative">
