@@ -80,7 +80,7 @@ export class NativeQiblaService {
   // Smoothing state
   private lastCompassAngle: number | null = null;
   private lastNeedleAngle: number | null = null;
-  private smoothingFactor = 0.2; // Adjust for smoothness (lower = smoother, higher = more responsive)
+  private smoothingFactor = 0.15; // Adjust for smoothness (lower = smoother, higher = more responsive)
 
   static getInstance(): NativeQiblaService {
     if (!NativeQiblaService.instance) {

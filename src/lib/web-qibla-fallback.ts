@@ -153,6 +153,9 @@ export class WebQibla {
     }
 
     this.orientationListener = (event: DeviceOrientationEvent) => {
+      // Log for debugging
+      console.log(`Compass Event (Fallback): alpha=${event.alpha}, beta=${event.beta}, gamma=${event.gamma}`);
+
       // Get heading from device orientation
       if (event.alpha !== null) {
         // Convert to 0-360 degrees where 0 = North

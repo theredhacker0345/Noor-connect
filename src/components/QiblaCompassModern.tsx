@@ -22,7 +22,7 @@ interface CompassStateMeta {
 }
 
 const ALIGNMENT_THRESHOLD_DEG = 7;
-const HEADING_SMOOTHING = 0.2;
+const HEADING_SMOOTHING = 0.15;
 const SENSOR_TIMEOUT_MS = 6500;
 
 const COMPASS_STATE_META: Record<CompassState, CompassStateMeta> = {
@@ -111,6 +111,11 @@ const QiblaCompassModern = () => {
   const readHeadingFromEvent = useCallback((event: DeviceOrientationEvent): number | null => {
     const eventWithWebkit = event as DeviceOrientationEvent & { webkitCompassHeading?: number };
 
+    // Log values as requested for debugging
+    console.log(
+      `Compass Event: alpha=${event.alpha}, beta=${event.beta}, gamma=${event.gamma}, webkitHeading=${eventWithWebkit.webkitCompassHeading}`
+    );
+
     if (
       typeof eventWithWebkit.webkitCompassHeading === "number" &&
       !Number.isNaN(eventWithWebkit.webkitCompassHeading)
@@ -118,7 +123,8 @@ const QiblaCompassModern = () => {
       return normalizeDegrees(eventWithWebkit.webkitCompassHeading);
     }
 
-    if (typeof event.alpha === "number" && !Number.isNaN(event.alpha)) {
+    // Android/Generic fallback
+    if (event.alpha !== null && typeof event.alpha === "number" && !Number.isNaN(event.alpha)) {
       return normalizeDegrees(360 - event.alpha);
     }
 
