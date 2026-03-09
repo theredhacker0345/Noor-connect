@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
       },
     },
+    headers: {
+      "Content-Security-Policy": "worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    }
   },
   plugins: [
     react(),
