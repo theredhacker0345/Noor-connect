@@ -74,3 +74,4 @@ dependencies {
 apply from: 'capacitor.build.gradle'
 
 // Removed Google Services for F-Droid compliance. All notifications are handled locally.
+apply from: 'fdroid.gradle'

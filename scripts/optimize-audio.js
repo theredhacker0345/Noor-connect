@@ -38,22 +38,24 @@ function optimizeAudio(inputPath, outputPath, config) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Use ffmpeg for audio compression
-    execFileSync('npx', ['ffmpeg', '-i', inputPath, '-b:a', config.bitrate, '-q:a', config.quality, outputPath, '-y'], { stdio: 'inherit' });
+    // FFmpeg is removed for F-Droid compliance.
+    // In a production environment, you should use a FOSS alternative or pre-optimize assets.
+    console.warn(`⚠️ FFmpeg optimization skipped for ${path.basename(inputPath)} (F-Droid compliance)`);
+    fs.copyFileSync(inputPath, outputPath);
     
     const newSize = getAudioSize(outputPath);
     const savings = ((originalSize - newSize) / originalSize * 100).toFixed(1);
     
-    console.log(`✅ Optimized: ${path.basename(inputPath)}`);
-    console.log(`   Original: ${originalSize}MB → Optimized: ${newSize}MB (${savings}% savings)`);
+    console.log(`✅ Copied: ${path.basename(inputPath)}`);
+    console.log(`   Original: ${originalSize}MB → Copied: ${newSize}MB (${savings}% savings)`);
   } catch (error) {
-    console.error(`❌ Failed to optimize ${inputPath}:`, error.message);
+    console.error(`❌ Failed to process ${inputPath}:`, error.message);
   }
 }
 
 function processAudio() {
-  const publicDir = path.join(__dirname, '../public/audio');
-  const outputDir = path.join(__dirname, '../public/audio/optimized');
+  const publicDir = path.join(process.cwd(), 'public/audio');
+  const outputDir = path.join(process.cwd(), 'public/audio/optimized');
 
   if (!fs.existsSync(publicDir)) {
     console.log('❌ Audio directory not found');
@@ -94,7 +96,11 @@ function processAudio() {
   console.log(`   Total savings: ${totalSavings}% (${(totalOriginalSize - totalOptimizedSize).toFixed(2)}MB)`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Fixed path for ES modules
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+
+if (__filename === process.argv[1]) {
   processAudio();
 }
 

@@ -31,18 +31,20 @@ function optimizeImage(inputPath, outputPath, options) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    // Use sharp for image processing (if available) or fallback to imagemin
-    execFileSync('npx', ['sharp', inputPath, '--output', outputPath, '--quality', options.quality], { stdio: 'inherit' });
+    // Sharp is removed for F-Droid compliance.
+    // In a production environment, you should use a FOSS alternative or pre-optimize assets.
+    console.warn(`⚠️ Sharp optimization skipped for ${path.basename(inputPath)} (F-Droid compliance)`);
+    fs.copyFileSync(inputPath, outputPath);
     
-    console.log(`✅ Optimized: ${inputPath} -> ${outputPath}`);
+    console.log(`✅ Copied: ${inputPath} -> ${outputPath}`);
   } catch (error) {
-    console.error(`❌ Failed to optimize ${inputPath}:`, error.message);
+    console.error(`❌ Failed to process ${inputPath}:`, error.message);
   }
 }
 
 function processImages() {
-  const publicDir = path.join(__dirname, '../public');
-  const outputDir = path.join(__dirname, '../public/optimized');
+  const publicDir = path.join(process.cwd(), 'public');
+  const outputDir = path.join(process.cwd(), 'public/optimized');
 
   // Process icons (keep PNG)
   const iconFiles = [
@@ -63,37 +65,43 @@ function processImages() {
     if (fs.existsSync(inputPath)) {
       // Copy icons as-is (no conversion for compatibility)
       const outputPath = path.join(outputDir, file);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
       fs.copyFileSync(inputPath, outputPath);
       console.log(`📋 Copied icon: ${file}`);
     }
   });
 
-  // Process content images (convert to WebP)
+  // Process content images
   console.log('🔧 Processing content images...');
   const contentImages = ['qibla.png', 'apple-touch-icon.png'];
   
   contentImages.forEach(file => {
     const inputPath = path.join(publicDir, file);
     if (fs.existsSync(inputPath)) {
-      // Create WebP version
-      const webpPath = path.join(outputDir, file.replace('.png', '.webp'));
-      optimizeImage(inputPath, webpPath, { quality: 85 });
+      const outputPath = path.join(outputDir, file);
+      optimizeImage(inputPath, outputPath, { quality: 85 });
       
-      // Create responsive sizes
+      // Create placeholders for responsive sizes
       OPTIMIZATION_CONFIG.content.sizes.forEach(size => {
-        const resizedPath = path.join(outputDir, `${size}-${file.replace('.png', '.webp')}`);
+        const resizedPath = path.join(outputDir, `${size}-${file}`);
          try {
-           execFileSync('npx', ['sharp', inputPath, '--resize', size.toString(), '--output', resizedPath, '--quality', '85'], { stdio: 'inherit' });
-           console.log(`📐 Created ${size}px version: ${resizedPath}`);
+           fs.copyFileSync(inputPath, resizedPath);
+           console.log(`📐 Copied ${size}px placeholder: ${resizedPath}`);
          } catch (error) {
-           console.error(`❌ Failed to create ${size}px version:`, error.message);
+           console.error(`❌ Failed to copy ${size}px placeholder:`, error.message);
          }
       });
     }
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Fixed path for ES modules
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+
+if (__filename === process.argv[1]) {
   processImages();
 }
 
