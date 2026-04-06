@@ -23,14 +23,14 @@ export class GeolocationService {
    * Check if geolocation is supported
    */
   static isSupported(): boolean {
-    return 'geolocation' in navigator;
+    return typeof navigator !== 'undefined' && 'geolocation' in navigator;
   }
 
   /**
    * Check current permission status
    */
   static async checkPermissions(): Promise<PermissionStatus> {
-    if ('permissions' in navigator) {
+    if (typeof navigator !== 'undefined' && 'permissions' in navigator) {
       try {
         const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
         const state = result.state as 'granted' | 'denied' | 'prompt';
@@ -52,7 +52,7 @@ export class GeolocationService {
 
   static async requestPermissions(): Promise<boolean> {
     return new Promise((resolve) => {
-      if (!navigator.geolocation) {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
         resolve(false);
         return;
       }
@@ -81,7 +81,7 @@ export class GeolocationService {
     };
 
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
         reject(new Error('Geolocation is not supported by your browser'));
         return;
       }
@@ -130,7 +130,7 @@ export class GeolocationService {
       ...options
     };
 
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       return "";
     }
 
@@ -154,7 +154,7 @@ export class GeolocationService {
    * Clear position watch
    */
   static async clearWatch(watchId: string): Promise<void> {
-    if (watchId) {
+    if (typeof navigator !== 'undefined' && navigator.geolocation && watchId) {
       navigator.geolocation.clearWatch(parseInt(watchId, 10));
     }
   }

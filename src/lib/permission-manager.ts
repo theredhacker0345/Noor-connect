@@ -5,6 +5,9 @@
 
 import { unifiedNotifications } from './unified-notifications';
 import { GeolocationService } from './geolocation-service';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export type PermissionType = 'location' | 'notifications';
 
@@ -44,8 +47,7 @@ class PermissionManager {
   }
 
   private detectPlatform(): PlatformType {
-    const capacitor = (window as any).Capacitor;
-    if (capacitor && capacitor.isNativePlatform()) {
+    if (Capacitor.isNativePlatform()) {
       return 'mobile';
     }
     return 'web';
@@ -165,7 +167,7 @@ class PermissionManager {
 
   // Check location permission
   private async checkLocationPermission(): Promise<PermissionStatus> {
-    if (!navigator.geolocation) return 'not-supported';
+    if (!GeolocationService.isSupported()) return 'not-supported';
 
     try {
       const status = await GeolocationService.checkPermissions();
@@ -187,12 +189,12 @@ class PermissionManager {
 
   // Check notification permission
   private async checkNotificationPermission(): Promise<PermissionStatus> {
-    if (this.platform === 'mobile') {
+    if (Capacitor.isNativePlatform()) {
       const status = await unifiedNotifications.getPermissionStatus();
       return status === 'granted' ? 'granted' : status === 'denied' ? 'denied' : 'prompt';
     } else {
       // Web - check if notifications are supported
-      if (!('Notification' in window)) return 'not-supported';
+      if (typeof window === 'undefined' || !('Notification' in window)) return 'not-supported';
       
       if (Notification.permission === 'granted') return 'granted';
       if (Notification.permission === 'denied') return 'denied';
@@ -203,6 +205,10 @@ class PermissionManager {
 
   // Request notification permission
   private async requestNotificationPermission(): Promise<boolean> {
+    if (Capacitor.isNativePlatform()) {
+      const status = await LocalNotifications.requestPermissions();
+      return status.display === 'granted';
+    }
     return await unifiedNotifications.requestPermission();
   }
 
@@ -219,16 +225,17 @@ class PermissionManager {
   }
 
   // Open settings
-  openSettings(type: PermissionType): void {
-    if (this.platform === 'mobile') {
-       // On native, we might use a plugin to open settings, but for now we just log
-       console.log(`Opening settings for ${type} on mobile`);
-    } else {
-       if (type === 'location') {
-         window.open('chrome://settings/content/location');
-       } else {
-         window.open('chrome://settings/content/notifications');
+  async openSettings(type: PermissionType): Promise<void> {
+    if (Capacitor.isNativePlatform()) {
+       try {
+         await App.openSettings();
+       } catch (error) {
+         console.error('Error opening settings:', error);
        }
+    } else {
+       // Web: Deep-linking into chrome:// settings is unreliable and often blocked.
+       // We will rely on browser-specific instructions provided in the UI instead.
+       console.log(`Settings guidance for ${type} on web requested`);
     }
   }
 }

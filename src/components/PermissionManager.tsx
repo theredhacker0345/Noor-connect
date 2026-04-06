@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Shield, ShieldCheck, ShieldOff, MapPin, Bell, BellOff, Smartphone, Globe, AlertTriangle, RefreshCw, Settings, Info } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { permissionManager, type PermissionType, type PermissionInfo } from '@/lib/permission-manager';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext-new';
-import { GeolocationService } from '@/lib/geolocation-service';
 
 interface PermissionManagerProps {
   className?: string;
 }
 
-const PermissionManager = ({ className }: PermissionManagerProps) => {
+const PermissionManager = ({ className = "" }: PermissionManagerProps) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [permissions, setPermissions] = useState<Map<PermissionType, PermissionInfo>>(new Map());
@@ -50,17 +48,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
           description: `The ${type} permission has been successfully granted.`,
         });
       } else {
-        // Additional handling for denied permissions
-        if (type === 'location') {
-          await GeolocationService.requestPermissions();
-        } else if (type === 'notifications') {
-          if (Capacitor.isNativePlatform()) {
-            await LocalNotifications.requestPermissions();
-          } else if ('Notification' in window) {
-            await Notification.requestPermission();
-          }
-        }
-
         toast({
           title: 'Permission Required',
           description: `Please enable ${type} permissions in your device settings to use this feature.`,
@@ -81,7 +68,14 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
   };
 
   const handleOpenSettings = async (type: PermissionType) => {
-    permissionManager.openSettings(type);
+    if (platform === 'web') {
+       const info = permissions.get(type);
+       toast({
+         title: `${info?.title} Settings`,
+         description: info?.instructions?.web || 'Please check your browser settings.',
+       });
+    }
+    await permissionManager.openSettings(type);
   };
 
   const getStatusIcon = (status: PermissionInfo['status']) => {
@@ -91,7 +85,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       case 'denied':
         return <ShieldOff className="w-5 h-5 text-red-500" />;
       case 'prompt':
-      case 'prompt-with-rationale':
         return <Shield className="w-5 h-5 text-amber-500" />;
       default:
         return <AlertTriangle className="w-5 h-5 text-gray-400" />;
@@ -105,7 +98,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       case 'denied':
         return <Badge variant="destructive">Denied</Badge>;
       case 'prompt':
-      case 'prompt-with-rationale':
         return <Badge variant="outline" className="text-amber-600 border-amber-600">Action Needed</Badge>;
       case 'not-supported':
         return <Badge variant="secondary">Not Supported</Badge>;
@@ -150,7 +142,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {locationPermission?.status === 'granted' && (
               <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
-                ✅ Accurate Prayer Times & Qibla Enabled
+                ✅ Location Access Enabled
               </div>
             )}
 
@@ -196,6 +188,12 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 </Button>
               </div>
             )}
+
+            {locationPermission?.status === 'not-supported' && (
+              <div className="bg-gray-50 text-gray-700 text-xs px-2 py-1 rounded-md">
+                ❌ Location Not Supported
+              </div>
+            )}
           </div>
         </div>
 
@@ -210,14 +208,14 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
               )}
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  {platform === 'mobile' ? 'Mobile App Instructions:' : 'Browser Instructions:'}
+                  {platform === 'mobile' ? 'Mobile Location Instructions:' : 'Web Location Instructions:'}
                 </p>
               </div>
             </div>
             <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
               <strong>How to Fix:</strong> {locationPermission?.instructions?.[platform] || 'Check your device settings'}
             </div>
-            <div className="flex flex-col gap-2 mt-2">
+            <div className="space-y-2 mt-2">
               {platform === 'web' && (
                 <>
                   <Button
@@ -353,59 +351,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   >
                     <Bell className="w-4 h-4 mr-2" />
                     Request Permission
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if ((window as any).chrome) {
-                        window.open('chrome://settings/content/notifications');
-                      } else if ((window as any).mozInnerScreenX !== undefined) {
-                        window.open('about:preferences#privacy');
-                      } else if ((window as any).safari) {
-                        toast({
-                          title: 'Safari Settings',
-                          description: 'Go to Safari > Preferences > Websites > Notifications',
-                        });
-                      } else {
-                        toast({
-                          title: 'Browser Settings',
-                          description: 'Click lock icon in your browser address bar and allow notifications',
-                        });
-                      }
-                    }}
-                    className="w-full"
-                  >
-                    <Settings className="w-4 h-4 me-2" />
-                    Open Browser Settings
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Test notification to show current status
-                      if ('Notification' in window) {
-                        const testNotification = new Notification('Test Notification', {
-                          body: 'This is a test notification from Noor Connect',
-                          icon: '/favicon.ico'
-                        });
-                        setTimeout(() => testNotification.close(), 3000);
-                        toast({
-                          title: 'Test Notification Sent',
-                          description: 'If you don\'t see this, please enable notifications in browser settings',
-                        });
-                      } else {
-                        toast({
-                          title: 'Notifications Not Supported',
-                          description: 'Your browser does not support notifications',
-                          variant: 'destructive'
-                        });
-                      }
-                    }}
-                    className="w-full"
-                  >
-                    <Bell className="w-4 h-4 mr-2" />
-                    Test Notification
                   </Button>
                 </>
               )}
