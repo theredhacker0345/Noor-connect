@@ -36,6 +36,7 @@ export interface PermissionRequestOptions {
 class PermissionManager {
   private platform: PlatformType;
   private permissionCache: Map<PermissionType, PermissionStatus> = new Map();
+  private subscribers: Set<() => void> = new Set();
 
   constructor() {
     this.platform = this.detectPlatform();
@@ -43,20 +44,10 @@ class PermissionManager {
   }
 
   private detectPlatform(): PlatformType {
-    const capacitor = (window as unknown as { Capacitor?: unknown }).Capacitor;
-    
-    if (capacitor) {
-      const isNativeApp = !!(window as unknown as { 
-        cordova?: unknown;
-        device?: { platform?: string };
-      }).cordova || 
-      (window as any).device?.platform ||
-      window.location.protocol === 'file:' ||
-      window.navigator.userAgent.includes('Capacitor');
-      
-      return isNativeApp ? 'mobile' : 'web';
+    const capacitor = (window as any).Capacitor;
+    if (capacitor && capacitor.isNativePlatform()) {
+      return 'mobile';
     }
-    
     return 'web';
   }
 
@@ -68,6 +59,16 @@ class PermissionManager {
 
   private updateCache(type: PermissionType, status: PermissionStatus): void {
     this.permissionCache.set(type, status);
+    this.notifySubscribers();
+  }
+
+  private notifySubscribers(): void {
+    this.subscribers.forEach(sub => sub());
+  }
+
+  subscribe(callback: () => void): () => void {
+    this.subscribers.add(callback);
+    return () => this.subscribers.delete(callback);
   }
 
   getPlatform(): PlatformType {
@@ -142,16 +143,8 @@ class PermissionManager {
     }
   }
 
-  async requestPermission(options: PermissionRequestOptions): Promise<boolean> {
-    const { type, rationale, onSuccess, onError } = options;
-    const permissionInfo = this.getPermissionInfo(type);
-
+  async requestPermission(type: PermissionType): Promise<boolean> {
     try {
-      if (rationale) {
-        const confirmed = confirm(permissionInfo.rationale + '\n\n' + rationale);
-        if (!confirmed) return false;
-      }
-
       let granted = false;
 
       if (type === 'location') {
@@ -163,71 +156,32 @@ class PermissionManager {
       }
 
       this.updateCache(type, granted ? 'granted' : 'denied');
-
-      if (granted) {
-        onSuccess?.();
-      } else {
-        onError?.(new Error(`${permissionInfo.title} was denied`));
-      }
-
       return granted;
     } catch (error) {
       this.updateCache(type, 'denied');
-      onError?.(error as Error);
       return false;
     }
   }
 
   // Check location permission
   private async checkLocationPermission(): Promise<PermissionStatus> {
-    if (this.platform === 'mobile') {
-      try {
-        const permissions = await GeolocationService.checkPermissions();
-        return (permissions as any).location === 'granted' ? 'granted' : 'denied';
-      } catch {
-        return 'denied';
-      }
-    } else {
-      // Web - check if geolocation is supported and permission is granted
-      if (!navigator.geolocation) return 'not-supported';
-      
-      return navigator.permissions ? 
-        await this.checkWebPermission('geolocation') :
-        'prompt'; // Can't check without permissions API
+    if (!navigator.geolocation) return 'not-supported';
+
+    try {
+      const status = await GeolocationService.checkPermissions();
+      return status.location as PermissionStatus;
+    } catch {
+      return 'prompt';
     }
   }
 
   // Request location permission
   private async requestLocationPermission(): Promise<boolean> {
-    if (this.platform === 'mobile') {
-      try {
-        const granted = await GeolocationService.requestPermissions();
-        return granted;
-      } catch {
-        return false;
-      }
-    } else {
-      // Web - request geolocation permission.
-      // Note: Permissions API does not provide a standard `request()` method.
-      // The reliable way to trigger the browser prompt is calling getCurrentPosition()
-      if (!navigator.geolocation) return false;
-
-      return new Promise<boolean>((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          () => resolve(true),
-          (error: any) => {
-            // PERMISSION_DENIED is code 1
-            if (error && error.code === 1) {
-              resolve(false);
-              return;
-            }
-            // If it failed for another reason (timeout/unavailable), permission may still be granted.
-            // Treat as granted so the UI can proceed and handle location retrieval separately.
-            resolve(true);
-          },
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-        );
-      });
+    try {
+      const granted = await GeolocationService.requestPermissions();
+      return granted;
+    } catch {
+      return false;
     }
   }
 
@@ -243,9 +197,7 @@ class PermissionManager {
       if (Notification.permission === 'granted') return 'granted';
       if (Notification.permission === 'denied') return 'denied';
       
-      return navigator.permissions ? 
-        await this.checkWebPermission('notifications') :
-        'prompt';
+      return 'prompt';
     }
   }
 
@@ -254,64 +206,32 @@ class PermissionManager {
     return await unifiedNotifications.requestPermission();
   }
 
-  // Check web permission using Permissions API
-  private async checkWebPermission(permissionName: PermissionName): Promise<PermissionStatus> {
-    if (!navigator.permissions) return 'prompt';
-
-    try {
-      const result = await navigator.permissions.query({ name: permissionName });
-      switch (result.state) {
-        case 'granted': return 'granted';
-        case 'denied': return 'denied';
-        case 'prompt': return 'prompt';
-        default: return 'prompt';
-      }
-    } catch {
-      return 'prompt';
-    }
-  }
-
   // Get all permissions status
-  async getAllPermissionsStatus(): Promise<Map<PermissionType, PermissionInfo>> {
-    const permissions = new Map<PermissionType, PermissionInfo>();
+  async getAllPermissions(): Promise<PermissionInfo[]> {
+    const permissions: PermissionInfo[] = [];
     
     for (const type of ['location', 'notifications'] as PermissionType[]) {
-      const status = await this.getPermissionStatus(type);
-      permissions.set(type, this.getPermissionInfo(type));
+      await this.getPermissionStatus(type);
+      permissions.push(this.getPermissionInfo(type));
     }
 
     return permissions;
   }
 
-  // Check if all critical permissions are granted
-  async areCriticalPermissionsGranted(): Promise<boolean> {
-    const locationStatus = await this.getPermissionStatus('location');
-    const notificationStatus = await this.getPermissionStatus('notifications');
-    
-    return locationStatus === 'granted' && notificationStatus === 'granted';
-  }
-
-  // Refresh permission cache
-  async refreshPermissions(): Promise<void> {
-    this.permissionCache.clear();
-    await this.getAllPermissionsStatus();
+  // Open settings
+  openSettings(type: PermissionType): void {
+    if (this.platform === 'mobile') {
+       // On native, we might use a plugin to open settings, but for now we just log
+       console.log(`Opening settings for ${type} on mobile`);
+    } else {
+       if (type === 'location') {
+         window.open('chrome://settings/content/location');
+       } else {
+         window.open('chrome://settings/content/notifications');
+       }
+    }
   }
 }
 
 // Singleton instance
 export const permissionManager = new PermissionManager();
-
-// Helper function for easy permission requests
-export const requestPermission = async (
-  type: PermissionType,
-  options?: Omit<PermissionRequestOptions, 'type'>
-): Promise<boolean> => {
-  return permissionManager.requestPermission({ type, ...options });
-};
-
-// Helper function to check permission status
-export const checkPermission = async (type: PermissionType): Promise<PermissionInfo> => {
-  const status = await permissionManager.getPermissionStatus(type);
-  const info = permissionManager.getPermissionInfo(type);
-  return { ...info, status };
-};

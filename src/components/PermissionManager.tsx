@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Shield, ShieldCheck, ShieldOff, MapPin, Bell, BellOff, Smartphone, Globe, AlertTriangle, RefreshCw, Settings, Info } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { Geolocation } from '@capacitor/geolocation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { permissionManager, type PermissionType, type PermissionInfo } from '@/lib/permission-manager';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext-new';
+import { GeolocationService } from '@/lib/geolocation-service';
 
 interface PermissionManagerProps {
   className?: string;
@@ -18,174 +18,115 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [permissions, setPermissions] = useState<Map<PermissionType, PermissionInfo>>(new Map());
-  const [loading, setLoading] = useState<PermissionType | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const platform = permissionManager.getPlatform();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<'mobile' | 'web'>('web');
 
   useEffect(() => {
+    setPlatform(Capacitor.isNativePlatform() ? 'mobile' : 'web');
     loadPermissions();
+
+    const unsubscribe = permissionManager.subscribe(() => {
+      loadPermissions();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadPermissions = async () => {
-    try {
-      const allPermissions = await permissionManager.getAllPermissionsStatus();
-      setPermissions(allPermissions);
-    } catch (error) {
-      console.error('Failed to load permissions:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load permission status',
-        variant: 'destructive'
-      });
-    }
+    const allPermissions = await permissionManager.getAllPermissions();
+    const permissionMap = new Map<PermissionType, PermissionInfo>();
+    allPermissions.forEach(p => permissionMap.set(p.type, p));
+    setPermissions(permissionMap);
   };
 
   const handleRequestPermission = async (type: PermissionType) => {
     setLoading(type);
     try {
-      const permissionInfo = permissionManager.getPermissionInfo(type);
+      const success = await permissionManager.requestPermission(type);
       
-      const granted = await permissionManager.requestPermission({
-        type,
-        rationale: `${permissionInfo.rationale}\n\nPermission Benefits:\n${permissionInfo.benefits.map(b => `• ${b}`).join('\n')}`,
-        onSuccess: () => {
-          toast({
-            title: '✅ Permission Granted',
-            description: `${permissionInfo.title} has been enabled successfully.`,
-          });
-          loadPermissions(); // Refresh status
-        },
-        onError: (error) => {
-          toast({
-            title: 'Permission Denied',
-            description: error.message,
-            variant: 'destructive'
-          });
+      if (success) {
+        toast({
+          title: 'Permission Granted',
+          description: `The ${type} permission has been successfully granted.`,
+        });
+      } else {
+        // Additional handling for denied permissions
+        if (type === 'location') {
+          await GeolocationService.requestPermissions();
+        } else if (type === 'notifications') {
+          if (Capacitor.isNativePlatform()) {
+            await LocalNotifications.requestPermissions();
+          } else if ('Notification' in window) {
+            await Notification.requestPermission();
+          }
         }
-      });
 
-      setLoading(null);
+        toast({
+          title: 'Permission Required',
+          description: `Please enable ${type} permissions in your device settings to use this feature.`,
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
-      setLoading(null);
+      console.error('Error requesting permission:', error);
       toast({
         title: 'Error',
-        description: 'Failed to request permission',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleRefreshPermissions = async () => {
-    setRefreshing(true);
-    try {
-      await permissionManager.refreshPermissions();
-      await loadPermissions();
-      toast({
-        title: 'Permissions Refreshed',
-        description: 'Permission status has been updated.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to refresh permissions',
-        variant: 'destructive'
+        description: 'An unexpected error occurred while requesting permission.',
+        variant: 'destructive',
       });
     } finally {
-      setRefreshing(false);
+      setLoading(null);
+      loadPermissions();
     }
   };
 
   const handleOpenSettings = async (type: PermissionType) => {
-    if (platform === 'mobile') {
-      try {
-        if (type === 'notifications') {
-          // In Android, requesting permission when it's already denied officially triggers 
-          // a deep link to the app details in OS settings.
-          await LocalNotifications.requestPermissions();
-        } else if (type === 'location') {
-          await Geolocation.requestPermissions();
-        }
-        
-        toast({
-          title: 'Opening Settings',
-          description: 'Taking you to your system settings. Please find "Noor Connect" permissions.',
-        });
-      } catch (error) {
-        console.error('Failed to open app settings:', error);
-        // Fallback for older Android / iOS
-        window.open('package:com.noorconnect.app'); 
-      }
-    } else {
-      // Web platform - show guidance
-      if (type === 'location') {
-        toast({
-          title: 'Location Settings',
-          description: 'Click location icon in your browser address bar (usually 🌐 or ⚠️) and select "Allow"',
-        });
-      } else if (type === 'notifications') {
-        toast({
-          title: 'Notification Settings',
-          description: 'Click lock icon in your browser address bar and allow notifications',
-        });
-      }
-    }
+    permissionManager.openSettings(type);
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: PermissionInfo['status']) => {
     switch (status) {
       case 'granted':
-        return <ShieldCheck className="w-4 h-4 text-green-500" />;
+        return <ShieldCheck className="w-5 h-5 text-green-500" />;
       case 'denied':
-        return <ShieldOff className="w-4 h-4 text-red-500" />;
+        return <ShieldOff className="w-5 h-5 text-red-500" />;
       case 'prompt':
-        return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-      case 'not-supported':
-        return <ShieldOff className="w-4 h-4 text-gray-400" />;
+      case 'prompt-with-rationale':
+        return <Shield className="w-5 h-5 text-amber-500" />;
       default:
-        return <Shield className="w-4 h-4 text-gray-400" />;
+        return <AlertTriangle className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variant = status === 'granted' ? 'default' : 
-                   status === 'denied' ? 'destructive' : 
-                   status === 'not-supported' ? 'secondary' : 'outline';
-    
-    return (
-      <Badge variant={variant} className="text-xs">
-        {status === 'granted' ? 'Granted' : 
-         status === 'denied' ? 'Denied' : 
-         status === 'not-supported' ? 'Not Supported' : 
-         status === 'prompt' ? 'Needed' : 'Unknown'}
-      </Badge>
-    );
+  const getStatusBadge = (status: PermissionInfo['status']) => {
+    switch (status) {
+      case 'granted':
+        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Granted</Badge>;
+      case 'denied':
+        return <Badge variant="destructive">Denied</Badge>;
+      case 'prompt':
+      case 'prompt-with-rationale':
+        return <Badge variant="outline" className="text-amber-600 border-amber-600">Action Needed</Badge>;
+      case 'not-supported':
+        return <Badge variant="secondary">Not Supported</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
   };
 
   const locationPermission = permissions.get('location');
   const notificationPermission = permissions.get('notifications');
 
   return (
-    <Card className={`p-4 space-y-4 ${className || ''}`}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-sm flex items-center gap-2">
-          <Shield className="w-4 h-4" />
-          Permissions
-        </h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefreshPermissions}
-          disabled={refreshing}
-          className="shrink-0"
-        >
-          {refreshing ? (
-            <RefreshCw className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-        </Button>
+    <Card className={`p-4 space-y-6 ${className}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <Shield className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-semibold">Privacy & Permissions</h3>
       </div>
+
+      <p className="text-sm text-muted-foreground">
+        Noor Connect is privacy-first. We only request permissions necessary for core features like prayer times and notifications. All data stays on your device.
+      </p>
 
       {/* Location Permission */}
       <div className="space-y-3 p-3 rounded-lg border border-border/50">
@@ -209,14 +150,14 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {locationPermission?.status === 'granted' && (
               <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
-                ✅ Location Enabled
+                ✅ Accurate Prayer Times & Qibla Enabled
               </div>
             )}
 
             {locationPermission?.status === 'denied' && (
               <div className="space-y-2">
                 <div className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-md">
-                  ❌ Location Denied
+                  ❌ Location Access Denied
                 </div>
                 <div className="text-xs text-muted-foreground">
                   <p className="font-medium mb-1">Why Location Needed:</p>
@@ -255,12 +196,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 </Button>
               </div>
             )}
-
-            {locationPermission?.status === 'not-supported' && (
-              <div className="bg-gray-50 text-gray-700 text-xs px-2 py-1 rounded-md">
-                ❌ Location Not Supported
-              </div>
-            )}
           </div>
         </div>
 
@@ -275,58 +210,20 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
               )}
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  {platform === 'mobile' ? 'Mobile Location Instructions:' : 'Web Location Instructions:'}
+                  {platform === 'mobile' ? 'Mobile App Instructions:' : 'Browser Instructions:'}
                 </p>
               </div>
             </div>
             <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
               <strong>How to Fix:</strong> {locationPermission?.instructions?.[platform] || 'Check your device settings'}
             </div>
-            <div className="space-y-2 mt-2">
+            <div className="flex flex-col gap-2 mt-2">
               {platform === 'web' && (
                 <>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if ((window as any).chrome) {
-                        window.open('chrome://settings/content/location');
-                      } else if ((window as any).mozInnerScreenX !== undefined) {
-                        window.open('about:preferences#privacy');
-                      } else {
-                        toast({
-                          title: 'Browser Settings',
-                          description: 'Please check your browser\'s settings menu for location permissions',
-                        });
-                      }
-                    }}
-                    className="w-full"
-                  >
-                    <Settings className="w-4 h-4 me-2" />
-                    Open Chrome Settings
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                          () => {
-                            toast({
-                              title: 'Location Permission',
-                              description: 'Please allow location access in the browser prompt',
-                            });
-                          },
-                          () => {
-                            toast({
-                              title: 'Location Denied',
-                              description: 'Please click the location icon in your browser address bar',
-                            });
-                          },
-                          { timeout: 1000 }
-                        );
-                      }
-                    }}
+                    onClick={() => handleRequestPermission('location')}
                     className="w-full"
                   >
                     <MapPin className="w-4 h-4 me-2" />
@@ -450,9 +347,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      // There is no standard `navigator.permissions.request()` on the web.
-                      // Attempting requestPermission here will usually return "denied" if the user
-                      // previously blocked it, but it keeps the UX consistent.
                       handleRequestPermission('notifications');
                     }}
                     className="w-full"

@@ -1,10 +1,9 @@
 /**
  * Geolocation Service
- * Handles location detection with proper Android permission handling
+ * Handles location detection using standard browser API for F-Droid compliance
  */
 
 import { Capacitor } from '@capacitor/core';
-import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
 
 export interface LocationCoordinates {
   latitude: number;
@@ -14,47 +13,59 @@ export interface LocationCoordinates {
   country?: string;
 }
 
+export interface PermissionStatus {
+  location: 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale';
+  coarseLocation: 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale';
+}
+
 export class GeolocationService {
   /**
    * Check if geolocation is supported
    */
   static isSupported(): boolean {
-    if (Capacitor.isNativePlatform()) {
-      return true; // Capacitor plugin is available
-    } else {
-      return 'geolocation' in navigator;
-    }
+    return 'geolocation' in navigator;
   }
 
   /**
    * Check current permission status
    */
   static async checkPermissions(): Promise<PermissionStatus> {
-    if (Capacitor.isNativePlatform()) {
-      return await Geolocation.checkPermissions();
-    } else {
-      // Web doesn't have granular permission checking
-      return { location: 'prompt' as PermissionStatus['location'], coarseLocation: 'prompt' as PermissionStatus['coarseLocation'] };
+    if ('permissions' in navigator) {
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        const state = result.state as 'granted' | 'denied' | 'prompt';
+        return {
+          location: state,
+          coarseLocation: state
+        };
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+      }
     }
+
+    // Fallback for browsers that don't support permissions.query
+    return {
+      location: 'prompt',
+      coarseLocation: 'prompt'
+    };
   }
 
   static async requestPermissions(): Promise<boolean> {
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const permissions = await Geolocation.requestPermissions();
-        return permissions.location === 'granted' || permissions.coarseLocation === 'granted';
-      } catch (error) {
-        return false;
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(false);
+        return;
       }
-    } else {
-      return new Promise((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          () => resolve(true),
-          () => resolve(false),
-          { timeout: 15000 }
-        );
-      });
-    }
+
+      navigator.geolocation.getCurrentPosition(
+        () => resolve(true),
+        (error) => {
+          console.warn('Geolocation permission request failed or denied:', error);
+          resolve(false);
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+      );
+    });
   }
 
   static async getCurrentPosition(options?: {
@@ -69,52 +80,39 @@ export class GeolocationService {
       ...options
     };
 
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const position = await Geolocation.getCurrentPosition(defaultOptions);
-        return {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy
-        };
-      } catch (error) {
-        throw new Error('Failed to get location. Please check your location permissions.');
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by your browser'));
+        return;
       }
-    } else {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('Geolocation is not supported by your browser'));
-          return;
-        }
 
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy
-            });
-          },
-          (error) => {
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                reject(new Error('Location access denied. Please enable location permissions.'));
-                break;
-              case error.POSITION_UNAVAILABLE:
-                reject(new Error('Location information unavailable.'));
-                break;
-              case error.TIMEOUT:
-                reject(new Error('Location request timed out.'));
-                break;
-              default:
-                reject(new Error('An unknown error occurred while getting location.'));
-                break;
-            }
-          },
-          defaultOptions
-        );
-      });
-    }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              reject(new Error('Location access denied. Please enable location permissions.'));
+              break;
+            case error.POSITION_UNAVAILABLE:
+              reject(new Error('Location information unavailable.'));
+              break;
+            case error.TIMEOUT:
+              reject(new Error('Location request timed out.'));
+              break;
+            default:
+              reject(new Error('An unknown error occurred while getting location.'));
+              break;
+          }
+        },
+        defaultOptions
+      );
+    });
   }
 
   static async watchPosition(
@@ -132,42 +130,31 @@ export class GeolocationService {
       ...options
     };
 
-    if (Capacitor.isNativePlatform()) {
-      return await Geolocation.watchPosition(defaultOptions, (position, err) => {
-        if (err || !position) {
-          return;
-        }
+    if (!navigator.geolocation) {
+      return "";
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
         callback({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy
         });
-      });
-    } else {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          callback({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-        },
-        (error) => {
-          // Silently handle watch errors to avoid spam
-        },
-        defaultOptions
-      );
-      return watchId.toString();
-    }
+      },
+      (error) => {
+        // Silently handle watch errors to avoid spam
+      },
+      defaultOptions
+    );
+    return watchId.toString();
   }
 
   /**
    * Clear position watch
    */
   static async clearWatch(watchId: string): Promise<void> {
-    if (Capacitor.isNativePlatform()) {
-      await Geolocation.clearWatch({ id: watchId });
-    } else {
+    if (watchId) {
       navigator.geolocation.clearWatch(parseInt(watchId, 10));
     }
   }
