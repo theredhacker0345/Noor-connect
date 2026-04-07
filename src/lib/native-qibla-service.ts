@@ -1,5 +1,7 @@
 import { Capacitor } from '@capacitor/core';
-import { registerPlugin } from '@capacitor/core';
+import { Motion, type OrientationListenerHandle } from '@capacitor/motion';
+import { GeolocationService, type LocationCoordinates } from './geolocation-service';
+import { calculateQiblaBearing, normalizeDegrees } from './qibla';
 
 export interface QiblaDirectionData {
   isFacingQibla: boolean;
@@ -11,12 +13,6 @@ export interface QiblaDirectionData {
   accuracy?: number;
 }
 
-export interface LocationAddress {
-  address?: string;
-  city?: string;
-  country?: string;
-}
-
 export interface PermissionStatus {
   permissions: {
     ACCESS_FINE_LOCATION: boolean;
@@ -25,62 +21,20 @@ export interface PermissionStatus {
   allGranted: boolean;
 }
 
-export interface QiblaPlugin {
-  startCompass(): Promise<{
-    success: boolean;
-    message: string;
-  }>;
-
-  stopCompass(): Promise<{
-    success: boolean;
-    message: string;
-  }>;
-
-  getQiblaDirection(): Promise<{
-    success: boolean;
-    message: string;
-    isListening?: boolean;
-  }>;
-
-  checkPermissions(): Promise<PermissionStatus>;
-
-  addListener(
-    eventName: 'qiblaDirectionChange',
-    listenerFunc: (data: QiblaDirectionData) => void
-  ): Promise<any>;
-
-  addListener(
-    eventName: 'permissionGranted',
-    listenerFunc: (data: { success: boolean; permission: string; message: string }) => void
-  ): Promise<any>;
-
-  addListener(
-    eventName: 'permissionDenied',
-    listenerFunc: (data: { success: boolean; message: string }) => void
-  ): Promise<any>;
-
-  addListener(
-    eventName: 'locationAddress',
-    listenerFunc: (data: LocationAddress) => void
-  ): Promise<any>;
-
-  removeAllListeners(): Promise<void>;
-}
-
-const QiblaPlugin = registerPlugin<QiblaPlugin>('Qibla', {
-  web: () => import('./web-qibla-fallback').then(m => new m.WebQibla()),
-});
-
 export class NativeQiblaService {
   private static instance: NativeQiblaService;
   private isNative = Capacitor.isNativePlatform();
   private isListening = false;
   private listeners: Set<(data: QiblaDirectionData) => void> = new Set();
 
+  private location: LocationCoordinates | null = null;
+  private lastHeading: number | null = null;
+  private orientationListener: OrientationListenerHandle | null = null;
+  private watchId: string | null = null;
+
   // Smoothing state
   private lastCompassAngle: number | null = null;
-  private lastNeedleAngle: number | null = null;
-  private smoothingFactor = 0.15; // Adjust for smoothness (lower = smoother, higher = more responsive)
+  private smoothingFactor = 0.15;
 
   static getInstance(): NativeQiblaService {
     if (!NativeQiblaService.instance) {
@@ -91,22 +45,36 @@ export class NativeQiblaService {
 
   async startCompass(): Promise<{ success: boolean; message: string }> {
     try {
-      if (!this.isNative) {
-        // Use web fallback
-        const result = await QiblaPlugin.startCompass();
-        if (result.success) {
-          this.isListening = true;
-          await this.setupEventListeners();
-        }
-        return result;
+      if (this.isListening) {
+        return { success: true, message: 'Compass already started' };
       }
 
-      const result = await QiblaPlugin.startCompass();
-      if (result.success) {
-        this.isListening = true;
-        await this.setupEventListeners();
+      // 1. Get initial location
+      try {
+        const coords = await GeolocationService.getCurrentPosition();
+        this.location = coords;
+      } catch (err) {
+        console.warn('NativeQiblaService: Initial location failed, using default', err);
+        this.location = { latitude: 21.4225, longitude: 39.8262, accuracy: 1000 };
       }
-      return result;
+
+      // 2. Setup Location Watch
+      this.watchId = await GeolocationService.watchPosition((coords) => {
+        this.location = coords;
+        this.updateQiblaData();
+      });
+
+      // 3. Setup Orientation Listener using Capacitor Motion
+      this.orientationListener = await Motion.addListener('orientation', (event) => {
+        if (event.alpha !== null) {
+          // alpha is the rotation around the z-axis (0 to 360)
+          this.lastHeading = normalizeDegrees(360 - event.alpha);
+          this.updateQiblaData();
+        }
+      });
+
+      this.isListening = true;
+      return { success: true, message: 'Compass started successfully' };
     } catch (error) {
       console.error('Failed to start compass:', error);
       return {
@@ -118,22 +86,22 @@ export class NativeQiblaService {
 
   async stopCompass(): Promise<{ success: boolean; message: string }> {
     try {
-      if (!this.isNative) {
-        // Use web fallback
-        const result = await QiblaPlugin.stopCompass();
-        if (result.success) {
-          this.isListening = false;
-          await this.removeEventListeners();
-        }
-        return result;
+      if (!this.isListening) {
+        return { success: true, message: 'Compass already stopped' };
       }
 
-      const result = await QiblaPlugin.stopCompass();
-      if (result.success) {
-        this.isListening = false;
-        await this.removeEventListeners();
+      if (this.orientationListener) {
+        this.orientationListener.remove();
+        this.orientationListener = null;
       }
-      return result;
+
+      if (this.watchId) {
+        await GeolocationService.clearWatch(this.watchId);
+        this.watchId = null;
+      }
+
+      this.isListening = false;
+      return { success: true, message: 'Compass stopped successfully' };
     } catch (error) {
       console.error('Failed to stop compass:', error);
       return {
@@ -148,46 +116,23 @@ export class NativeQiblaService {
     message: string;
     isListening?: boolean;
   }> {
-    try {
-      if (!this.isNative) {
-        // Use web fallback
-        return await QiblaPlugin.getQiblaDirection();
-      }
-
-      return await QiblaPlugin.getQiblaDirection();
-    } catch (error) {
-      console.error('Failed to get Qibla direction:', error);
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Unknown error occurred'
-      };
-    }
+    return {
+      success: true,
+      message: 'Qibla tracking status',
+      isListening: this.isListening
+    };
   }
 
   async checkPermissions(): Promise<PermissionStatus> {
-    try {
-      if (!this.isNative) {
-        // For web, return a default permission status
-        return {
-          permissions: {
-            ACCESS_FINE_LOCATION: false,
-            ACCESS_COARSE_LOCATION: false,
-          },
-          allGranted: false,
-        };
-      }
-
-      return await QiblaPlugin.checkPermissions();
-    } catch (error) {
-      console.error('Failed to check permissions:', error);
-      return {
-        permissions: {
-          ACCESS_FINE_LOCATION: false,
-          ACCESS_COARSE_LOCATION: false,
-        },
-        allGranted: false,
-      };
-    }
+    const status = await GeolocationService.checkPermissions();
+    const granted = status.location === 'granted';
+    return {
+      permissions: {
+        ACCESS_FINE_LOCATION: granted,
+        ACCESS_COARSE_LOCATION: granted,
+      },
+      allGranted: granted,
+    };
   }
 
   onQiblaDirectionChange(callback: (data: QiblaDirectionData) => void): () => void {
@@ -197,58 +142,36 @@ export class NativeQiblaService {
     };
   }
 
-  private async setupEventListeners(): Promise<void> {
-    await QiblaPlugin.addListener('qiblaDirectionChange', (data: QiblaDirectionData) => {
-      // Apply low-pass filter to smooth out jitter
-      let smoothedCompass = data.compassAngle;
-      let smoothedNeedle = data.needleAngle;
+  private updateQiblaData(): void {
+    if (!this.location || this.lastHeading === null || !this.isListening) return;
 
-      if (this.lastCompassAngle !== null) {
-        // Handle 360-degree wrap-around for smoothing
-        let diff = data.compassAngle - this.lastCompassAngle;
-        if (diff > 180) diff -= 360;
-        if (diff < -180) diff += 360;
-        smoothedCompass = (this.lastCompassAngle + diff * this.smoothingFactor + 360) % 360;
-      }
+    const qiblaBearing = calculateQiblaBearing(this.location.latitude, this.location.longitude);
+    const rawCompass = this.lastHeading;
 
-      if (this.lastNeedleAngle !== null) {
-        let diff = data.needleAngle - this.lastNeedleAngle;
-        if (diff > 180) diff -= 360;
-        if (diff < -180) diff += 360;
-        smoothedNeedle = (this.lastNeedleAngle + diff * this.smoothingFactor + 360) % 360;
-      }
+    // Apply low-pass filter to smooth out jitter
+    let smoothedCompass = rawCompass;
+    if (this.lastCompassAngle !== null) {
+      let diff = rawCompass - this.lastCompassAngle;
+      if (diff > 180) diff -= 360;
+      if (diff < -180) diff += 360;
+      smoothedCompass = (this.lastCompassAngle + diff * this.smoothingFactor + 360) % 360;
+    }
+    this.lastCompassAngle = smoothedCompass;
 
-      this.lastCompassAngle = smoothedCompass;
-      this.lastNeedleAngle = smoothedNeedle;
+    const diff = Math.abs(normalizeDegrees(smoothedCompass - qiblaBearing));
+    const isFacingQibla = diff < 10 || diff > 350;
 
-      const smoothedData: QiblaDirectionData = {
-        ...data,
-        compassAngle: smoothedCompass,
-        needleAngle: smoothedNeedle
-      };
+    const data: QiblaDirectionData = {
+      isFacingQibla,
+      compassAngle: smoothedCompass,
+      needleAngle: qiblaBearing,
+      qiblaBearing,
+      latitude: this.location.latitude,
+      longitude: this.location.longitude,
+      accuracy: this.location.accuracy,
+    };
 
-      this.listeners.forEach(listener => listener(smoothedData));
-    });
-
-    if (!this.isNative) return;
-
-    await QiblaPlugin.addListener('permissionGranted', (data) => {
-      console.log('Permission granted:', data);
-    });
-
-    await QiblaPlugin.addListener('permissionDenied', (data) => {
-      console.warn('Permission denied:', data);
-    });
-
-    await QiblaPlugin.addListener('locationAddress', (data: LocationAddress) => {
-      console.log('Location address:', data);
-    });
-  }
-
-  private async removeEventListeners(): Promise<void> {
-    if (!this.isNative) return;
-    await QiblaPlugin.removeAllListeners();
-    this.listeners.clear();
+    this.listeners.forEach(listener => listener(data));
   }
 
   getIsListening(): boolean {

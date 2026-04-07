@@ -10,7 +10,6 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(WidgetPlugin.class);
         registerPlugin(NativeAdhanPlugin.class);
-        registerPlugin(QiblaPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Enable Motion Event Splitting on the WebView

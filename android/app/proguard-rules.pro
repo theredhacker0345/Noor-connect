@@ -5,13 +5,8 @@
 # ── CompassQibla Library ─────────────────────────────────────────
 # Prevents R8 from stripping the Qibla compass library classes
 # that are accessed via reflection or dynamically.
--keep class com.derysudrajat.compassqibla.** { *; }
--keep interface com.derysudrajat.compassqibla.** { *; }
--keepclassmembers class com.derysudrajat.compassqibla.** { *; }
 
 # Keep the Builder pattern + listener interfaces
--keep class com.derysudrajat.compassqibla.CompassQibla$Builder { *; }
--keep class com.derysudrajat.compassqibla.QiblaDirection { *; }
 
 # ── Noor Connect App Classes ────────────────────────────────────
 # BroadcastReceivers, Services, and Plugins referenced in Manifest
@@ -42,7 +37,6 @@
 
 # ── AndroidX / Google Play Services ──────────────────────────────
 -keep class androidx.core.app.NotificationCompat** { *; }
--dontwarn com.google.android.gms.**
 
 # ── General ──────────────────────────────────────────────────────
 # Keep source file names and line numbers for crash reports
@@ -63,4 +57,3 @@
 -keep interface androidx.work.** { *; }
 
 # Keep CompassQibla library (fixed from Github)
--keep class io.github.derysudrajat.compassqibla.** { *; }
