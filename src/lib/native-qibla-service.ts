@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core';
-import { Motion, type OrientationListenerHandle } from '@capacitor/motion';
 import { GeolocationService, type LocationCoordinates } from './geolocation-service';
 import { calculateQiblaBearing, normalizeDegrees } from './qibla';
 
@@ -29,7 +28,6 @@ export class NativeQiblaService {
 
   private location: LocationCoordinates | null = null;
   private lastHeading: number | null = null;
-  private orientationListener: OrientationListenerHandle | null = null;
   private watchId: string | null = null;
 
   // Smoothing state
@@ -64,14 +62,34 @@ export class NativeQiblaService {
         this.updateQiblaData();
       });
 
-      // 3. Setup Orientation Listener using Capacitor Motion
-      this.orientationListener = await Motion.addListener('orientation', (event) => {
-        if (event.alpha !== null) {
-          // alpha is the rotation around the z-axis (0 to 360)
-          this.lastHeading = normalizeDegrees(360 - event.alpha);
-          this.updateQiblaData();
-        }
-      });
+      // 3. Setup Orientation Listener
+      if (typeof window !== 'undefined') {
+        const handleOrientation = (event: any) => {
+          let heading: number | null = null;
+
+          // iOS absolute heading
+          if (typeof event.webkitCompassHeading === 'number' && !Number.isNaN(event.webkitCompassHeading)) {
+            heading = event.webkitCompassHeading;
+          }
+          // Android / Modern Web absolute heading
+          else if (event.absolute === true && typeof event.alpha === 'number' && !Number.isNaN(event.alpha)) {
+            heading = 360 - event.alpha;
+          }
+          // Fallback if absolutely no other choice, but we prefer absolute/webkitCompassHeading
+          else if (typeof event.alpha === 'number' && !Number.isNaN(event.alpha) && event.absolute !== false) {
+             heading = 360 - event.alpha;
+          }
+
+          if (heading !== null) {
+            this.lastHeading = normalizeDegrees(heading);
+            this.updateQiblaData();
+          }
+        };
+
+        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        (this as any)._orientationHandler = handleOrientation;
+      }
 
       this.isListening = true;
       return { success: true, message: 'Compass started successfully' };
@@ -90,9 +108,10 @@ export class NativeQiblaService {
         return { success: true, message: 'Compass already stopped' };
       }
 
-      if (this.orientationListener) {
-        this.orientationListener.remove();
-        this.orientationListener = null;
+      if (typeof window !== 'undefined' && (this as any)._orientationHandler) {
+        window.removeEventListener('deviceorientationabsolute', (this as any)._orientationHandler, true);
+        window.removeEventListener('deviceorientation', (this as any)._orientationHandler, true);
+        delete (this as any)._orientationHandler;
       }
 
       if (this.watchId) {

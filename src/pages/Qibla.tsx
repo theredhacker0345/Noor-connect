@@ -15,8 +15,14 @@ const Qibla = () => {
             <QiblaCompassModern />
           </div>
           <p className="text-center text-[10px] text-muted-foreground/60 px-6 pb-8 italic">
-            The qibla feature is currently in development and may not be 100% accurate.
-            Please use a physical compass for religious obligations.
+            {t(
+              "qiblaDisclaimerLine1",
+              "The qibla feature is currently in development and may not be 100% accurate."
+            )}{" "}
+            {t(
+              "qiblaDisclaimerLine2",
+              "Please use a physical compass for religious obligations."
+            )}
           </p>
         </div>
       </div>

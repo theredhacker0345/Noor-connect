@@ -1,3 +1,4 @@
 configurations.all {
     // F-Droid compliance: Zero Google Play Services references allowed
+    exclude group: "com.google.android.gms"
 }

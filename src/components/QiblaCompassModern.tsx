@@ -550,7 +550,7 @@ const QiblaCompassModern = () => {
   // ── Loading State ─────────────────────────────────────────────
   if (isLoadingLocation && !location) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6" style={{ background: THEME.cream }}>
+      <div className="flex flex-col items-center justify-center h-full min-h-0 gap-6" style={{ background: THEME.cream }}>
         <div className="relative">
           <div className="w-20 h-20 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
           <Compass className="absolute inset-0 m-auto h-8 w-8 text-amber-600" />
@@ -563,7 +563,7 @@ const QiblaCompassModern = () => {
   // ── Error State ────────────────────────────────────────────────
   if (!location || !qiblaResult) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 px-6 text-center" style={{ background: THEME.cream }}>
+      <div className="flex flex-col items-center justify-center h-full min-h-0 gap-6 px-6 text-center" style={{ background: THEME.cream }}>
         <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center border border-amber-200">
           <Compass className="h-10 w-10 text-amber-600" />
         </div>
@@ -585,7 +585,7 @@ const QiblaCompassModern = () => {
 
   // ── Main Render ───────────────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-[80vh] relative overflow-hidden" style={{ background: THEME.cream }}>
+    <div className="flex flex-col h-full min-h-0 relative overflow-hidden" style={{ background: THEME.cream }}>
       {/* ── Background Pattern ───────────────────────────────────── */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
         <div className="absolute inset-0" style={{
