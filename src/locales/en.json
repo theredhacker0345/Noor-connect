@@ -231,6 +231,6 @@
   "rateLimited": "Please wait before checking again",
   "lastChecked": "Last checked: {time}",
   "version": "Version",
-  "qiblaDisclaimerLine1": "The qibla feature is currently in development and may not be 100% accurate.",
-  "qiblaDisclaimerLine2": "Please use a physical compass for religious obligations."
+  "qiblaDisclaimerLine1": "This Qibla feature uses device hardware sensors and mathematical calculations for privacy and FOSS compliance.",
+  "qiblaDisclaimerLine2": "Accuracy depends on your device's magnetometer calibration."
 }
