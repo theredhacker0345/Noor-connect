@@ -10,7 +10,7 @@ RepoType: git
 AutoName: Noor Connect
 AntiFeatures:
   NonFreeNet:
-    en-US: App connects to external Islamic APIs (prayer times, Quran data) hosted on third-party servers. Full API list documented at docs/api_manifest.md.
+    en-US: App connects to external Islamic APIs (prayer times, Quran data) hosted on third-party servers. Full API list documented at API_MANIFEST.md.
 
 
 Builds:
