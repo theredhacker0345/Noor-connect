@@ -19,6 +19,12 @@
     <color name="widget_accent_emerald_dim">#FF065F46</color>
     <color name="widget_accent_gold">#FFF59E0B</color>
     <color name="widget_accent_gold_dim">#FF92400E</color>
+    <!-- Selectable accents (WidgetConfigureActivity) — brighter for dark bg -->
+    <color name="widget_accent_amber">#FFFBBF24</color>
+    <color name="widget_accent_blue">#FF60A5FA</color>
+    <color name="widget_accent_purple">#FFA78BFA</color>
+    <color name="widget_accent_teal">#FF2DD4BF</color>
+    <color name="widget_accent_red">#FFF87171</color>
 
     <!-- Text -->
     <color name="widget_text_primary">#FFF0F4F8</color>
