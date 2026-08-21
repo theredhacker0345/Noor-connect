@@ -24,6 +24,8 @@ import type { QuranProgressPayload } from '@/lib/widget-types';
 const QURAN_PROGRESS_KEY = 'quran-reading-progress';
 const TASBEEH_TOTAL_KEY = 'tasbeeh-total';
 const STORAGE_EVENT = 'storage';
+// Dispatched by setTasbeehTotal() in lib/storage.ts whenever the total changes
+const TASBEEH_UPDATED_EVENT = 'tasbeeh-updated';
 
 function parseQuranProgress(raw: string | null): QuranProgressPayload | null {
   if (!raw) return null;
@@ -121,12 +123,12 @@ export function useWidgetSync() {
 
     window.addEventListener(STORAGE_EVENT, onStorage);
     window.addEventListener('noorconnect:quran-progress-changed', onQuranProgressCustom);
-    window.addEventListener('noorconnect:tasbeeh-changed', onTasbeehCustom);
+    window.addEventListener(TASBEEH_UPDATED_EVENT, onTasbeehCustom);
 
     return () => {
       window.removeEventListener(STORAGE_EVENT, onStorage);
       window.removeEventListener('noorconnect:quran-progress-changed', onQuranProgressCustom);
-      window.removeEventListener('noorconnect:tasbeeh-changed', onTasbeehCustom);
+      window.removeEventListener(TASBEEH_UPDATED_EVENT, onTasbeehCustom);
     };
   }, []);
 }

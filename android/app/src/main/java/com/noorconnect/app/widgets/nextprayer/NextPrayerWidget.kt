@@ -112,8 +112,13 @@ class NextPrayerWidget : AppWidgetProvider() {
             val countdownStr = formatCountdown(remaining)
             views.setTextViewText(R.id.widget_countdown, countdownStr)
 
-            // ─── Progress ring rotation ───
-            // Find previous prayer (or start of day for Fajr) to compute progress 0-1
+            // ─── Progress ring fill ───
+            // NOTE: Do NOT use RemoteViews reflection for setRotation here.
+            // View.setRotation only became @RemotableViewMethod in Android 12 (API 31);
+            // on API <= 30 the reflection action throws ActionException and the whole
+            // widget fails to render ("Problem loading widget"). The level-based arc
+            // (setImageLevel on a useLevel=true ring drawable) works on all supported
+            // API levels, so it is the single source of truth for ring progress.
             val prevTime = if (nextIdx > 0) {
                 prayers[nextIdx - 1].time
             } else {
@@ -129,12 +134,6 @@ class NextPrayerWidget : AppWidgetProvider() {
             val progress = if (total > 0) {
                 ((now - prevTime).toFloat() / total.toFloat()).coerceIn(0f, 1f)
             } else 0f
-            // Rotate 270 degrees (leaves a 90-degree gap at the top)
-            val rotation = -90f + (progress * 270f)
-            views.setFloat(R.id.widget_ring_progress, "setRotation", rotation)
-
-            // Also set progress level for ring_fg drawable (useLevel=true)
-            // Progress 0-10000 to support 270° arc via drawable level
             views.setInt(R.id.widget_ring_progress, "setImageLevel", (progress * 10000).toInt())
 
             // ─── Stale data badge (if data is older than 2 hours) ───

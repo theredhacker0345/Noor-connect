@@ -167,14 +167,13 @@
             android:contentDescription="@null"
             android:src="@drawable/widget_progress_ring_bg" />
 
-        <!-- Ring fill (rotated by code) -->
+        <!-- Ring fill (progress driven by setImageLevel) -->
         <ImageView
             android:id="@+id/widget_ring_progress"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@null"
-            android:src="@drawable/widget_progress_ring_fg"
-            android:rotation="-90" />
+            android:src="@drawable/widget_progress_ring_fg" />
 
         <!-- Inner content — clock + prayer time -->
         <LinearLayout

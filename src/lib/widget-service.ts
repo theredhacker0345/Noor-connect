@@ -93,16 +93,24 @@ function buildPrayerPayload(
   if (!prayerTimes) return null;
   const now = Date.now();
 
-  const entries: PrayerEntry[] = [
-    { name: 'Fajr',    time: prayerTimes.fajr?.getTime()    ?? 0, formattedTime: formatPrayerTime(prayerTimes.fajr)    ?? '--:--' },
-    { name: 'Sunrise', time: prayerTimes.sunrise?.getTime() ?? 0, formattedTime: formatPrayerTime(prayerTimes.sunrise) ?? '--:--' },
-    { name: 'Dhuhr',   time: prayerTimes.dhuhr?.getTime()   ?? 0, formattedTime: formatPrayerTime(prayerTimes.dhuhr)   ?? '--:--' },
-    { name: 'Asr',     time: prayerTimes.asr?.getTime()     ?? 0, formattedTime: formatPrayerTime(prayerTimes.asr)     ?? '--:--' },
-    { name: 'Maghrib', time: prayerTimes.maghrib?.getTime() ?? 0, formattedTime: formatPrayerTime(prayerTimes.maghrib) ?? '--:--' },
-    { name: 'Isha',    time: prayerTimes.isha?.getTime()    ?? 0, formattedTime: formatPrayerTime(prayerTimes.isha)    ?? '--:--' },
-  ].filter(e => e.time > 0);
+  // The native side (WidgetPayloads.kt / WidgetBridge.kt) hard-requires all 6
+  // entries. Rather than filtering partial data (which the bridge would then
+  // silently reject), refuse to build a payload when any time is missing.
+  const required = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
+  const hasAllTimes = required.every(k => prayerTimes[k] instanceof Date && !isNaN(prayerTimes[k].getTime()));
+  if (!hasAllTimes) {
+    console.warn('[WidgetService] buildPrayerPayload: missing prayer time(s), skipping widget sync');
+    return null;
+  }
 
-  if (entries.length === 0) return null;
+  const entries: PrayerEntry[] = [
+    { name: 'Fajr',    time: prayerTimes.fajr.getTime(),    formattedTime: formatPrayerTime(prayerTimes.fajr)    ?? '--:--' },
+    { name: 'Sunrise', time: prayerTimes.sunrise.getTime(), formattedTime: formatPrayerTime(prayerTimes.sunrise) ?? '--:--' },
+    { name: 'Dhuhr',   time: prayerTimes.dhuhr.getTime(),   formattedTime: formatPrayerTime(prayerTimes.dhuhr)   ?? '--:--' },
+    { name: 'Asr',     time: prayerTimes.asr.getTime(),     formattedTime: formatPrayerTime(prayerTimes.asr)     ?? '--:--' },
+    { name: 'Maghrib', time: prayerTimes.maghrib.getTime(), formattedTime: formatPrayerTime(prayerTimes.maghrib) ?? '--:--' },
+    { name: 'Isha',    time: prayerTimes.isha.getTime(),    formattedTime: formatPrayerTime(prayerTimes.isha)    ?? '--:--' },
+  ];
 
   // Find the next upcoming prayer. If all of today's prayers are in the past
   // (e.g. after Isha), wrap to the first prayer of tomorrow and roll its time
@@ -115,7 +123,7 @@ function buildPrayerPayload(
     }
   }
   // Loop completed without finding a future prayer -> all passed for today.
-  if (entries.length > 0 && entries[nextPrayerIndex].time <= now) {
+  if (entries[nextPrayerIndex].time <= now) {
     nextPrayerIndex = 0;
     const oneDayMs = 24 * 60 * 60 * 1000;
     for (const entry of entries) {

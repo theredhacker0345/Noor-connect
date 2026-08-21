@@ -200,6 +200,9 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard-widgets" element={<DashboardWidgets />} />
+        {/* Widget deep-link targets (WidgetDeeplink.kt) that have no dedicated page */}
+        <Route path="/prayers" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/quran/reading" element={<Navigate to="/quran-progress" replace />} />
         <Route path="/quran" element={<SurahList />} />
         <Route path="/quran-reader/:surahNumber" element={<Navigate to="/quran" replace />} />
         <Route path="/quran/:surahName" element={<QuranReader />} />

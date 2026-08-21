@@ -46,7 +46,6 @@ class QuranProgressWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_pages, context.getString(R.string.widget_quran_progress_pages_format, 0))
                 views.setTextViewText(R.id.widget_goal_label, context.getString(R.string.widget_quran_progress_goal_format, 0))
                 views.setProgressBar(R.id.widget_goal_bar, 100, 0, false)
-                views.setFloat(R.id.widget_ring_progress, "setRotation", -90f)
                 views.setInt(R.id.widget_ring_progress, "setImageLevel", 0)
             } else {
                 // Streak
@@ -68,10 +67,9 @@ class QuranProgressWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_goal_label, context.getString(R.string.widget_quran_progress_goal_format, goalInt))
                 views.setProgressBar(R.id.widget_goal_bar, 100, goalInt, false)
 
-                // Ring rotation (270° arc)
+                // Ring fill via drawable level (useLevel=true) — works on all API levels.
+                // Do NOT use setRotation reflection here (breaks widgets on API <= 30).
                 val progressFraction = (payload.totalPercent / 100f).coerceIn(0f, 1f)
-                val rotation = -90f + (progressFraction * 270f)
-                views.setFloat(R.id.widget_ring_progress, "setRotation", rotation)
                 views.setInt(R.id.widget_ring_progress, "setImageLevel", (progressFraction * 10000).toInt())
             }
 

@@ -133,8 +133,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="@null"
-                android:src="@drawable/widget_progress_ring_fg"
-                android:rotation="-90" />
+                android:src="@drawable/widget_progress_ring_fg" />
 
             <TextView
                 android:id="@+id/widget_percent"
