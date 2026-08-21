@@ -1,7 +1,7 @@
-import { memo, useCallback, useState, useEffect, useMemo } from "react";
+import { memo, useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Radio, Play, Pause, BarChart3, Search,
+  ArrowLeft, Radio, Play, Pause, BarChart3, Search, X,
   Pin, PinOff, Landmark, Moon, BookOpen, BookMarked, Headphones,
   Globe, Sparkles, Scale, Star
 } from "lucide-react";
@@ -78,10 +78,28 @@ const QuranRadio = () => {
   const [activeCategory, setActiveCategory] = useState<RadioCategory | "all">("all");
   const [pinned, setPinned] = useState<Set<string>>(loadPinned);
 
+  // Optimistic tap feedback: the station the user just started, cleared once
+  // playback begins (or after a timeout so it never sticks on failure).
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
+    };
+  }, []);
+
+  // Clear pending indicator as soon as the tapped station actually plays…
+  useEffect(() => {
+    if (pendingUrl && globalRadio.isPlaying && globalRadio.currentStation?.url === pendingUrl) {
+      setPendingUrl(null);
+    }
+  }, [globalRadio.isPlaying, globalRadio.currentStation?.url, pendingUrl]);
 
   const togglePin = useCallback((station: StationView) => {
     setPinned((prev) => {
@@ -108,7 +126,10 @@ const QuranRadio = () => {
     });
   }, [search, activeCategory]);
 
-  const pinnedStations = allStations.filter((s) => pinned.has(s.url));
+  const pinnedStations = useMemo(
+    () => allStations.filter((s) => pinned.has(s.url)),
+    [pinned]
+  );
   const categories = useMemo(
     () =>
       Object.keys(CATEGORY_LABELS) as RadioCategory[],
@@ -121,6 +142,9 @@ const QuranRadio = () => {
       if (globalRadio.isPlaying) {
         globalRadio.pauseRadio();
       } else {
+        setPendingUrl(station.url);
+        if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
+        pendingTimerRef.current = setTimeout(() => setPendingUrl(null), 6000);
         globalRadio.playRadio({
           id: station.id,
           name: station.name,
@@ -131,11 +155,15 @@ const QuranRadio = () => {
     }
 
     // Play new station using global radio
+    setPendingUrl(station.url);
+    if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
+    pendingTimerRef.current = setTimeout(() => setPendingUrl(null), 6000);
     globalRadio.playRadio({
       id: station.id,
       name: station.name,
       url: station.url
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalRadio.currentStation?.url, globalRadio.isPlaying, globalRadio.playRadio, globalRadio.pauseRadio]);
 
   const isCurrentStation = useCallback(
@@ -163,20 +191,32 @@ const QuranRadio = () => {
 
           {/* Search */}
           <div className="mt-3 relative">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search reciter or station…"
-              className="ps-9"
+              className="ps-9 pe-9"
+              aria-label="Search reciter or station"
             />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute end-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {/* Category chips */}
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-4 px-4" role="tablist" aria-label="Station categories">
             <button
               onClick={() => setActiveCategory("all")}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              role="tab"
+              aria-selected={activeCategory === "all"}
+              className={`shrink-0 min-h-[40px] px-4 rounded-full text-xs font-semibold transition-colors ${
                 activeCategory === "all"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-primary/10"
@@ -188,7 +228,9 @@ const QuranRadio = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                role="tab"
+                aria-selected={activeCategory === cat}
+                className={`shrink-0 min-h-[40px] px-4 rounded-full text-xs font-semibold transition-colors ${
                   activeCategory === cat
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-primary/10"
@@ -213,6 +255,7 @@ const QuranRadio = () => {
               <StationGrid
                 stations={featuredStations}
                 pinned={pinned}
+                pendingUrl={pendingUrl}
                 isCurrentStation={isCurrentStation}
                 isPlaying={globalRadio.isPlaying}
                 onSelect={handleStationSelect}
@@ -227,6 +270,7 @@ const QuranRadio = () => {
                 <StationGrid
                   stations={pinnedStations}
                   pinned={pinned}
+                  pendingUrl={pendingUrl}
                   isCurrentStation={isCurrentStation}
                   isPlaying={globalRadio.isPlaying}
                   onSelect={handleStationSelect}
@@ -242,14 +286,12 @@ const QuranRadio = () => {
                 title={`All Stations (${filtered.length})`}
               />
               {filtered.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <p className="text-lg font-semibold">No stations found</p>
-                  <p className="text-sm mt-1">Try a different search or category.</p>
-                </div>
+                <EmptyState />
               ) : (
                 <StationGrid
                   stations={filtered}
                   pinned={pinned}
+                  pendingUrl={pendingUrl}
                   isCurrentStation={isCurrentStation}
                   isPlaying={globalRadio.isPlaying}
                   onSelect={handleStationSelect}
@@ -271,6 +313,16 @@ const SectionTitle = ({ icon, title }: { icon: React.ReactNode; title: string })
   </h2>
 );
 
+const EmptyState = () => (
+  <div className="text-center py-12 text-muted-foreground">
+    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+      <Radio className="w-6 h-6 text-muted-foreground/70" />
+    </div>
+    <p className="text-lg font-semibold">No stations found</p>
+    <p className="text-sm mt-1">Try a different search or category.</p>
+  </div>
+);
+
 const GridSkeleton = () => (
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {Array.from({ length: 8 }).map((_, i) => (
@@ -287,13 +339,14 @@ const GridSkeleton = () => (
 interface StationGridProps {
   stations: StationView[];
   pinned: Set<string>;
+  pendingUrl: string | null;
   isCurrentStation: (s: StationView) => boolean;
   isPlaying: boolean;
   onSelect: (s: StationView) => void;
   onTogglePin: (s: StationView) => void;
 }
 
-const StationGrid: React.FC<StationGridProps> = ({ stations, pinned, isCurrentStation, isPlaying, onSelect, onTogglePin }) => (
+const StationGrid: React.FC<StationGridProps> = ({ stations, pinned, pendingUrl, isCurrentStation, isPlaying, onSelect, onTogglePin }) => (
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {stations.map((station) => (
       <StationCard
@@ -301,6 +354,7 @@ const StationGrid: React.FC<StationGridProps> = ({ stations, pinned, isCurrentSt
         station={station}
         isPinned={pinned.has(station.url)}
         isPlaying={isCurrentStation(station) && isPlaying}
+        isPending={isCurrentStation(station) ? !isPlaying && pendingUrl === station.url : pendingUrl === station.url}
         onSelect={onSelect}
         onTogglePin={onTogglePin}
       />
@@ -312,6 +366,7 @@ interface StationCardProps {
   station: StationView;
   isPinned: boolean;
   isPlaying: boolean;
+  isPending: boolean;
   onSelect: (station: StationView) => void;
   onTogglePin: (station: StationView) => void;
 }
@@ -384,27 +439,38 @@ const avatarColor = (url: string): string => {
   return avatarPalette[h % avatarPalette.length];
 };
 
-const StationCard = memo<StationCardProps>(({ station, isPinned, isPlaying, onSelect, onTogglePin }) => {
+const StationCard = memo<StationCardProps>(({ station, isPinned, isPlaying, isPending, onSelect, onTogglePin }) => {
   const [imageError, setImageError] = useState(false);
 
   const showPhoto = station.category === "reciter" && !!station.img && !imageError;
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(station);
+    }
+  }, [onSelect, station]);
+
   return (
     <Card
-      className={`group relative overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer ${isPlaying
+      role="button"
+      tabIndex={0}
+      aria-label={`${isPlaying ? "Pause" : "Play"} ${station.nameEn || station.name}`}
+      className={`group relative overflow-hidden rounded-2xl shadow-md hover:shadow-lg cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-[transform,box-shadow] duration-200 motion-safe:hover:-translate-y-0.5 ${isPlaying
         ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
-        : 'hover:scale-105'
+        : ''
         }`}
       onClick={() => onSelect(station)}
+      onKeyDown={handleKeyDown}
     >
       {/* Station Image / Art */}
       <div className="aspect-square relative overflow-hidden">
         {showPhoto ? (
           <img
             src={station.img}
-            alt={station.name}
+            alt=""
             loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-200 motion-safe:group-hover:scale-105"
             onError={() => setImageError(true)}
           />
         ) : station.category === "reciter" ? (
@@ -413,15 +479,19 @@ const StationCard = memo<StationCardProps>(({ station, isPinned, isPlaying, onSe
           <CategoryArt category={station.category} id={station.id} />
         )}
 
-        {/* Pin button */}
+        {/* Subtle desktop hover scrim only (never blocks the art on touch) */}
+        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-md:hidden" />
+
+        {/* Pin button — 36px visual, ~48px hit area via inset span */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onTogglePin(station);
           }}
           aria-label={isPinned ? "Unpin station" : "Pin station"}
-          className="absolute top-2 start-2 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center hover:bg-black/70 transition-colors"
+          className="absolute top-2 start-2 z-10 w-9 h-9 rounded-full bg-black/50 backdrop-blur flex items-center justify-center hover:bg-black/70 active:scale-95 transition-colors"
         >
+          <span className="absolute -inset-1.5" aria-hidden="true" />
           {isPinned ? (
             <Pin className="w-4 h-4 text-primary fill-primary" />
           ) : (
@@ -429,25 +499,32 @@ const StationCard = memo<StationCardProps>(({ station, isPinned, isPlaying, onSe
           )}
         </button>
 
-        {/* Play Overlay */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
-            {isPlaying ? (
-              <Pause className="w-6 h-6 text-primary" />
-            ) : (
-              <Play className="w-6 h-6 text-primary ms-0.5" />
-            )}
-          </div>
+        {/* Play / Pause / Loading badge — always visible (touch has no hover),
+            bottom-end corner like standard audio list rows. Opacity-only motion. */}
+        <div
+          className={`absolute bottom-2 end-2 w-9 h-9 rounded-full flex items-center justify-center shadow-lg border transition-opacity duration-200 ${
+            isPlaying
+              ? 'bg-primary text-primary-foreground border-primary/60 opacity-100'
+              : 'bg-black/55 border-white/20 text-white opacity-80 group-hover:opacity-100'
+            }`}
+        >
+          {isPending ? (
+            <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden="true" />
+          ) : isPlaying ? (
+            <Pause className="w-4 h-4 fill-current" aria-hidden="true" />
+          ) : (
+            <Play className="w-4 h-4 fill-current ms-0.5" aria-hidden="true" />
+          )}
         </div>
 
         {/* Now Playing Indicator */}
         {isPlaying && (
           <div className="absolute top-2 end-2">
             <div className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium">
-              <div className="flex gap-0.5">
-                <div className="w-1 h-3 bg-current animate-pulse"></div>
-                <div className="w-1 h-3 bg-current animate-pulse delay-75"></div>
-                <div className="w-1 h-3 bg-current animate-pulse delay-150"></div>
+              <div className="flex gap-0.5" aria-hidden="true">
+                <div className="w-1 h-3 bg-current rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-1 h-3 bg-current rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-1 h-3 bg-current rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
               </div>
               Playing
             </div>
