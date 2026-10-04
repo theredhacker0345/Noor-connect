@@ -11,6 +11,7 @@ import urTranslations from '../locales/ur.json';
 import bnTranslations from '../locales/bn.json';
 import ruTranslations from '../locales/ru.json';
 import frTranslations from '../locales/fr.json';
+import koTranslations from '../locales/ko.json';
 
 // Build i18next resources object
 const resources = {
@@ -20,6 +21,7 @@ const resources = {
   bn: { translation: bnTranslations },
   ru: { translation: ruTranslations },
   fr: { translation: frTranslations },
+  ko: { translation: koTranslations },
 };
 
 // Initialize i18next

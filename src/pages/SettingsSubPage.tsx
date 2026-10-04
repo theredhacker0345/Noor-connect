@@ -227,6 +227,7 @@ const SettingsSubPage: React.FC = () => {
                   <SelectItem value="bn">বাংলা (Bengali)</SelectItem>
                   <SelectItem value="ru">Русский (Russian)</SelectItem>
                   <SelectItem value="fr">Français (French)</SelectItem>
+                  <SelectItem value="ko">한국어 (Korean)</SelectItem>
                 </SelectContent>
               </Select>
             </Card>
