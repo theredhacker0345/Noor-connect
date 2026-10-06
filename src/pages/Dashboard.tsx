@@ -33,7 +33,6 @@ import { LocationCardSkeleton, LoadingSpinner } from "@/components/LoadingSkelet
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GeocodingService } from "@/lib/geocoding";
 import { PageTransition } from "@/components/PageTransition";
-import { widgetRefreshManager } from "@/lib/widget-refresh";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -255,7 +254,6 @@ export default function Dashboard() {
     // Add online listener to refresh prayer times as soon as internet is back
     const handleOnline = () => {
       loadPrayerTimes();
-      widgetRefreshManager.refreshAll(); // Refresh all widgets when online
     };
 
     window.addEventListener('online', handleOnline);

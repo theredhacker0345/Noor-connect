@@ -1,7 +1,7 @@
 ![Untitled design](https://github.com/user-attachments/assets/2e0a2569-47a2-49b3-8ccc-25e37964bfb5)
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://opensource.org/licenses/GPL-3.0) [![Status](https://img.shields.io/badge/status-stable-green.svg)](https://github.com/darkmaster0345/Noor-connect) [![F-Droid Compatible](https://img.shields.io/badge/F--Droid-Ready-blue.svg)](.fdroid.yml) [![Version](https://img.shields.io/badge/version-2.2.1-orange.svg)](CHANGELOG.md) [![Privacy First](https://img.shields.io/badge/Privacy-First-brightgreen.svg)]() [![Nasheed Partner](https://img.shields.io/badge/Nasheed-No%20Copyright%20Nasheed-purple.svg)]()
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](https://opensource.org/licenses/GPL-3.0) [![Status](https://img.shields.io/badge/status-stable-green.svg)](https://github.com/darkmaster0345/Noor-connect) [![F-Droid Compatible](https://img.shields.io/badge/F--Droid-Ready-blue.svg)](.fdroid.yml) [![Version](https://img.shields.io/badge/version-2.3.0-orange.svg)](CHANGELOG.md) [![Privacy First](https://img.shields.io/badge/Privacy-First-brightgreen.svg)]() [![Nasheed Partner](https://img.shields.io/badge/Nasheed-No%20Copyright%20Nasheed-purple.svg)]()
 
 **Noor Connect** is a truly comprehensive, beautiful, and strict privacy-focused Islamic application designed to help you stay connected with your faith. Built to modern mobile standards using web technologies (React + Vite + Capacitor), it stands as a premium, tracker-free digital companion for spiritual growth.
 
@@ -30,18 +30,27 @@ This partnership ensures every nasheed is legally licensed, high-quality, and su
 
 ---
 
+## 🆕 What's New in v2.3.0
+
+### 🇰🇷 Korean Language Support
+- Full Korean (한국어) translation added for all app UI strings — prayer names, navigation, settings, notifications, and in-app content.
+- Korean is now a first-class supported language alongside English, Arabic, Urdu, Bengali, Russian, and French.
+- All Korean translation keys reviewed and corrected for accurate, natural phrasing.
+
+### 🗑️ Widget System Removed
+- The native Android home-screen widget suite (Next Prayer, Daily Ayah, Daily Hadith, Quran Progress, Tasbeeh Counter) and all supporting infrastructure have been removed to simplify the codebase.
+- All widget-related Kotlin/Java files, Android manifest entries, web bridge code, and UI customizer deleted.
+
+### 💚 Simplified Donation Section
+- Replaced crypto wallet addresses (BTC, SOL, BNB) in the Support section with a clean WhatsApp contact card.
+- If you'd like to donate, contact the developer directly on WhatsApp — Jazak Allah Khair.
+
+---
+
 ## 🆕 What's New in v2.2.1
 
 ### 📱 Android Widgets — Stability, Deep-Links & Accent Colors
 - **Widgets No Longer Break on Android 8–11**: Removed `RemoteViews` reflection calls to `View.setRotation` (unsupported before Android 12) that made every Next Prayer / Quran Progress widget update fail with "Problem loading widget" on API ≤ 30. Rings now render via drawable levels on all supported versions.
-- **Widget Taps Fixed**: Next Prayer tap (and its empty-state CTA) no longer lands on the 404 page (`/prayers` → dashboard redirect); Quran Progress tap opens the Quran progress page (`/quran/reading` redirect).
-- **In-App Tasbeeh Syncs to the Widget**: Fixed an event-name mismatch (`noorconnect:tasbeeh-changed` was never dispatched; the real event is `tasbeeh-updated`) — tasbeeh counted in-app now updates the home-screen widget instantly instead of only widget-side taps counting.
-- **Accent Colors Work**: The configure screen's accent pick is now applied to widget accent text, and the previously missing Amber / Blue / Purple / Teal / Red palettes were added for light and dark themes.
-- **No Silent Sync Drops**: Prayer data with any missing time is now explicitly rejected with a warning instead of being filtered into a payload that the native validator silently dropped.
-- **Dead Code Removed**: Unused throttle helpers, duplicate step-detection registration, and inert manifest meta-data cleaned out.
-
-### 📱 Android Widgets — Stability, Deep-Links & Accent Colors
-- **Widgets No Longer Break on Android 8–11**: Removed all `RemoteViews` reflection calls to `View.setRotation` from the Next Prayer and Quran Progress widgets. That method only became `@RemotableViewMethod`-safe in Android 12; on API ≤ 30 every widget update threw an `ActionException` during rendering and the launcher showed "Problem loading widget". Progress rings now render purely via `setImageLevel` on the `useLevel` ring drawable, which works on every supported API level (and the redundant rotation/level double-rendering is gone — the arc starts at 12 o'clock).
 - **Widget Taps Fixed**: Next Prayer tap (and its empty-state CTA) no longer lands on the 404 page (`/prayers` → dashboard redirect); Quran Progress tap opens the Quran progress page (`/quran/reading` redirect).
 - **In-App Tasbeeh Syncs to the Widget**: Fixed an event-name mismatch (`noorconnect:tasbeeh-changed` was never dispatched; the real event is `tasbeeh-updated`) — tasbeeh counted in-app now updates the home-screen widget instantly instead of only widget-side taps counting.
 - **Accent Colors Work**: The configure screen's accent pick is now applied to widget accent text, and the previously missing Amber / Blue / Purple / Teal / Red palettes were added for light and dark themes.
@@ -53,6 +62,7 @@ This partnership ensures every nasheed is legally licensed, high-quality, and su
 - Unified platform URLs — both native Android and web use the same HTTPS endpoint. No more cleartext HTTP exceptions.
 - Added Kwikmotion 1080p as automatic fallback for Makkah.
 - Removed `m.live.net.sa` from Android network security config.
+
 
 ### 🎵 Quran Audio & Player Enhancements
 - **Quran Audio Page Redesigned**: Complete Spotify-style UI/UX remake — dark hero card, horizontal reciter carousel with circular gold-gradient avatars, surah list with diamond number plates and animated equalizer on the playing row, sticky search bar, and playback via GlobalQuranPlayer mini-player app-wide.

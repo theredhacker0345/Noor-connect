@@ -59,7 +59,6 @@ class QuranFeaturesService {
   private readonly BOOKMARKS_KEY = 'quran-bookmarks';
   private readonly NOTES_KEY = 'quran-notes';
   private readonly PROGRESS_KEY = 'quran-recitation-progress';
-  private readonly WIDGET_PROGRESS_KEY = 'quran-reading-progress';
   private readonly STREAK_KEY = 'quran-reading-streak';
   private readonly ACHIEVEMENTS_KEY = 'quran-achievements';
 
@@ -246,35 +245,6 @@ class QuranFeaturesService {
 
   private saveRecitationProgress(progress: RecitationProgress[]): void {
     localStorage.setItem(this.PROGRESS_KEY, JSON.stringify(progress));
-    this.syncWidgetProgress(progress);
-  }
-
-  private syncWidgetProgress(progress: RecitationProgress[]): void {
-    try {
-      const overall = this.calculateOverallProgress(progress);
-      const streak = this.getReadingStreakSync();
-      
-      // Find the most recently read surah
-      const lastReadEntry = progress
-        .filter(p => p.pagesRead > 0)
-        .sort((a, b) => new Date(b.lastReadDate).getTime() - new Date(a.lastReadDate).getTime())[0];
-      
-      const widgetPayload = {
-        currentSurah: lastReadEntry?.surahNumber || 1,
-        currentAyah: lastReadEntry?.lastReadAyah || 1,
-        currentJuz: Math.ceil(overall.pagesRead / 20), // Approximate juz
-        totalPagesRead: overall.pagesRead,
-        totalPercent: overall.percentage,
-        dailyStreak: streak?.currentStreak || 0,
-        lastReadTimestamp: lastReadEntry ? new Date(lastReadEntry.lastReadDate).getTime() : Date.now(),
-        lastReadLabel: lastReadEntry ? `${lastReadEntry.surahName} ${lastReadEntry.surahNumber}:${lastReadEntry.lastReadAyah}` : '',
-        goalPercent: 100,
-        lastUpdated: Date.now()
-      };
-      localStorage.setItem(this.WIDGET_PROGRESS_KEY, JSON.stringify(widgetPayload));
-    } catch (error) {
-      console.error('Error syncing widget progress:', error);
-    }
   }
 
   private calculateOverallProgress(progress: RecitationProgress[]): {
@@ -511,7 +481,6 @@ class QuranFeaturesService {
     localStorage.removeItem(this.BOOKMARKS_KEY);
     localStorage.removeItem(this.NOTES_KEY);
     localStorage.removeItem(this.PROGRESS_KEY);
-    localStorage.removeItem(this.WIDGET_PROGRESS_KEY);
     localStorage.removeItem(this.STREAK_KEY);
     localStorage.removeItem(this.ACHIEVEMENTS_KEY);
   }

@@ -6,7 +6,6 @@ import {
   LANGUAGES,
   SUPPORTED_CODES,
   DEFAULT_LANGUAGE,
-  WIDGET_STRING_KEYS,
   isRTL as checkRTL,
 } from '@/lib/language-config';
 import { isNativePlatform } from '@/lib/capacitor-utils';
@@ -104,27 +103,6 @@ async function loadSavedLanguageCode(): Promise<LanguageCode | null> {
   return DEFAULT_LANGUAGE;
 }
 
-   // ─── "Dumb Widget" bridge: send only the strings the widget needs ───
-
-    async function sendWidgetStrings(tFn: (key: string) => string) {
-      if (!isNativePlatform()) return;
-      try {
-        // Build a tiny JSON payload of only the widget-relevant strings
-    const payload: Record<string, string> = {};
-    for (const key of WIDGET_STRING_KEYS) {
-      payload[key] = tFn(key);
-    }
-
-    const { registerPlugin } = await import('@capacitor/core');
-    const WidgetPlugin = registerPlugin<{
-      setWidgetStrings: (opts: { strings: string }) => Promise<{ status: string }>;
-    }>('WidgetPlugin');
-    await WidgetPlugin.setWidgetStrings({ strings: JSON.stringify(payload) });
-  } catch (e) {
-    // Widget plugin might not be available — that's OK
-    console.warn('Failed to send widget strings:', e);
-  }
-}
 
 // ─── Provider ────────────────────────────────────────────
 
@@ -151,8 +129,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       i18n.changeLanguage(lang);
       applyLanguageSideEffects(lang);
 
-      // Also push strings to the widget on boot
-      sendWidgetStrings(i18n.t.bind(i18n));
     };
 
     bootstrap();
@@ -170,12 +146,6 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       i18n.changeLanguage(lang);
       applyLanguageSideEffects(lang);
       persistLanguage(lang);
-
-      // After i18next switches, send updated strings to native widget
-      // Use a microtask so i18n.t() returns the new language's values
-      queueMicrotask(() => {
-        sendWidgetStrings(i18n.t.bind(i18n));
-      });
     },
     [i18n]
   );

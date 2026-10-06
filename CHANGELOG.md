@@ -6,7 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.3.0] - 2026-10-06
+
+### 🇰🇷 Korean Language Support
+
+- Full Korean (한국어) translation added for all app UI strings — prayer names, navigation, settings, notifications, and in-app content.
+- Korean is now a first-class supported language alongside English, Arabic, Urdu, Bengali, Russian, and French.
+- All Korean translation keys reviewed and corrected for accurate, natural phrasing.
+
+### 🗑️ Widget System Removed
+
+- The native Android home-screen widget suite (Next Prayer, Daily Ayah, Daily Hadith, Quran Progress, Tasbeeh Counter) and all supporting infrastructure have been removed to simplify the codebase.
+- All widget-related Kotlin/Java source files, Android manifest receivers/services/activities, web bridge code (`widgetBridge.ts`, `widget-service.ts`, `widget-types.ts`, `widget-refresh.ts`), and UI customizer (`WidgetCustomizer.tsx`, `SafeWidgetPreview.tsx`) deleted.
+- All widget sync hooks (`useWidgetSync`), dashboard widget route, and language bridge for widget strings removed.
+
+### 💚 Simplified Donation Section
+
+- Replaced crypto wallet addresses (BTC, SOL, BNB) in the Support & Donate settings section with a clean WhatsApp contact card.
+- If you'd like to donate, kindly contact the developer directly on WhatsApp via the number given in the app. Jazak Allah Khair.
+
+### 🔧 Fixes
+
+- Korean translation quality review: corrected prayer time labels, navigation items, settings descriptions, and notification messages.
+
+---
+
 ## [2.2.1] - 2026-08-22
+
 
 ### 📱 Android Widgets — Stability, Deep-Links & Accent Colors
 

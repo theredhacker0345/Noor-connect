@@ -17,8 +17,6 @@ import { AnimatePresence, MotionConfig } from "framer-motion";
 import { LazyMotionWrapper } from "@/components/LazyMotionWrapper";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n-new";
-import { LOCATION_STORAGE_KEY } from "@/lib/location-config";
-import { useWidgetSync } from "@/hooks/useWidgetSync";
 import { App as CapacitorApp } from '@capacitor/app';
 import { AutoBackupRestoreDialog } from "@/components/AutoBackupRestoreDialog";
 import { initBackupService } from "@/lib/backup-service";
@@ -28,7 +26,7 @@ import { preloadCriticalResources, isLowEndDevice, monitorFPS } from "@/lib/perf
 import { applyTieredVisualOverrides, getAnimationTier } from "@/lib/device-performance";
 
 /**
- * DeepLinkListener — subscribes to widget deep-links (noorconnect://app/<path>?<query>)
+ * DeepLinkListener — subscribes to deep-links (noorconnect://app/<path>?<query>)
  * and routes them through React Router. Must live inside <BrowserRouter> so useNavigate works.
  *
  * Handles both cold start (Capacitor delivers the launch URL on appUrlOpen) and warm start
@@ -301,8 +299,6 @@ function AppShell() {
   // Always-on auto backup: runs immediately, then every 20 minutes of app use
   // while any page is open (not just the Settings page).
   useAutoBackup();
-  // Push Quran-progress + tasbeeh state to native widgets when they change
-  useWidgetSync();
   
   // Initialize animation preference (deferred from module scope)
   const initializedRef = useRef(false);
@@ -394,18 +390,6 @@ function AppShell() {
 
     if (import.meta.env.PROD && !navigator.serviceWorker.controller) {
       serviceWorkerManager.register();
-    }
-
-    const savedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
-    if (savedLocation) {
-      try {
-        const { latitude, longitude, locationName } = JSON.parse(savedLocation);
-        import('@/lib/widget-service').then(({ WidgetService }) => {
-          WidgetService.startAutoUpdate(latitude, longitude, locationName);
-        });
-      } catch (err) {
-        console.warn('Failed to start widget auto-update', err);
-      }
     }
 
     return () => {

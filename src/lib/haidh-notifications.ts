@@ -105,7 +105,7 @@ export const syncHaidhNotifications = async (data: HaidhTrackerData): Promise<vo
   const unfulfilledFasts = data.missedRamadanFasts - data.madeUpRamadanFasts;
   if (!data.isActive && unfulfilledFasts > 0) {
     // Find the next Sunday evening (to prepare for Monday fasting)
-    let nextSunday = new Date(now);
+    const nextSunday = new Date(now);
     nextSunday.setDate(now.getDate() + ((7 - now.getDay()) % 7)); // Next Sunday
     const fire = setTime(nextSunday, at(19, 0)); // 7:00 PM Sunday
     

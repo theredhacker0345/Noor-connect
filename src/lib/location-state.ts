@@ -81,16 +81,6 @@ export const useLocationState = () => {
         lastUpdated: new Date().toISOString()
       };
       saveLocation(newLocation);
-
-      // Update Android widget with new location (fire and forget with error handling)
-      import('@/lib/widget-service').then(({ WidgetService }) => {
-        try {
-          WidgetService.updateWidget(newLocation.latitude, newLocation.longitude, newLocation.locationName);
-        } catch (widgetError) {
-          console.warn('Failed to update widget:', widgetError);
-        }
-      }).catch(err => console.warn('Failed to import widget service:', err));
-
       return newLocation;
     });
   }, []); // No dependency on location — uses functional setState

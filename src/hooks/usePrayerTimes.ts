@@ -10,7 +10,6 @@ import { GeocodingService } from '@/lib/geocoding';
 import { AladhanAPI, ALADHAN_METHODS } from '@/lib/aladhan-api';
 import { formatPrayerTime } from '@/lib/time-formatter';
 import { GeolocationService } from '@/lib/geolocation-service';
-import { isNativePlatform } from '@/lib/capacitor-utils';
 import { getFallbackLocationByTimezone, LOCATION_STORAGE_KEY } from '@/lib/location-config';
 import { getMadhab } from '@/lib/storage';
 import { usePrayerNotifications } from './usePrayerNotifications';
@@ -362,50 +361,6 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
 
       lastFetchSignatureRef.current = fetchSignature;
 
-        // Update widget with next prayer
-        if (isNativePlatform()) {
-          // Find next prayer from current time
-          const now = new Date();
-          const prayers = [
-            { name: 'Fajr', time: times.fajr },
-            { name: 'Dhuhr', time: times.dhuhr },
-            { name: 'Asr', time: times.asr },
-            { name: 'Maghrib', time: times.maghrib },
-            { name: 'Isha', time: times.isha }
-          ];
-
-          let nextPrayer = prayers[0]; // Default to first prayer
-          for (const prayer of prayers) {
-            if (prayer.time > now) {
-              nextPrayer = prayer;
-              break;
-            }
-          }
-
-          const locationLabel = locationData.city || locationData.country || 'Unknown';
-
-          // Validate times matches expected widget payload shape
-          const requiredPrayerKeys = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
-          const isValidTimes = requiredPrayerKeys.every(key =>
-            !isNaN(prayerDates[key].getTime())
-          );
-
-          if (!isValidTimes) {
-            console.warn('WidgetService.updateWidget skipped: times payload missing or invalid prayer times', times);
-          } else {
-            try {
-              const { WidgetService } = await import('@/lib/widget-service');
-              WidgetService.updateWidget(
-                locationData.latitude,
-                locationData.longitude,
-                locationLabel,
-                prayerDates
-              ).catch(() => {});
-            } catch {
-              // WidgetService not available on this platform
-            }
-          }
-        }
 
     } catch (error) {
       console.error('Failed to calculate prayer times:', error);
@@ -592,41 +547,6 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
       window.removeEventListener('madhab-changed', handleMadhabChange);
     };
   }, [location, fetchPrayerTimesWithCoordinates]);
-
-  // Listen for widget update requests
-  useEffect(() => {
-    const handleWidgetUpdate = async () => {
-      if (location && prayerTimes) {
-        const locationLabel = location.city || location.country || 'Unknown';
-
-        // Validate prayerTimes matches expected widget payload shape
-        const requiredPrayerKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
-        const isValidTimes = requiredPrayerKeys.every(key =>
-          prayerTimes[key] instanceof Date && !isNaN((prayerTimes[key] as Date).getTime())
-        );
-
-        if (!isValidTimes) {
-          console.warn('WidgetService.updateWidget skipped: prayerTimes payload missing or invalid', prayerTimes);
-        } else {
-          try {
-            const { WidgetService } = await import('@/lib/widget-service');
-            WidgetService.updateWidget(
-              location.latitude,
-              location.longitude,
-              locationLabel,
-              prayerTimes
-            ).catch(() => {});
-          } catch {
-            // WidgetService not available on this platform
-          }
-        }
-      }
-    };
-    window.addEventListener('widget-update-requested', handleWidgetUpdate);
-    return () => {
-      window.removeEventListener('widget-update-requested', handleWidgetUpdate);
-    };
-  }, [location, prayerTimes]);
 
 
   return useMemo(() => ({

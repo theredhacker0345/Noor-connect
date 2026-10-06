@@ -113,11 +113,3 @@ export function toLanguageCode(raw: string | null | undefined): LanguageCode {
     return DEFAULT_LANGUAGE;
 }
 
-/**
- * Widget string keys — these are the translation keys the widget needs.
- * Keep this list small to keep the bridge payload tiny.
- */
-export const WIDGET_STRING_KEYS = [
-    'fajr', 'dhuhr', 'asr', 'maghrib', 'isha',
-    'nextPrayer', 'todaysPrayers',
-] as const;

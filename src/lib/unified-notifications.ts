@@ -129,7 +129,7 @@ class UnifiedNotificationService {
 
   // Show a notification
   async showNotification(options: NotificationOptions, immediate: boolean = false): Promise<boolean> {
-    let hasPermission = await this.getPermissionStatus();
+    const hasPermission = await this.getPermissionStatus();
     if (hasPermission !== 'granted') {
       const requested = await this.requestPermission();
       if (!requested) {

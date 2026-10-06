@@ -31,6 +31,17 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
+    version: '2.3.0',
+    date: '2026-10-06',
+    title: 'Korean Language, Widget System Removal & Donation Simplification',
+    changes: [
+      { type: 'feature', description: 'Korean Language Support: Full Korean (한국어) translation added for all app UI strings — prayer names, navigation, settings, notifications, and in-app content. Korean is now a first-class supported language alongside English, Arabic, Urdu, Bengali, Russian, and French.' },
+      { type: 'improvement', description: 'Widget System Removed: The native Android home-screen widget suite (Next Prayer, Daily Ayah, Daily Hadith, Quran Progress, Tasbeeh Counter) and all supporting infrastructure have been removed to simplify the codebase. All widget-related Kotlin/Java files, Android manifest entries, web bridge code, and UI customizer have been deleted.' },
+      { type: 'improvement', description: 'Simplified Donation Section: Replaced crypto wallet addresses (BTC, SOL, BNB) in the Support section with a clean WhatsApp contact card — if you wish to donate, contact the developer directly on WhatsApp.' },
+      { type: 'fix', description: 'Korean Translation Quality: Reviewed and corrected all Korean translation keys including prayer time labels, navigation items, settings, and notification messages for accuracy and natural phrasing.' },
+    ],
+  },
+  {
     version: '2.2.1',
     date: '2026-08-22',
     title: 'Live Streams — Migrated to Official SBA CDN',

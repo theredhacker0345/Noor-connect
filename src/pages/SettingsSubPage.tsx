@@ -18,7 +18,6 @@ import {
   DollarSign,
   Trash2,
   Sparkles,
-  Copy,
   ExternalLink,
   MessageCircle,
   Briefcase,
@@ -66,13 +65,10 @@ const SECTION_TITLES: Record<string, { title: string; subtitle: string; icon: an
   storage: { title: 'Storage & Cache', subtitle: 'Clear cache, offline Quran & download stats', icon: HardDrive },
   privacy: { title: 'Privacy & Security', subtitle: 'Data usage, local storage & permissions', icon: ShieldCheck },
   about: { title: 'About Noor Connect', subtitle: 'App version, changelog & developer', icon: Info },
-  support: { title: 'Support & Donate', subtitle: 'Sponsor development & crypto donations', icon: Heart },
+  support: { title: 'Support Noor Connect', subtitle: 'Help support development — contact us to donate', icon: Heart },
   contact: { title: 'Contact & Hire Developer', subtitle: 'WhatsApp, portfolio & email contacts', icon: Mail },
 };
 
-const BITCOIN_ADDRESS = 'bc1q43nelc0skgng752wesq5ez4qzhgl09cksmlddx';
-const SOLANA_ADDRESS = '3Aw78BrsdtBeZNpTQvAP6kjtUpGqDBqhr8dATzEZgp8V';
-const BNB_ADDRESS = '0xb170A4621662c5f870E4186a81dA7645B132cb09';
 
 const SettingsSubPage: React.FC = () => {
   const { sectionId = 'appearance' } = useParams<{ sectionId: string }>();
@@ -113,6 +109,11 @@ const SettingsSubPage: React.FC = () => {
     dhikrReminders: true,
     islamicKnowledge: true,
     motivationalMessages: true,
+    tahajjudReminders: false,
+    duhaReminders: false,
+    fastingDaysReminders: false,
+    quranTrackerReminders: false,
+    bedtimeDuaReminders: false,
     maxDailyNotifications: 5,
   });
 
@@ -143,10 +144,6 @@ const SettingsSubPage: React.FC = () => {
   const meta = SECTION_TITLES[sectionId] || { title: 'Settings', subtitle: 'Noor Connect Preferences', icon: Palette };
   const IconComponent = meta.icon;
 
-  const handleCopy = (name: string, address: string) => {
-    navigator.clipboard?.writeText(address);
-    toast({ title: `${name} address copied to clipboard` });
-  };
 
   const handleClearCache = async () => {
     await clearCache();
@@ -158,7 +155,7 @@ const SettingsSubPage: React.FC = () => {
   const handleClearQuranDownloads = async () => {
     try {
       await downloadManager.clearAll();
-      setQuranDownloads({ count: 0, size: 0 });
+      setQuranDownloads({ count: 0, size: 0, reciters: 0 });
       toast({ title: 'Offline surahs deleted', description: 'All downloaded Quran audio has been removed from this device.' });
     } catch {
       toast({ title: 'Could not delete downloads', variant: 'destructive' });
@@ -365,7 +362,7 @@ const SettingsSubPage: React.FC = () => {
                   onClick={() => {
                     setMadhabState('shafi');
                     setMadhab('shafi');
-                    try { localStorage.removeItem('cached_prayer_times'); } catch {}
+                    try { localStorage.removeItem('cached_prayer_times'); } catch { /* ignore */ }
                     toast({ title: 'Madhab set to Shafi / Maliki / Hanbali' });
                   }}
                 >
@@ -377,7 +374,7 @@ const SettingsSubPage: React.FC = () => {
                   onClick={() => {
                     setMadhabState('hanafi');
                     setMadhab('hanafi');
-                    try { localStorage.removeItem('cached_prayer_times'); } catch {}
+                    try { localStorage.removeItem('cached_prayer_times'); } catch { /* ignore */ }
                     toast({ title: 'Madhab set to Hanafi' });
                   }}
                 >
@@ -706,7 +703,7 @@ const SettingsSubPage: React.FC = () => {
               <h2 className="text-lg font-bold">Noor Connect</h2>
               <p className="text-xs text-slate-400">Version {CURRENT_APP_VERSION}</p>
               <p className="text-xs text-slate-500 max-w-xs mx-auto pt-2">
-                Built end-to-end: 6 languages, 5 native widgets, 400+ licensed nasheeds. Built for the sake of Allah.
+                Built end-to-end: 6 languages, 400+ licensed nasheeds. Built for the sake of Allah.
               </p>
             </Card>
 
@@ -725,43 +722,35 @@ const SettingsSubPage: React.FC = () => {
         {/* SUPPORT SECTION */}
         {sectionId === 'support' && (
           <div className="space-y-4">
-            <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Support Noor Connect Development</Label>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                100% of donations go to development — no fees, no middlemen. Supports BTC, SOL & BNB. Tap to copy the address, then paste it in your wallet.
-              </p>
-
-              <div className="space-y-2 pt-2">
-                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                  <div>
-                    <span className="text-xs font-bold">Bitcoin (BTC)</span>
-                    <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{BITCOIN_ADDRESS}</p>
-                  </div>
-                  <Button size="sm" variant="ghost" onClick={() => handleCopy('Bitcoin', BITCOIN_ADDRESS)}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
+            <Card className="p-5 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border-emerald-500/20 rounded-2xl space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <Heart className="w-5 h-5 text-emerald-600" />
                 </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                  <div>
-                    <span className="text-xs font-bold">Solana (SOL)</span>
-                    <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{SOLANA_ADDRESS}</p>
-                  </div>
-                  <Button size="sm" variant="ghost" onClick={() => handleCopy('Solana', SOLANA_ADDRESS)}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                  <div>
-                    <span className="text-xs font-bold">BNB Chain</span>
-                    <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{BNB_ADDRESS}</p>
-                  </div>
-                  <Button size="sm" variant="ghost" onClick={() => handleCopy('BNB', BNB_ADDRESS)}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
+                <div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Support Development</h3>
+                  <p className="text-xs text-slate-400">100% free. No ads. Built for the sake of Allah.</p>
                 </div>
               </div>
+
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Noor Connect is completely free with no ads or subscriptions. If you'd like to support development and help keep it free, we'd be truly grateful.
+              </p>
+
+              <div className="bg-slate-100 dark:bg-slate-800/60 rounded-xl p-4 space-y-1">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">How to donate</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  If you would like to donate, kindly contact on WhatsApp via the number given in the app. Jazak Allah Khair.
+                </p>
+              </div>
+
+              <Button
+                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all rounded-xl gap-2"
+                onClick={() => window.open('https://wa.me/923352706540', '_blank')}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="font-medium">Contact on WhatsApp</span>
+              </Button>
             </Card>
           </div>
         )}
