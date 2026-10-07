@@ -19,20 +19,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - This prevents the system from killing the MediaPlayer mid-adhan
 - **Web Notification Actions**: Added "Stop Adhan" and "Open App" action buttons to Capacitor LocalNotifications with proper action listener in `LocalNotificationManager.initialize()`
 
-### 🛡️ Stability Improvements
-
-- Android 7.0+ WebView crash fix: Added `browserslist` targeting Chrome 51+, `core-js` + `regenerator-runtime` polyfills, and esbuild syntax downleveling for optional chaining, nullish coalescing, dynamic import, and BigInt
-- Switch minification from Terser to esbuild (3–5× faster parse on low-end CPUs)
-- Enable `modulePreload` polyfill for parallel chunk loading
-- Move `pdf-vendor` (220 KB) and `charts` (102 KB) chunks out of main bundle → lazy-loaded only on demand
-- Add `requestIdleCallback` preload for 5 key routes (Quran, Hadith, Tasbeeh, Qibla, QuranReader)
-- Native splash screen control via `@capacitor/splash-screen` — smooth 300ms fade when app is ready
-- Timer cleanup fixes in `Dashboard.tsx` and `PremiumDashboard.tsx`
-
----
-
-## [2.3.0] - 2026-10-06
-
 ### 🇰🇷 Korean Language Support
 
 - Full Korean (한국어) translation added for all app UI strings — prayer names, navigation, settings, notifications, and in-app content.
@@ -50,9 +36,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Replaced crypto wallet addresses (BTC, SOL, BNB) in the Support & Donate settings section with a clean WhatsApp contact card.
 - If you'd like to donate, kindly contact the developer directly on WhatsApp via the number given in the app. Jazak Allah Khair.
 
-### 🔧 Fixes
+### 🛡️ Stability & Performance Improvements
 
-- Korean translation quality review: corrected prayer time labels, navigation items, settings descriptions, and notification messages.
+- Android 7.0+ WebView crash fix: Added `browserslist` targeting Chrome 51+, `core-js` + `regenerator-runtime` polyfills, and esbuild syntax downleveling for optional chaining, nullish coalescing, dynamic import, and BigInt
+- Switch minification from Terser to esbuild (3–5× faster parse on low-end CPUs)
+- Enable `modulePreload` polyfill for parallel chunk loading
+- Move `pdf-vendor` (220 KB) and `charts` (102 KB) chunks out of main bundle → lazy-loaded only on demand
+- Add `requestIdleCallback` preload for 5 key routes (Quran, Hadith, Tasbeeh, Qibla, QuranReader)
+- Native splash screen control via `@capacitor/splash-screen` — smooth 300ms fade when app is ready
+- Timer cleanup fixes in `Dashboard.tsx` and `PremiumDashboard.tsx`
 
 ---
 
