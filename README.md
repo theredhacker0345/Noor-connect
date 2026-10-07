@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.3.0 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.3.1 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -17,6 +17,29 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - ✅ **Official License Grant**: Free perpetual license to integrate 400+ premium nasheeds
 - ✅ **Official Feature**: Noor Connect is featured on the [No Copyright Nasheed website](https://nocopyrightnasheed.com/) as a trusted partner
 - 🎵 **400+ curated nasheeds** with a highly optimized audio player
+
+---
+
+## 🆕 What's New in v2.3.1
+
+### 🔔 Enhanced Adhan & Notification System
+- **Stop Adhan from Notification**: Tap "⏹ Stop Adhan" on any prayer notification to immediately stop the adhan playback (works on both native Android and web/PWA)
+- **Notification Dismisses After Adhan**: The adhan notification automatically disappears when the adhan finishes playing — no manual dismiss needed
+- **More Prayer Quotes**: Expanded notification quotes for all prayers (Fajr, Dhuhr, Asr, Maghrib, Isha, Jummah) — 5+ quotes per prayer from Quran & authentic Hadith
+- **Tablet Sleep Fix (Lenovo, Samsung, etc.)**: Fixed adhan cutting off early on aggressive battery-saver tablets by keeping CPU awake during playback via `MediaPlayer.setWakeMode()` and 60s WakeLock timeout
+- **Web Notification Actions**: "Stop Adhan" and "Open App" buttons on web/PWA notifications
+
+### 🇰🇷 Korean Language Support
+- Full Korean (한국어) translation for all app UI strings
+- Korean is now a first-class supported language alongside English, Arabic, Urdu, Bengali, Russian, and French
+
+### 🗑️ Widget System Removed
+- Removed native Android home-screen widgets to simplify the codebase
+- All widget-related infrastructure deleted
+
+### 💚 Simplified Donation Section
+- Replaced crypto wallet addresses with a clean WhatsApp contact card
+- Contact the developer directly on WhatsApp to donate — Jazak Allah Khair
 
 ---
 

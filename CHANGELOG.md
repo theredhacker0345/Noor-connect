@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.3.1] - 2026-10-07
+
+### 🔔 Enhanced Adhan & Notification System
+
+- **Stop Adhan from Notification**: Added "⏹ Stop Adhan" action button to both native Android notifications (via `AdhanPlaybackService`) and Capacitor web/PWA notifications (via `LocalNotifications`). Tapping it immediately stops the adhan playback.
+- **Notification Auto-Dismiss**: The adhan notification now automatically dismisses when the adhan finishes playing — `onCompletionListener` and `onErrorListener` both cancel the notification and stop the foreground service cleanly.
+- **Expanded Prayer Quotes**: Added 5+ new quotes per prayer (Fajr, Dhuhr, Asr, Maghrib, Isha, Jummah) sourced from Quran and authentic Hadith collections — more variety in notification bodies.
+- **Tablet Sleep Fix (Lenovo, Samsung, Xiaomi, etc.)**: Fixed adhan cutting off early on devices with aggressive battery optimizations by:
+  - Adding `MediaPlayer.setWakeMode(PowerManager.PARTIAL_WAKE_LOCK)` to keep CPU awake during playback
+  - Increasing WakeLock timeout in `AdhanAlarmReceiver` from 10s to 60s for slow tablet startup
+  - This prevents the system from killing the MediaPlayer mid-adhan
+- **Web Notification Actions**: Added "Stop Adhan" and "Open App" action buttons to Capacitor LocalNotifications with proper action listener in `LocalNotificationManager.initialize()`
+
+### 🛡️ Stability Improvements
+
+- Android 7.0+ WebView crash fix: Added `browserslist` targeting Chrome 51+, `core-js` + `regenerator-runtime` polyfills, and esbuild syntax downleveling for optional chaining, nullish coalescing, dynamic import, and BigInt
+- Switch minification from Terser to esbuild (3–5× faster parse on low-end CPUs)
+- Enable `modulePreload` polyfill for parallel chunk loading
+- Move `pdf-vendor` (220 KB) and `charts` (102 KB) chunks out of main bundle → lazy-loaded only on demand
+- Add `requestIdleCallback` preload for 5 key routes (Quran, Hadith, Tasbeeh, Qibla, QuranReader)
+- Native splash screen control via `@capacitor/splash-screen` — smooth 300ms fade when app is ready
+- Timer cleanup fixes in `Dashboard.tsx` and `PremiumDashboard.tsx`
+
+---
+
 ## [2.3.0] - 2026-10-06
 
 ### 🇰🇷 Korean Language Support

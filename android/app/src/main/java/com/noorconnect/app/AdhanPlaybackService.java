@@ -172,10 +172,19 @@ public class AdhanPlaybackService extends Service {
                     .build();
             mediaPlayer.setAudioAttributes(audioAttributes);
 
+            // CRITICAL FIX for Lenovo tablets and other aggressive battery savers:
+            // Keep CPU awake during playback so MediaPlayer doesn't get killed
+            mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+
             mediaPlayer.setOnPreparedListener(MediaPlayer::start);
             mediaPlayer.setOnCompletionListener(mp -> {
                 restoreVolumeSettings();
                 stopPlayback();
+                // Dismiss notification when adhan finishes
+                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                if (notificationManager != null) {
+                    notificationManager.cancel(NOTIFICATION_ID);
+                }
                 stopForeground(true);
                 stopSelf();
             });
@@ -183,6 +192,10 @@ public class AdhanPlaybackService extends Service {
                 Log.e(TAG, "Adhan media playback error what=" + what + " extra=" + extra);
                 restoreVolumeSettings();
                 stopPlayback();
+                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                if (notificationManager != null) {
+                    notificationManager.cancel(NOTIFICATION_ID);
+                }
                 stopForeground(true);
                 stopSelf();
                 return true;

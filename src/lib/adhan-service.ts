@@ -327,14 +327,21 @@ export class AdhanService {
    */
   private showAdhanNotification(prayerName: string, muezzinName: string): void {
     if ('Notification' in window && this.notificationPermission === 'granted') {
-      new Notification(`Adhan - ${this.getPrayerDisplayName(prayerName)}`, {
+      const notification = new Notification(`Adhan - ${this.getPrayerDisplayName(prayerName)}`, {
         body: `Recited by ${muezzinName}`,
         icon: '/icon-192x192.png',
         badge: '/icon-96x96.png',
         tag: 'adhan',
-        requireInteraction: false,
-        silent: false
+        requireInteraction: true,
+        silent: false,
+        data: { prayerName, action: 'adhan_playing' }
       });
+
+      // Add click handler to stop adhan when notification is clicked
+      notification.onclick = () => {
+        this.stopAdhan();
+        notification.close();
+      };
     }
   }
 

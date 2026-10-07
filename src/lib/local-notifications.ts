@@ -4,7 +4,7 @@
  * FOSS-friendly - no proprietary wake lock libraries
  */
 
-import { LocalNotifications, type LocalNotificationSchema } from '@capacitor/local-notifications';
+import { LocalNotifications, type LocalNotificationSchema, LocalNotificationActionType } from '@capacitor/local-notifications';
 import { AladhanAPI, type AladhanPrayerTime } from './aladhan-api';
 import { getEffectiveAladhanMethodId } from './prayer-method-resolver';
 import { getMadhab } from './storage';
@@ -131,6 +131,18 @@ export class LocalNotificationManager {
       if (!hasPermission) {
         return false;
       }
+
+      // Listen for notification actions (e.g., "Stop Adhan")
+      LocalNotifications.addListener('localNotificationActionPerformed', (action: ActionPerformed) => {
+        const actionId = action.actionId;
+        const notification = action.notification;
+        const prayerName = notification?.extra?.prayerName;
+
+        if (actionId === 'stop_adhan') {
+          console.log('Stop Adhan action triggered for:', prayerName);
+          adhanService.stopAdhan();
+        }
+      });
 
       this.isInitialized = true;
       return true;
@@ -395,6 +407,20 @@ export class LocalNotificationManager {
             smallIcon: 'ic_notification',
             largeIcon: 'ic_launcher',
             iconColor: '#1a4a4a',
+            actions: [
+              {
+                id: 'stop_adhan',
+                title: '⏹ Stop Adhan',
+                type: LocalNotificationActionType.Button,
+                requiresAuthentication: false
+              },
+              {
+                id: 'open_app',
+                title: '🕌 Open App',
+                type: LocalNotificationActionType.Button,
+                requiresAuthentication: false
+              }
+            ],
             extra: {
               prayerName: prayer.name,
               prayerTime: prayer.time,
@@ -501,6 +527,20 @@ export class LocalNotificationManager {
           smallIcon: 'ic_notification',
           largeIcon: 'ic_launcher',
           iconColor: '#1a4a4a',
+          actions: [
+            {
+              id: 'stop_adhan',
+              title: '⏹ Stop Adhan',
+              type: LocalNotificationActionType.Button,
+              requiresAuthentication: false
+            },
+            {
+              id: 'open_app',
+              title: '🕌 Open App',
+              type: LocalNotificationActionType.Button,
+              requiresAuthentication: false
+            }
+          ],
           extra: {
             prayerName,
             prayerTime,

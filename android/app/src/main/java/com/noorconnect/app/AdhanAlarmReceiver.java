@@ -30,8 +30,8 @@ public class AdhanAlarmReceiver extends BroadcastReceiver {
 
     /**
      * Acquire a partial WakeLock that keeps the CPU running until the
-     * foreground service is fully started. Times out after 30 seconds
-     * as a safety net.
+     * foreground service is fully started. Times out after 60 seconds
+     * as a safety net (longer for tablets with aggressive battery savers).
      */
     static void acquireWakeLock(Context context) {
         synchronized (LOCK) {
@@ -45,8 +45,8 @@ public class AdhanAlarmReceiver extends BroadcastReceiver {
                         PowerManager.PARTIAL_WAKE_LOCK,
                         "noorconnect:adhan_alarm");
                 sWakeLock.setReferenceCounted(false);
-                sWakeLock.acquire(10_000); // 10-second safety timeout
-                Log.d(TAG, "WakeLock acquired");
+                sWakeLock.acquire(60_000); // 60-second safety timeout for slow tablets
+                Log.d(TAG, "WakeLock acquired (60s timeout)");
             }
         }
     }
