@@ -760,6 +760,50 @@ const SettingsSubPage: React.FC = () => {
               </p>
             </Card>
 
+            {/* Contributors Section */}
+            <Card className="p-5 rounded-2xl space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">👥 Contributors</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-300">HSLN</span>
+                  <a
+                    href="https://gitlab.com/HSLN"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-600 dark:text-amber-400 hover:underline"
+                  >
+                    French Translation
+                  </a>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-300">Nuraqueer</span>
+                  <a
+                    href="https://gitlab.com/nuraqueer"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-600 dark:text-amber-400 hover:underline"
+                  >
+                    Korean Translation
+                  </a>
+                </div>
+              </div>
+            </Card>
+
+            {/* Feedback Contributors Section */}
+            <Card className="p-5 rounded-2xl space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">💬 Feedback Contributors</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-300">Haris</span>
+                  <span className="text-slate-400">Sri Lanka</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-300">Ibrahim Bn Tariq</span>
+                  <span className="text-slate-400">Egypt</span>
+                </div>
+              </div>
+            </Card>
+
             <Button
               variant="outline"
               className="w-full rounded-xl gap-2"

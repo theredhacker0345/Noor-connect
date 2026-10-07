@@ -166,7 +166,23 @@ npm run android:build
 
 ---
 
-## 📄 License
+## � Contributors
+
+Special thanks to our contributors who helped make Noor Connect better:
+
+- **HSLN** ([@HSLN](https://gitlab.com/HSLN)) - French language translation
+- **Nuraqueer** ([@nuraqueer](https://gitlab.com/nuraqueer)) - Korean language translation
+
+## 💬 Feedback Contributors
+
+We're grateful to those who provided valuable feedback:
+
+- **Haris** - Sri Lanka
+- **Ibrahim Bn Tariq** - Egypt
+
+---
+
+## �📄 License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
