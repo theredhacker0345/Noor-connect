@@ -18,9 +18,6 @@ const QuranProgressWidget = lazy(() => import("@/components/QuranProgressWidget"
 const IslamicEventsWidget = lazy(() => import("@/components/IslamicEventsWidget"));
 const PrayerStatsWidget = lazy(() => import("@/components/PrayerStatsWidget"));
 const QazaTracker = lazy(() => import("@/components/QazaTracker"));
-const DhikrReminder = lazy(() => import("@/components/DhikrReminder"));
-const QuranRadio = lazy(() => import("@/components/QuranRadio").then(m => ({ default: m.QuranRadio })));
-const MoodSelector = lazy(() => import("@/components/MoodSelector").then(m => ({ default: m.MoodSelector })));
 
 const WidgetFallback = () => <div className="h-40 w-full rounded-2xl bg-card/40 animate-pulse border border-border/40 backdrop-blur-sm" />;
 
@@ -529,39 +526,6 @@ function PremiumDashboardInner({
             })}
           >
             <Suspense fallback={<WidgetFallback />}><QazaTracker compact={true} /></Suspense>
-          </m.div>
-
-          {/* ── Dhikr Reminder ── */}
-          <m.div
-            {...motionProps({
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.4 }
-            })}
-          >
-            <Suspense fallback={<WidgetFallback />}><DhikrReminder /></Suspense>
-          </m.div>
-
-          {/* ── Quran Radio ── */}
-          <m.div
-            {...motionProps({
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.4 }
-            })}
-          >
-            <Suspense fallback={<WidgetFallback />}><QuranRadio /></Suspense>
-          </m.div>
-
-          {/* ── Mood / Remedy ── */}
-          <m.div
-            {...motionProps({
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.4 }
-            })}
-          >
-            <Suspense fallback={<WidgetFallback />}><MoodSelector /></Suspense>
           </m.div>
         </div>
       </div>
