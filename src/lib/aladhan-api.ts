@@ -93,6 +93,9 @@ export interface AladhanMonthlyData {
 const STORAGE_KEY = 'aladhan-monthly-data';
 const API_BASE = 'https://api.aladhan.com/v1';
 
+// In-flight request deduplication
+const fetchingMonths = new Set<string>();
+
 export const ALADHAN_METHODS: Record<string, number> = {
   MuslimWorldLeague: 3,
   Egyptian: 5,
@@ -120,6 +123,23 @@ export class AladhanAPI {
     method: number = 3, // Muslim World League default (callers should pass the effective method)
     school?: number // 0 for Shafi, 1 for Hanafi
   ): Promise<AladhanMonthlyData> {
+    const fetchKey = `${latitude.toFixed(4)},${longitude.toFixed(4)}|${year}-${month}|${method}|${school ?? ''}`;
+    
+    // Deduplicate in-flight requests for the same month/location/method/school
+    if (fetchingMonths.has(fetchKey)) {
+      // Wait for the in-flight request to complete
+      while (fetchingMonths.has(fetchKey)) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      // Return cached data after the other request finishes
+      const cached = this.getStoredMonthlyData();
+      if (cached && cached.year === year && cached.month === month && cached.method === method && cached.school === school) {
+        return cached;
+      }
+    }
+
+    fetchingMonths.add(fetchKey);
+
     let url = `${API_BASE}/calendar/${year}/${month}?latitude=${latitude}&longitude=${longitude}&method=${method}`;
     if (school !== undefined) {
       url += `&school=${school}`;
@@ -161,15 +181,27 @@ export class AladhanAPI {
     } catch (error) {
       console.error('Failed to fetch monthly calendar:', error);
       throw new Error(`Failed to fetch prayer times: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      fetchingMonths.delete(fetchKey);
     }
   }
 
   /**
-   * Get prayer times for a specific date from cached data
+   * Get prayer times for a specific date from cached data, validating method/school
    */
-  static getPrayerTimesForDate(date: Date, latitude?: number, longitude?: number): AladhanDayData | null {
+  static getPrayerTimesForDate(
+    date: Date, 
+    latitude?: number, 
+    longitude?: number,
+    method?: number,
+    school?: number
+  ): AladhanDayData | null {
     const monthlyData = this.getStoredMonthlyData();
     if (!monthlyData) return null;
+
+    // Validate method and school if provided
+    if (method !== undefined && monthlyData.method !== method) return null;
+    if (school !== undefined && monthlyData.school !== undefined && monthlyData.school !== school) return null;
 
     // Verify it's the correct location if coordinates provided
     if (latitude !== undefined && longitude !== undefined) {

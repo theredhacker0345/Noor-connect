@@ -537,11 +537,11 @@ export class LocalNotificationManager {
       const year = prayerDate.getFullYear();
       const month = String(prayerDate.getMonth() + 1).padStart(2, '0');
       const day = String(prayerDate.getDate()).padStart(2, '0');
+      // Full date number YYYYMMDD fits in 32-bit signed int until year 2147
+      // Multiply by 10 and add prayer index (1-5) for uniqueness
       const dateNumber = parseInt(`${year}${month}${day}`, 10);
       const index = prayerIndex[prayerName] || 9;
-      // Use modulo to keep IDs within 32-bit integer range (max 2,147,483,647)
-      // This prevents overflow on Android PendingIntent IDs
-      return (dateNumber % 100000) * 10 + index;
+      return dateNumber * 10 + index;
     }
 
     return 1000 + (prayerIndex[prayerName] || 9);
