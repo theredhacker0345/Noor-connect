@@ -43,22 +43,6 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ---
 
-## 🆕 What's New in v2.3.0
-
-### 🇰🇷 Korean Language Support
-- Full Korean (한국어) translation for all app UI strings
-- Korean is now a first-class supported language alongside English, Arabic, Urdu, Bengali, Russian, and French
-
-### 🗑️ Widget System Removed
-- Removed native Android home-screen widgets to simplify the codebase
-- All widget-related infrastructure deleted
-
-### 💚 Simplified Donation Section
-- Replaced crypto wallet addresses with a clean WhatsApp contact card
-- Contact the developer directly on WhatsApp to donate — Jazak Allah Khair
-
----
-
 ## ✨ Features
 
 ### 📖 Quran & Tafsir
