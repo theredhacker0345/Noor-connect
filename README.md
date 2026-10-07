@@ -201,12 +201,12 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE).
   </tr>
   <tr>
     <td align="center"><img width="280" alt="Hadith" src="assets/screenshots/4_hadith.png" /><br/><b>Hadith</b></td>
+    <td align="center"><img width="280" alt="Islamic Quiz" src="assets/screenshots/5_quiz.png" /><br/><b>Islamic Quiz</b></td>
     <td align="center"><img width="280" alt="Services" src="assets/screenshots/6_services.png" /><br/><b>Services</b></td>
-    <td align="center"><img width="280" alt="Settings" src="assets/screenshots/7_settings.png" /><br/><b>Settings</b></td>
   </tr>
   <tr>
+    <td align="center"><img width="280" alt="Settings" src="assets/screenshots/7_settings.png" /><br/><b>Settings</b></td>
     <td align="center"><img width="280" alt="Prayer Stats" src="assets/screenshots/8_prayer-stats.png" /><br/><b>Prayer Stats</b></td>
     <td align="center"><img width="280" alt="Quran Radio" src="assets/screenshots/9_radio.png" /><br/><b>Quran Radio</b></td>
-    <td align="center"><img width="280" alt="Quiz" src="assets/screenshots/6_quiz.png" /><br/><b>Islamic Quiz</b></td>
   </tr>
 </table>
