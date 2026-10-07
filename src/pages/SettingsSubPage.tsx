@@ -760,54 +760,86 @@ const SettingsSubPage: React.FC = () => {
               </p>
             </Card>
 
+
             {/* Contributors Section */}
-            <Card className="p-5 rounded-2xl space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">👥 Contributors</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-300">HSLN</span>
+            <Card className="p-5 rounded-2xl space-y-4 bg-gradient-to-br from-blue-500/5 to-purple-500/5 border-blue-500/20">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span className="text-lg">👥</span> Contributors
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                      HS
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">HSLN</p>
+                      <p className="text-xs text-slate-400">🇫🇷 French Translation</p>
+                    </div>
+                  </div>
                   <a
                     href="https://gitlab.com/HSLN"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-600 dark:text-amber-400 hover:underline"
+                    className="px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold hover:bg-blue-500/20 transition-all"
                   >
-                    French Translation
+                    GitLab
                   </a>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-300">Nuraqueer</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                      NU
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Nuraqueer</p>
+                      <p className="text-xs text-slate-400">🇰🇷 Korean Translation</p>
+                    </div>
+                  </div>
                   <a
                     href="https://gitlab.com/nuraqueer"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-600 dark:text-amber-400 hover:underline"
+                    className="px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-semibold hover:bg-purple-500/20 transition-all"
                   >
-                    Korean Translation
+                    GitLab
                   </a>
                 </div>
               </div>
             </Card>
 
             {/* Feedback Contributors Section */}
-            <Card className="p-5 rounded-2xl space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">💬 Feedback Contributors</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-300">Haris</span>
-                  <span className="text-slate-400">Sri Lanka</span>
+            <Card className="p-5 rounded-2xl space-y-4 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border-emerald-500/20">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span className="text-lg">💬</span> Feedback Contributors
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
+                      HA
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Haris</p>
+                      <p className="text-xs text-slate-400">🇱🇰 Sri Lanka</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ Feedback</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 dark:text-slate-300">Ibrahim Bn Tariq</span>
-                  <span className="text-slate-400">Egypt</span>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-teal-400 dark:hover:border-teal-500 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                      IB
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Ibrahim Bn Tariq</p>
+                      <p className="text-xs text-slate-400">🇪🇬 Egypt</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium text-teal-600 dark:text-teal-400">✓ Feedback</span>
                 </div>
               </div>
             </Card>
-
-            <Button
-              variant="outline"
-              className="w-full rounded-xl gap-2"
-              onClick={() => setShowChangelog(true)}
             >
               View Release Changelog
             </Button>

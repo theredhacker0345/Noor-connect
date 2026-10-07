@@ -164,15 +164,20 @@ npx cap open android
 npm run android:build
 ```
 
----
 
-## � Contributors
+## 👥 Contributors
 
-Special thanks to our contributors who helped make Noor Connect better:
+| Contributor | Contribution | Link |
+|-------------|---------------|------|
+| 🇫🇷 **HSLN** | French Language Translation | [GitLab](https://gitlab.com/HSLN) |
+| 🇰🇷 **Nuraqueer** | Korean Language Translation | [GitLab](https://gitlab.com/nuraqueer) |
 
-- **HSLN** ([@HSLN](https://gitlab.com/HSLN)) - French language translation
-- **Nuraqueer** ([@nuraqueer](https://gitlab.com/nuraqueer)) - Korean language translation
+## 💬 Feedback Contributors
 
+| Name | Location |
+|------|----------|
+| **Haris** | Sri Lanka 🇱🇰 |
+| **Ibrahim Bn Tariq** | Egypt 🇪🇬 |
 ## 💬 Feedback Contributors
 
 We're grateful to those who provided valuable feedback:
