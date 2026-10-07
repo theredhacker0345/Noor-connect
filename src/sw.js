@@ -41,7 +41,7 @@ registerRoute(
     cacheName: API_CACHE_NAME,
     networkTimeoutSeconds: 5,
     plugins: [
-      new CacheableResponsePlugin({ statuses: [200], types: ['basic'] }),
+      new CacheableResponsePlugin({ statuses: [0, 200], types: ['basic', 'opaque'] }),
       new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 }),
     ],
   })
@@ -200,67 +200,75 @@ self.addEventListener('notificationclick', (event) => {
 const sentPrayerAlerts = {};
 
 async function checkPrayerTimes() {
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const today = now.toDateString();
+  try {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const today = now.toDateString();
 
-  // Reset sent alerts at midnight for a new day
-  if (lastCheckDate !== today) {
-    lastCheckDate = today;
-    Object.keys(sentPrayerAlerts).forEach(k => delete sentPrayerAlerts[k]);
-  }
-
-  // Check prayer times with a 2-minute window to handle 15-min check interval
-  for (const [prayer, data] of Object.entries(PRAYER_TIMES)) {
-    if (!data.time || sentPrayerAlerts[prayer]) continue;
-
-    const [h, m] = data.time.split(':').map(Number);
-    if (isNaN(h) || isNaN(m)) continue;
-
-    const prayerMinutes = h * 60 + m;
-    const diff = Math.abs(currentMinutes - prayerMinutes);
-
-    // Fire if within 2 minutes of the exact time (accounts for 15-min check interval)
-    if (diff <= 2) {
-      sentPrayerAlerts[prayer] = true;
-      await sendPrayerNotification(prayer, data);
+    // Reset sent alerts at midnight for a new day
+    if (lastCheckDate !== today) {
+      lastCheckDate = today;
+      Object.keys(sentPrayerAlerts).forEach(k => delete sentPrayerAlerts[k]);
     }
+
+    // Check prayer times with a 2-minute window to handle 15-min check interval
+    for (const [prayer, data] of Object.entries(PRAYER_TIMES)) {
+      if (!data.time || sentPrayerAlerts[prayer]) continue;
+
+      const [h, m] = data.time.split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) continue;
+
+      const prayerMinutes = h * 60 + m;
+      const diff = Math.abs(currentMinutes - prayerMinutes);
+
+      // Fire if within 2 minutes of the exact time (accounts for 15-min check interval)
+      if (diff <= 2) {
+        sentPrayerAlerts[prayer] = true;
+        await sendPrayerNotification(prayer, data);
+      }
+    }
+  } catch (error) {
+    console.error('Service Worker: Error checking prayer times:', error);
   }
 }
 
 // Check Islamic events and send notifications
 async function checkIslamicEvents() {
-  console.log('Service Worker: Checking Islamic events...');
+  try {
+    console.log('Service Worker: Checking Islamic events...');
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const ramadanStart = getEstimatedRamadan(year);
-  const ramadanCountdownStart = new Date(ramadanStart);
-  ramadanCountdownStart.setDate(ramadanStart.getDate() - 30);
+    const now = new Date();
+    const year = now.getFullYear();
+    const ramadanStart = getEstimatedRamadan(year);
+    const ramadanCountdownStart = new Date(ramadanStart);
+    ramadanCountdownStart.setDate(ramadanStart.getDate() - 30);
 
-  // Check Ramadan countdown only if within the 30-day window before Ramadan
-  if (now >= ramadanCountdownStart && now < ramadanStart) {
-    const daysUntil = Math.ceil((ramadanStart - now) / (1000 * 60 * 60 * 24));
-    await sendRamadanCountdownNotification(daysUntil);
-  }
+    // Check Ramadan countdown only if within the 30-day window before Ramadan
+    if (now >= ramadanCountdownStart && now < ramadanStart) {
+      const daysUntil = Math.ceil((ramadanStart - now) / (1000 * 60 * 60 * 24));
+      await sendRamadanCountdownNotification(daysUntil);
+    }
 
-  // Check Eid events
-  const eidFitr = getEidFitrDate(year);
-  const eidAdha = getEidAdhaDate(year);
+    // Check Eid events
+    const eidFitr = getEidFitrDate(year);
+    const eidAdha = getEidAdhaDate(year);
 
-  if (now.toDateString() === eidFitr.toDateString()) {
-    await sendEidNotification('Eid-ul-Fitr');
-  }
+    if (now.toDateString() === eidFitr.toDateString()) {
+      await sendEidNotification('Eid-ul-Fitr');
+    }
 
-  if (now.toDateString() === eidAdha.toDateString()) {
-    await sendEidNotification('Eid-ul-Adha');
-  }
+    if (now.toDateString() === eidAdha.toDateString()) {
+      await sendEidNotification('Eid-ul-Adha');
+    }
 
-  // Check Friday Surah Kahf reminder
-  const fridayConfig = getFridayKahfConfig();
-  if (now.getDay() === fridayConfig.day &&
-    formatTime(now) === fridayConfig.time) {
-    await sendFridayKahfNotification();
+    // Check Friday Surah Kahf reminder
+    const fridayConfig = getFridayKahfConfig();
+    if (now.getDay() === fridayConfig.day &&
+      formatTime(now) === fridayConfig.time) {
+      await sendFridayKahfNotification();
+    }
+  } catch (error) {
+    console.error('Service Worker: Error checking Islamic events:', error);
   }
 }
 
