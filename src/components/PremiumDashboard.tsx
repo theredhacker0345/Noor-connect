@@ -1,4 +1,4 @@
-﻿import React, { useEffect, memo, lazy, Suspense } from "react";
+﻿import React, { useEffect, memo, lazy, Suspense, useState } from "react";
 import { m } from "framer-motion";
 import { Bell, MapPin, ChevronRight, Activity, Compass, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
