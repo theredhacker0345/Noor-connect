@@ -18,6 +18,7 @@ import { LazyMotionWrapper } from "@/components/LazyMotionWrapper";
 import { useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n-new";
 import { App as CapacitorApp } from '@capacitor/app';
+import { SplashScreen as CapacitorSplashScreen } from '@capacitor/splash-screen';
 import { AutoBackupRestoreDialog } from "@/components/AutoBackupRestoreDialog";
 import { initBackupService } from "@/lib/backup-service";
 import { useAutoBackup } from "@/hooks/useAutoBackup";
@@ -342,6 +343,24 @@ function AppShell() {
   useEffect(() => {
     preloadCriticalResources();
 
+    // ── Preload likely next routes after idle (improves navigation speed)
+    const preloadRoutes = () => {
+      const routes = [
+        import('@/pages/Quran'),
+        import('@/pages/QuranReader'),
+        import('@/pages/Hadith'),
+        import('@/pages/Tasbeeh'),
+        import('@/pages/Qibla'),
+      ];
+      routes.forEach(p => p.catch(() => {}));
+    };
+
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(preloadRoutes, { timeout: 2000 });
+    } else {
+      setTimeout(preloadRoutes, 200);
+    }
+
     // ── FPS monitor: DEV only ─────────────────────────────────────────────
     // monitorFPS runs a lightweight rAF loop and fires its callback once per
     // second with the current frame rate.  We only enable this in development
@@ -394,6 +413,18 @@ function AppShell() {
     return () => {
       notificationManager.stop();
     };
+  }, []);
+
+  // Hide native splash screen when app is ready
+  useEffect(() => {
+    const checkReady = setInterval(() => {
+      const root = document.getElementById('root');
+      if (root && root.hasChildNodes()) {
+        clearInterval(checkReady);
+        CapacitorSplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+      }
+    }, 50);
+    return () => clearInterval(checkReady);
   }, []);
 
   return (

@@ -13,12 +13,12 @@ export default defineConfig(({ mode }) => ({
     __APP_VERSION__: JSON.stringify(APP_VERSION),
   },
   build: {
-    minify: 'terser',
+    minify: 'esbuild',
     chunkSizeWarningLimit: 600,
     target: 'es2015',
     cssCodeSplit: true,
     modulePreload: {
-      polyfill: false,
+      polyfill: true,
       resolveDependencies: (filename, deps) => {
         // Exclude heavy vendor chunks from modulepreload (they're lazy-loaded)
         return deps.filter(dep =>
@@ -29,26 +29,21 @@ export default defineConfig(({ mode }) => ({
         );
       }
     },
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production',
-        drop_debugger: mode === 'production',
-        pure_funcs: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
-      },
-      mangle: {
-        safari10: true, // Better Safari 10+ compatibility
-      },
+    esbuild: {
+      target: 'es2015',
+      supported: {
+        'optional-chaining': false,
+        'nullish-coalescing': false,
+        'dynamic-import': false,
+        'bigint': false
+      }
     },
     rollupOptions: {
       output: {
         manualChunks: {
-          // PDF vendor chunk
-          'pdf-vendor': ['pdfjs-dist', 'jspdf'],
-          // Charts vendor chunk
-          'charts': ['recharts'],
-          // Animation vendor chunk
+          // Animation vendor chunk (used everywhere)
           'animations': ['framer-motion'],
-          // Radix UI components
+          // Radix UI components (used everywhere)
           'radix-ui': [
             '@radix-ui/react-dialog',
             '@radix-ui/react-dropdown-menu',
@@ -73,9 +68,6 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-toggle',
             '@radix-ui/react-tooltip',
           ],
-          // React + i18n stay in the main chunk — manual chunks can't extract
-          // React when @vitejs/plugin-react-swc handles resolution, and separating
-          // react-i18next from React causes createContext timing issues.
           // React Query
           'react-query': ['@tanstack/react-query'],
           // Carousel vendor chunk
