@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.4.0 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.3.0 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -20,7 +20,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ---
 
-## 🆕 What's New in v2.4.0
+## 🆕 What's New in v2.3.0
 
 ### 🔔 Enhanced Adhan & Notification System
 - **Stop Adhan from Notification**: Tap "⏹ Stop Adhan" on any prayer notification to immediately stop the adhan playback (works on both native Android and web/PWA)
