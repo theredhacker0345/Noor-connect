@@ -4,7 +4,7 @@
  * FOSS-friendly - no proprietary wake lock libraries
  */
 
-import { LocalNotifications, type LocalNotificationSchema, LocalNotificationActionType } from '@capacitor/local-notifications';
+import { LocalNotifications, type LocalNotificationSchema, type ActionType } from '@capacitor/local-notifications';
 import { AladhanAPI, type AladhanPrayerTime } from './aladhan-api';
 import { getEffectiveAladhanMethodId } from './prayer-method-resolver';
 import { getMadhab } from './storage';
@@ -130,6 +130,35 @@ export class LocalNotificationManager {
 
       if (!hasPermission) {
         return false;
+      }
+
+      // Register action types for notification buttons
+      try {
+        await LocalNotifications.registerActionTypes({
+          types: [
+            {
+              id: 'prayer_actions',
+              actions: [
+                {
+                  id: 'stop_adhan',
+                  title: '⏹ Stop Adhan',
+                  requiresAuthentication: false,
+                  foreground: false,
+                  destructive: false
+                },
+                {
+                  id: 'open_app',
+                  title: '🕌 Open App',
+                  requiresAuthentication: false,
+                  foreground: true,
+                  destructive: false
+                }
+              ]
+            }
+          ]
+        });
+      } catch (error) {
+        console.warn('Failed to register notification action types:', error);
       }
 
       // Listen for notification actions (e.g., "Stop Adhan")
@@ -407,20 +436,7 @@ export class LocalNotificationManager {
             smallIcon: 'ic_notification',
             largeIcon: 'ic_launcher',
             iconColor: '#1a4a4a',
-            actions: [
-              {
-                id: 'stop_adhan',
-                title: '⏹ Stop Adhan',
-                type: LocalNotificationActionType.Button,
-                requiresAuthentication: false
-              },
-              {
-                id: 'open_app',
-                title: '🕌 Open App',
-                type: LocalNotificationActionType.Button,
-                requiresAuthentication: false
-              }
-            ],
+            actionTypeId: 'prayer_actions',
             extra: {
               prayerName: prayer.name,
               prayerTime: prayer.time,
@@ -527,20 +543,7 @@ export class LocalNotificationManager {
           smallIcon: 'ic_notification',
           largeIcon: 'ic_launcher',
           iconColor: '#1a4a4a',
-          actions: [
-            {
-              id: 'stop_adhan',
-              title: '⏹ Stop Adhan',
-              type: LocalNotificationActionType.Button,
-              requiresAuthentication: false
-            },
-            {
-              id: 'open_app',
-              title: '🕌 Open App',
-              type: LocalNotificationActionType.Button,
-              requiresAuthentication: false
-            }
-          ],
+          actionTypeId: 'prayer_actions',
           extra: {
             prayerName,
             prayerTime,
