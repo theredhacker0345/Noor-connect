@@ -178,16 +178,10 @@ npm run android:build
 |------|----------|
 | **Haris** | Sri Lanka 🇱🇰 |
 | **Ibrahim Bn Tariq** | Egypt 🇪🇬 |
-## 💬 Feedback Contributors
-
-We're grateful to those who provided valuable feedback:
-
-- **Haris** - Sri Lanka
-- **Ibrahim Bn Tariq** - Egypt
 
 ---
 
-## �📄 License
+## 📄 License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
@@ -202,17 +196,17 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE).
 <table>
   <tr>
     <td align="center"><img width="280" alt="Home Dashboard" src="assets/screenshots/1_home.png" /><br/><b>Home Dashboard</b></td>
-    <td align="center"><img width="280" alt="Services" src="assets/screenshots/2_services.png" /><br/><b>Services</b></td>
+    <td align="center"><img width="280" alt="Quran" src="assets/screenshots/2_quran.png" /><br/><b>Quran</b></td>
     <td align="center"><img width="280" alt="Qibla Compass" src="assets/screenshots/3_qibla.png" /><br/><b>Qibla Compass</b></td>
   </tr>
   <tr>
-    <td align="center"><img width="280" alt="Live Streams" src="assets/screenshots/4_live.png" /><br/><b>Live Streams</b></td>
-    <td align="center"><img width="280" alt="Quran Radio" src="assets/screenshots/5_radio.png" /><br/><b>Quran Radio</b></td>
-    <td align="center"><img width="280" alt="Islamic Quiz" src="assets/screenshots/6_quiz.png" /><br/><b>Islamic Quiz</b></td>
+    <td align="center"><img width="280" alt="Hadith" src="assets/screenshots/4_hadith.png" /><br/><b>Hadith</b></td>
+    <td align="center"><img width="280" alt="Services" src="assets/screenshots/6_services.png" /><br/><b>Services</b></td>
+    <td align="center"><img width="280" alt="Settings" src="assets/screenshots/7_settings.png" /><br/><b>Settings</b></td>
   </tr>
   <tr>
-    <td align="center"><img width="280" alt="Islamic Remedies" src="assets/screenshots/7_islamic_remedies.png" /><br/><b>Islamic Remedies</b></td>
-    <td align="center"><img width="280" alt="Hadith Encyclopedia" src="assets/screenshots/8_hadith.png" /><br/><b>Hadith Encyclopedia</b></td>
-    <td align="center"><img width="280" alt="Settings" src="assets/screenshots/9_settings.png" /><br/><b>Settings</b></td>
+    <td align="center"><img width="280" alt="Prayer Stats" src="assets/screenshots/8_prayer-stats.png" /><br/><b>Prayer Stats</b></td>
+    <td align="center"><img width="280" alt="Quran Radio" src="assets/screenshots/9_radio.png" /><br/><b>Quran Radio</b></td>
+    <td align="center"><img width="280" alt="Quiz" src="assets/screenshots/6_quiz.png" /><br/><b>Islamic Quiz</b></td>
   </tr>
 </table>
