@@ -67,9 +67,57 @@ export const CALCULATION_METHOD_LABELS: Record<CalculationMethodName, string> = 
   Tehran: 'Tehran',
 };
 
-// Get stored calculation method
+// Get stored calculation method.
+// Two storage keys exist historically:
+//  - 'calculation-method': written by setCalculationMethod() (name string, e.g. 'Egyptian')
+//  - 'prayer_calculation_method': written by the Settings UI (numeric PRAYER_METHODS id)
+// The Settings selector only ever wrote the id key, which meant this reader never
+// saw the user's choice and silently fell back to MWL. Both keys are bridged here.
+const PRAYER_METHOD_ID_TO_NAME: Record<number, CalculationMethodName> = {
+  1: 'MuslimWorldLeague', // Muslim World League
+  2: 'NorthAmerica',      // ISNA
+  3: 'Egyptian',          // Egyptian General Authority of Survey
+  4: 'UmmAlQura',         // Umm al-Qura
+  5: 'Karachi',           // University of Islamic Sciences, Karachi
+  7: 'Tehran',            // Institute of Geophysics, Tehran
+  8: 'MuslimWorldLeague', // Gulf region (MWL base)
+  9: 'Kuwait',
+  10: 'Qatar',
+  11: 'Singapore',
+  12: 'Turkey',           // Diyanet
+  13: 'Tehran',
+  14: 'MuslimWorldLeague' // Morocco (MWL base)
+};
+
 export const getCalculationMethod = (): CalculationMethodName => {
-  return (localStorage.getItem('calculation-method') as CalculationMethodName) || 'MuslimWorldLeague';
+  try {
+    const legacy = localStorage.getItem('calculation-method');
+    if (legacy && legacy in CALCULATION_METHODS) {
+      return legacy as CalculationMethodName;
+    }
+
+    const selectedId = localStorage.getItem('prayer_calculation_method');
+    if (selectedId) {
+      const mapped = PRAYER_METHOD_ID_TO_NAME[parseInt(selectedId, 10)];
+      if (mapped) return mapped;
+    }
+  } catch {
+    // localStorage unavailable — fall through to default
+  }
+  return 'MuslimWorldLeague';
+};
+
+/** True when the user has explicitly picked a calculation method in Settings. */
+export const hasExplicitCalculationMethod = (): boolean => {
+  try {
+    const legacy = localStorage.getItem('calculation-method');
+    if (legacy && legacy in CALCULATION_METHODS) return true;
+    const selectedId = localStorage.getItem('prayer_calculation_method');
+    if (selectedId && PRAYER_METHOD_ID_TO_NAME[parseInt(selectedId, 10)]) return true;
+  } catch {
+    // ignore
+  }
+  return false;
 };
 
 export const setCalculationMethod = (method: CalculationMethodName): void => {

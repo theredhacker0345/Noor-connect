@@ -27,6 +27,8 @@ import { getTimeFormat, formatTime } from "@/lib/time-formatter";
 import { useLocationState } from "@/lib/location-state";
 import { CURRENT_APP_VERSION } from "@/lib/constants";
 import { AladhanAPI } from "@/lib/aladhan-api";
+import { getEffectiveAladhanMethodId, getEffectiveCalculationMethod } from "@/lib/prayer-method-resolver";
+import { getMadhab } from "@/lib/storage";
 import { type PrayerTime } from "@/lib/local-notifications";
 import { useToast } from "@/hooks/use-toast";
 import { LocationCardSkeleton, LoadingSpinner } from "@/components/LoadingSkeleton";
@@ -180,8 +182,14 @@ export default function Dashboard() {
     setLoadingAPI(true);
 
     try {
+      // Use the same effective calculation method as every other code path
+      // (user's explicit choice or the region-recommended one), instead of a
+      // hardcoded method that disagreed with the hook, notifications & adhan.
+      const methodId = getEffectiveAladhanMethodId(location.latitude, location.longitude);
+      const schoolParam = getMadhab() === 'hanafi' ? 1 : 0;
+
       // Check if we have cached data for this specific location
-      const hasValidCache = AladhanAPI.isCachedDataValid(location.latitude, location.longitude);
+      const hasValidCache = AladhanAPI.isCachedDataValid(location.latitude, location.longitude, schoolParam, methodId);
 
       if (!hasValidCache) {
         // Fetch fresh data for current month
@@ -190,12 +198,13 @@ export default function Dashboard() {
           location.longitude,
           undefined,
           undefined,
-          1 // Pakistan/Karachi method
+          methodId,
+          schoolParam
         );
       }
 
       // Get today's prayer times and metadata (including timezone)
-      const { timings, timezone: fetchedTimezone } = await AladhanAPI.getTodaysPrayerTimes(location.latitude, location.longitude, 1);
+      const { timings, timezone: fetchedTimezone } = await AladhanAPI.getTodaysPrayerTimes(location.latitude, location.longitude, methodId, schoolParam);
 
       // Update global location state with the fetched timezone if it's different or not set
       if (fetchedTimezone && fetchedTimezone !== location.timeZone) {
@@ -215,7 +224,7 @@ export default function Dashboard() {
       setPrayers(prayerList);
 
       // Get next prayer countdown
-      const nextEvent = await AladhanAPI.getNextEventCountdown(location.latitude, location.longitude, 1, false);
+      const nextEvent = await AladhanAPI.getNextEventCountdown(location.latitude, location.longitude, methodId, false);
       if (nextEvent) {
         setNextPrayerName(nextEvent.name);
         setNextPrayerTime(nextEvent.time || "--:--");
@@ -227,7 +236,12 @@ export default function Dashboard() {
       console.error('Failed to load API prayer times:', error);
       // Fallback to offline calculation
       const { calculatePrayerTimes, formatPrayerTime } = await import('@/lib/prayer-calculator');
-      const times = calculatePrayerTimes(location.latitude, location.longitude, new Date());
+      const times = calculatePrayerTimes(
+        location.latitude,
+        location.longitude,
+        new Date(),
+        getEffectiveCalculationMethod(location.latitude, location.longitude)
+      );
 
       setPrayers([
         { name: "Fajr", time: formatTimeFromAPI(times.fajr.toTimeString().slice(0, 5)), date: times.fajr },
@@ -323,6 +337,20 @@ export default function Dashboard() {
        window.removeEventListener('time-format-changed', handleCustomTimeFormatChange as EventListener);
      };
    }, [setTimeFormat]);
+
+  // Reload prayer times when the calculation method or madhab changes so the
+  // dashboard grid never shows times from the previous method.
+  useEffect(() => {
+    const handleRecalculate = () => {
+      loadPrayerTimes();
+    };
+    window.addEventListener('prayer-method-changed', handleRecalculate);
+    window.addEventListener('madhab-changed', handleRecalculate);
+    return () => {
+      window.removeEventListener('prayer-method-changed', handleRecalculate);
+      window.removeEventListener('madhab-changed', handleRecalculate);
+    };
+  }, [loadPrayerTimes]);
 
   // Clear stale location data on mount to prevent ISTRES issue
   useEffect(() => {

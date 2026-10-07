@@ -6,6 +6,8 @@
 
 import { LocalNotifications, type LocalNotificationSchema } from '@capacitor/local-notifications';
 import { AladhanAPI, type AladhanPrayerTime } from './aladhan-api';
+import { getEffectiveAladhanMethodId } from './prayer-method-resolver';
+import { getMadhab } from './storage';
 import { Capacitor } from '@capacitor/core';
 import { getAdhanUrlForPrayer, type PrayerName } from './adhan-preferences';
 import { nativeAdhan, type NativeAdhanAlarm } from './native-adhan';
@@ -169,7 +171,10 @@ export class LocalNotificationManager {
       }
 
       const now = new Date();
-      const method = 1; // Muslim World League method
+      // Use the same effective calculation method/madhab as the rest of the app
+      // (was hardcoded to Karachi method id 1 regardless of the user's choice).
+      const method = getEffectiveAladhanMethodId(locationData.latitude, locationData.longitude);
+      const school = getMadhab() === 'hanafi' ? 1 : 0;
       const adhanPreferenceSignature = localStorage.getItem('adhan-preferences') || 'default';
       const adhanConfigText = localStorage.getItem('adhan-config') || '{}';
       const adhanEnabledSignature = this.isPrayerAlarmEnabled() ? 'adhan-on' : 'adhan-off';
@@ -179,6 +184,8 @@ export class LocalNotificationManager {
         locationData.longitude.toFixed(3),
         locationData.source || 'unknown',
         `window-${SCHEDULE_WINDOW_DAYS}`,
+        `method-${method}`,
+        `school-${school}`,
         adhanPreferenceSignature,
         adhanEnabledSignature,
         adhanConfigText
@@ -211,7 +218,8 @@ export class LocalNotificationManager {
             locationData.longitude,
             year,
             month,
-            method
+            method,
+            school
           );
           monthsFetched.add(monthKey);
         }

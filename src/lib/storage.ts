@@ -121,6 +121,11 @@ export const getMadhab = (): MadhabType => {
 
 export const setMadhab = (madhab: MadhabType): void => {
   localStorage.setItem(STORAGE_KEYS.MADHAB, madhab);
+  // Notify listeners (usePrayerTimes, Dashboard, GlobalPrayerAlarm) so times
+  // are recalculated & notifications re-scheduled for the new Asr school.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('madhab-changed', { detail: { madhab } }));
+  }
 };
 
 // Time Format

@@ -6,6 +6,7 @@
 import { Coordinates, CalculationMethod, PrayerTimes, CalculationParameters, Madhab, Shafaq } from 'adhan';
 import { getMadhab } from './storage';
 import { calculatePrayerTimes } from './prayer-calculator';
+import { LOCATION_STORAGE_KEY } from './location-config';
 
 export type CalculationMethodName = 
   | 'MuslimWorldLeague'
@@ -176,7 +177,21 @@ class PrayerMethodsService {
     } catch (error) {
       console.error('Failed to load prayer method from storage:', error);
     }
-    
+
+    // No explicit choice yet — recommend the method used by the user's region
+    // (e.g. Egyptian General Authority for Egypt) so times match local mosques.
+    try {
+      const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
+      if (storedLocation) {
+        const parsed = JSON.parse(storedLocation) as { latitude?: number; longitude?: number };
+        if (typeof parsed.latitude === 'number' && typeof parsed.longitude === 'number') {
+          return this.getRecommendedMethod(parsed.latitude, parsed.longitude);
+        }
+      }
+    } catch {
+      // ignore — fall through to default
+    }
+
     return DEFAULT_METHOD;
   }
 
@@ -186,6 +201,9 @@ class PrayerMethodsService {
   saveSelectedMethod(method: PrayerMethod): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, method.id.toString());
+      // Keep the legacy name-based key in sync so every reader
+      // (prayer-calculator, hooks, notifications) sees the same choice.
+      localStorage.setItem('calculation-method', method.calculationMethod);
       console.log(`Prayer method saved: ${method.name} (${method.id})`);
     } catch (error) {
       console.error('Failed to save prayer method to storage:', error);
@@ -260,6 +278,9 @@ class PrayerMethodsService {
     } else if (latitude >= 24 && latitude <= 37 && longitude >= 44 && longitude <= 60) {
       // Gulf region
       return PRAYER_METHODS.find(m => m.id === 8) || DEFAULT_METHOD; // Gulf Region
+    } else if (latitude >= 21 && latitude <= 32 && longitude >= 24 && longitude <= 37) {
+      // Egypt — Egyptian General Authority of Survey (Fajr 19.5°, Isha 17.5°)
+      return PRAYER_METHODS.find(m => m.id === 3) || DEFAULT_METHOD; // Egyptian
     } else if (latitude >= 25 && latitude <= 45 && longitude >= -125 && longitude <= -66) {
       // North America
       return PRAYER_METHODS.find(m => m.id === 2) || DEFAULT_METHOD; // ISNA

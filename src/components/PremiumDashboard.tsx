@@ -1,14 +1,9 @@
-﻿import React, { useState, useEffect, memo, lazy, Suspense } from "react";
+﻿import React, { useEffect, memo, lazy, Suspense } from "react";
 import { m } from "framer-motion";
 import { Bell, MapPin, ChevronRight, Activity, Compass, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
-import {
-  loadDashboardWidgetConfig,
-  DASHBOARD_WIDGET_CONFIG_CHANGED_EVENT,
-  type DashboardWidgetConfig
-} from "@/lib/dashboard-widget-config";
 import { globalTimerManager } from "@/lib/timer-manager";
 import { useAnimationTier } from "@/hooks/useAnimationTier";
 
@@ -154,41 +149,7 @@ function PremiumDashboardInner({
   const { animationEnabled } = useSettings();
   const { tier } = useAnimationTier();
   const { isRamadan, ramadanDay } = useIslamicCalendar();
-  const [widgets, setWidgets] = useState<DashboardWidgetConfig[]>([]);
   const [timeFormat, setTimeFormat] = useState<'12' | '24'>(() => (localStorage.getItem('time-format') as '12' | '24') || '24');
-
-  useEffect(() => {
-    // Load config on mount
-    setWidgets(loadDashboardWidgetConfig());
-
-    // Listen to changes (e.g. from WidgetCustomizer)
-    const handleWidgetConfigChange = (e: Event) => {
-      const customEvent = e as CustomEvent<{ widgets: DashboardWidgetConfig[] }>;
-      if (customEvent.detail?.widgets) {
-        setWidgets(customEvent.detail.widgets);
-      } else {
-        setWidgets(loadDashboardWidgetConfig());
-      }
-    };
-
-    window.addEventListener(DASHBOARD_WIDGET_CONFIG_CHANGED_EVENT, handleWidgetConfigChange);
-    return () => {
-      window.removeEventListener(DASHBOARD_WIDGET_CONFIG_CHANGED_EVENT, handleWidgetConfigChange);
-    };
-  }, []);
-
-  // Show ramadan widget only during Ramadan
-  useEffect(() => {
-    setWidgets(prevWidgets => {
-      const ramadanWidget = prevWidgets.find(w => w.id === 'ramadan');
-      if (ramadanWidget) {
-        return prevWidgets.map(w => 
-          w.id === 'ramadan' ? { ...w, visible: isRamadan } : w
-        );
-      }
-      return prevWidgets;
-    });
-  }, [isRamadan]);
 
   useEffect(() => {
     const handleFormatChange = (e: CustomEvent) => {
@@ -339,24 +300,17 @@ function PremiumDashboardInner({
           </div>
         </m.div>
 
-        {/* ── Dynamic Widgets Container ── */}
+        {/* ── Dashboard Sections ── */}
         <div className="space-y-6">
-          {widgets
-            .filter(w => w.visible)
-            .sort((a, b) => a.order - b.order)
-            .map(widget => {
-              switch (widget.id) {
-                case 'prayer-times':
-                  return (
-                    <m.section
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                      className="w-full"
-                    >
+          {/* ── Prayer Times ── */}
+          <m.section
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+            className="w-full"
+          >
                       <div className="flex items-center justify-between px-1 mb-4">
                         <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Prayer Times</h2>
                         <button
@@ -412,20 +366,17 @@ function PremiumDashboardInner({
                           </m.div>
                         ))}
                       </div>
-                    </m.section>
-                  );
+          </m.section>
 
-                case 'salah-tracker':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                      className="p-5 rounded-[28px] bg-card/40 border border-border/40 backdrop-blur-md"
-                    >
+          {/* ── Daily Salah ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+            className="p-5 rounded-[28px] bg-card/40 border border-border/40 backdrop-blur-md"
+          >
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Daily Salah</h3>
                         <div className="px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(201,134,10,0.1)', color: '#C9860A' }}>
@@ -459,202 +410,159 @@ function PremiumDashboardInner({
                           </button>
                         ))}
                       </div>
-                    </m.div>
-                  );
+          </m.div>
 
-                case 'daily-ayah':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><EnhancedDailyAyah /></Suspense>
-                    </m.div>
-                  );
-
-                case 'daily-hadith':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><EnhancedDailyHadith /></Suspense>
-                    </m.div>
-                  );
-
-                case 'qibla-quick':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><QiblaQuickWidget /></Suspense>
-                    </m.div>
-                  );
-
-                case 'tasbeeh-quick':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><TasbeehQuickWidget /></Suspense>
-                    </m.div>
-                  );
-
-                case 'ramadan':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}>
-                        <RamadanWidget
-                          isRamadan={isRamadan}
-                          ramadanDay={ramadanDay}
-                          prayerTimesWithEnd={prayerTimesHook?.prayerTimesWithEnd || null}
-                          timeFormat={timeFormat}
-                        />
-                      </Suspense>
-                    </m.div>
-                  );
-
-                case 'weekly-chart':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><WeeklySalahChart /></Suspense>
-                    </m.div>
-                  );
-
-                case 'quran-progress':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><QuranProgressWidget /></Suspense>
-                    </m.div>
-                  );
-
-                case 'islamic-events':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><IslamicEventsWidget /></Suspense>
-                    </m.div>
-                  );
-
-                case 'prayer-stats':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><PrayerStatsWidget /></Suspense>
-                    </m.div>
-                  );
-
-                case 'qaza-tracker':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><QazaTracker compact={true} /></Suspense>
-                    </m.div>
-                  );
-
-                case 'dhikr-reminder':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><DhikrReminder /></Suspense>
-                    </m.div>
-                  );
-
-                case 'quran-radio':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><QuranRadio /></Suspense>
-                    </m.div>
-                  );
-
-                case 'remedy':
-                  return (
-                    <m.div
-                      key={widget.id}
-                      {...motionProps({
-                        initial: { opacity: 0, y: 12 },
-                        animate: { opacity: 1, y: 0 },
-                        transition: { duration: 0.4 }
-                      })}
-                    >
-                      <Suspense fallback={<WidgetFallback />}><MoodSelector /></Suspense>
-                    </m.div>
-                  );
-
-                default:
-                  return null;
-              }
+          {/* ── Daily Ayah ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
             })}
+          >
+            <Suspense fallback={<WidgetFallback />}><EnhancedDailyAyah /></Suspense>
+          </m.div>
+
+          {/* ── Daily Hadith ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><EnhancedDailyHadith /></Suspense>
+          </m.div>
+
+          {/* ── Qibla Quick ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><QiblaQuickWidget /></Suspense>
+          </m.div>
+
+          {/* ── Tasbeeh Quick ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><TasbeehQuickWidget /></Suspense>
+          </m.div>
+
+          {/* ── Ramadan (Suhoor/Iftar) — shown only during Ramadan ── */}
+          {isRamadan && (
+            <m.div
+              {...motionProps({
+                initial: { opacity: 0, y: 12 },
+                animate: { opacity: 1, y: 0 },
+                transition: { duration: 0.4 }
+              })}
+            >
+              <Suspense fallback={<WidgetFallback />}>
+                <RamadanWidget
+                  isRamadan={isRamadan}
+                  ramadanDay={ramadanDay}
+                  prayerTimesWithEnd={prayerTimesHook?.prayerTimesWithEnd || null}
+                  timeFormat={timeFormat}
+                />
+              </Suspense>
+            </m.div>
+          )}
+
+          {/* ── Weekly Salah Chart ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><WeeklySalahChart /></Suspense>
+          </m.div>
+
+          {/* ── Quran Progress ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><QuranProgressWidget /></Suspense>
+          </m.div>
+
+          {/* ── Islamic Events ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><IslamicEventsWidget /></Suspense>
+          </m.div>
+
+          {/* ── Prayer Stats ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><PrayerStatsWidget /></Suspense>
+          </m.div>
+
+          {/* ── Qaza Tracker ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><QazaTracker compact={true} /></Suspense>
+          </m.div>
+
+          {/* ── Dhikr Reminder ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><DhikrReminder /></Suspense>
+          </m.div>
+
+          {/* ── Quran Radio ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><QuranRadio /></Suspense>
+          </m.div>
+
+          {/* ── Mood / Remedy ── */}
+          <m.div
+            {...motionProps({
+              initial: { opacity: 0, y: 12 },
+              animate: { opacity: 1, y: 0 },
+              transition: { duration: 0.4 }
+            })}
+          >
+            <Suspense fallback={<WidgetFallback />}><MoodSelector /></Suspense>
+          </m.div>
         </div>
       </div>
     </div>

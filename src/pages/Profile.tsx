@@ -245,7 +245,7 @@ const Profile: React.FC = () => {
       }
 
       try {
-        const calcMethod = localStorage.getItem('prayer_calculation_method') || localStorage.getItem('calculation_method');
+        const calcMethod = localStorage.getItem('calculation-method') || localStorage.getItem('prayer_calculation_method');
         results['prayer'] = getCalcMethodDisplay(calcMethod);
       } catch {
         results['prayer'] = null;

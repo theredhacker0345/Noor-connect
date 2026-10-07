@@ -47,6 +47,7 @@ import { usePrayerAlarm } from '@/hooks/usePrayerAlarm';
 import { CURRENT_APP_VERSION } from '@/lib/constants';
 
 import { HapticSettings } from '@/components/HapticSettings';
+import { useTimeFormat } from '@/hooks/useTimeFormat';
 import { AdhanSelector } from '@/components/AdhanSelector';
 import { CustomAdhanUpload } from '@/components/CustomAdhanUpload';
 import { PrayerMethodSelector } from '@/components/PrayerMethodSelector';
@@ -67,6 +68,46 @@ const SECTION_TITLES: Record<string, { title: string; subtitle: string; icon: an
   about: { title: 'About Noor Connect', subtitle: 'App version, changelog & developer', icon: Info },
   support: { title: 'Support Noor Connect', subtitle: 'Help support development — contact us to donate', icon: Heart },
   contact: { title: 'Contact & Hire Developer', subtitle: 'WhatsApp, portfolio & email contacts', icon: Mail },
+};
+
+
+/**
+ * 12/24-hour time format toggle — used in both the Appearance and Prayer
+ * settings sections. Persisting happens through time-formatter.setTimeFormat,
+ * which dispatches `time-format-changed` so the whole app re-renders instantly.
+ */
+const TimeFormatControl = ({ withBorder = false }: { withBorder?: boolean }) => {
+  const [timeFormat, setTimeFormat] = useTimeFormat();
+  const { toast } = useToast();
+
+  return (
+    <div className={`flex items-center justify-between py-1 ${withBorder ? 'border-t border-slate-100 dark:border-slate-800 pt-3' : ''}`}>
+      <div>
+        <Label className="text-sm font-bold">Time Format</Label>
+        <p className="text-xs text-slate-400">Prayer times, clock & countdowns</p>
+      </div>
+      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <button
+          onClick={() => {
+            setTimeFormat('12');
+            toast({ title: 'Time format set to 12-hour' });
+          }}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${timeFormat === '12' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-400'}`}
+        >
+          12H
+        </button>
+        <button
+          onClick={() => {
+            setTimeFormat('24');
+            toast({ title: 'Time format set to 24-hour' });
+          }}
+          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${timeFormat === '24' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-400'}`}
+        >
+          24H
+        </button>
+      </div>
+    </div>
+  );
 };
 
 
@@ -257,6 +298,8 @@ const SettingsSubPage: React.FC = () => {
                 </div>
               </div>
 
+              <TimeFormatControl withBorder />
+
               <div className="flex items-center justify-between py-1 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <div>
                   <Label className="text-sm font-bold">Fluid Animations</Label>
@@ -348,6 +391,10 @@ const SettingsSubPage: React.FC = () => {
         {/* PRAYER SECTION */}
         {sectionId === 'prayer' && (
           <div className="space-y-4">
+            <Card className="p-4 rounded-2xl">
+              <TimeFormatControl />
+            </Card>
+
             <Card className="p-4 space-y-3 rounded-2xl">
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Calculation Method</Label>
               <PrayerMethodSelector />
@@ -362,7 +409,10 @@ const SettingsSubPage: React.FC = () => {
                   onClick={() => {
                     setMadhabState('shafi');
                     setMadhab('shafi');
-                    try { localStorage.removeItem('cached_prayer_times'); } catch { /* ignore */ }
+                    try {
+                      localStorage.removeItem('cached_prayer_times');
+                      localStorage.removeItem('cached-prayer-times');
+                    } catch { /* ignore */ }
                     toast({ title: 'Madhab set to Shafi / Maliki / Hanbali' });
                   }}
                 >
@@ -374,7 +424,10 @@ const SettingsSubPage: React.FC = () => {
                   onClick={() => {
                     setMadhabState('hanafi');
                     setMadhab('hanafi');
-                    try { localStorage.removeItem('cached_prayer_times'); } catch { /* ignore */ }
+                    try {
+                      localStorage.removeItem('cached_prayer_times');
+                      localStorage.removeItem('cached-prayer-times');
+                    } catch { /* ignore */ }
                     toast({ title: 'Madhab set to Hanafi' });
                   }}
                 >

@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AladhanAPI } from '@/lib/aladhan-api';
-import { getCalculationMethod } from '@/lib/prayer-calculator';
 import { getMadhab } from '@/lib/storage';
-import { ALADHAN_METHODS } from '@/lib/aladhan-api';
+import { getEffectiveAladhanMethodId } from '@/lib/prayer-method-resolver';
 
 interface PrayerTimesQueryParams {
   latitude: number;
@@ -14,8 +13,7 @@ interface PrayerTimesQueryParams {
 export function usePrayerTimesAPI(params: PrayerTimesQueryParams, enabled = true) {
   const { latitude, longitude, method, school } = params;
   
-  const methodName = method || getCalculationMethod();
-  const methodId = method || ALADHAN_METHODS[methodName] || 3;
+  const methodId = method ?? getEffectiveAladhanMethodId(latitude, longitude);
   const schoolParam = school !== undefined ? school : (getMadhab() === 'hanafi' ? 1 : 0);
 
   return useQuery({

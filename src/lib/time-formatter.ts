@@ -24,7 +24,7 @@ function getLocale(): string {
  */
 export function formatTime(
   time: string | Date,
-  format: '12' | '24' = '24',
+  format: '12' | '24' = getTimeFormat(),
   options: TimeFormatOptions = {}
 ): string {
   const { showSeconds = false, showAMPM = true, timeZone } = options;
@@ -84,7 +84,7 @@ export function formatTime(
  * @param format - Time format preference ('12' or '24')
  * @returns Formatted time string
  */
-export function formatPrayerTime(time: string | Date, format: '12' | '24' = '24', timeZone?: string): string {
+export function formatPrayerTime(time: string | Date, format: '12' | '24' = getTimeFormat(), timeZone?: string): string {
   return formatTime(time, format, { showSeconds: false, showAMPM: true, timeZone });
 }
 
@@ -94,7 +94,7 @@ export function formatPrayerTime(time: string | Date, format: '12' | '24' = '24'
  * @param format - Time format preference ('12' or '24')
  * @returns Formatted time string
  */
-export function formatCountdownTime(time: string | Date, format: '12' | '24' = '24'): string {
+export function formatCountdownTime(time: string | Date, format: '12' | '24' = getTimeFormat()): string {
   return formatTime(time, format, { showSeconds: false, showAMPM: true });
 }
 
@@ -112,6 +112,11 @@ export function getTimeFormat(): '12' | '24' {
  */
 export function setTimeFormat(format: '12' | '24'): void {
   localStorage.setItem('time-format', format);
+  // Notify listening components (Dashboard, PremiumDashboard, PrayerCards, ...)
+  // so the whole app re-renders immediately with the new format.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('time-format-changed', { detail: { format } }));
+  }
 }
 
 /**
@@ -120,7 +125,7 @@ export function setTimeFormat(format: '12' | '24'): void {
  * @param format - Time format preference ('12' or '24')
  * @returns Object with formatted prayer times
  */
-export function preConvertPrayerTimes(prayerTimes: Record<string, string>, format: '12' | '24' = '24'): Record<string, string> {
+export function preConvertPrayerTimes(prayerTimes: Record<string, string>, format: '12' | '24' = getTimeFormat()): Record<string, string> {
   const converted: Record<string, string> = {};
 
   for (const [prayer, time] of Object.entries(prayerTimes)) {
@@ -136,6 +141,6 @@ export function preConvertPrayerTimes(prayerTimes: Record<string, string>, forma
  * @param format - Time format preference ('12' or '24')
  * @returns Array of formatted time strings
  */
-export function batchFormatTimes(times: (string | Date)[], format: '12' | '24' = '24'): string[] {
+export function batchFormatTimes(times: (string | Date)[], format: '12' | '24' = getTimeFormat()): string[] {
   return times.map(time => formatPrayerTime(time, format));
 }

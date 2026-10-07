@@ -2,6 +2,7 @@
  * Prayer End Time Calculator
  * Calculates when each prayer time ends based on the next prayer's start time
  */
+import { formatTime as formatTimePreference } from './time-formatter';
 
 export interface PrayerTime {
   name: string;
@@ -119,14 +120,10 @@ export const isPrayerEndingSoon = (prayer: PrayerWithEndTime): boolean => {
 };
 
 /**
- * Format time in HH:MM format
+ * Format time according to the user's 12/24-hour preference
  */
 export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
+  return formatTimePreference(date);
 };
 
 /**

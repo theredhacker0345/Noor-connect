@@ -5,6 +5,8 @@ import { getAdhanUrlForPrayer, type PrayerName } from '@/lib/adhan-preferences';
 import { localNotifications } from '@/lib/local-notifications';
 import { adhanService, type AdhanConfig } from '@/lib/adhan-service';
 import { getFallbackLocationByTimezone, LOCATION_STORAGE_KEY } from '@/lib/location-config';
+import { getEffectiveAladhanMethodId } from '@/lib/prayer-method-resolver';
+import { getMadhab } from '@/lib/storage';
 import {
   PRAYER_ALARM_CONTROL_EVENT,
   PRAYER_ALARM_STATE_EVENT,
@@ -175,8 +177,13 @@ export const GlobalPrayerAlarm = () => {
 
       if (signal?.aborted) return;
 
+      // Use the same effective calculation method/madhab as the rest of the app
+      // (was hardcoded to ISNA, so the adhan fired at different times than shown).
+      const methodId = getEffectiveAladhanMethodId(latitude, longitude);
+      const school = getMadhab() === 'hanafi' ? 1 : 0;
+
       const response = await fetch(
-        `https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=2`,
+        `https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=${methodId}&school=${school}`,
         { signal }
       );
 
@@ -481,10 +488,23 @@ export const GlobalPrayerAlarm = () => {
       }
     };
 
+    // When the calculation method or madhab changes, today's cached times are stale —
+    // drop them so the alarm refetches and fires with the new method's times.
+    const handleMethodChange = () => {
+      try {
+        localStorage.removeItem(PRAYER_TIMES_KEY);
+      } catch {
+        // ignore — cache will simply stay until the next successful fetch
+      }
+      stopChecking();
+      handleConfigChange();
+    };
+
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('adhan-config-changed', handleConfigChange as EventListener);
     window.addEventListener('adhan-preferences-changed', handleConfigChange as EventListener);
-    window.addEventListener('prayer-method-changed', handleConfigChange as EventListener);
+    window.addEventListener('prayer-method-changed', handleMethodChange as EventListener);
+    window.addEventListener('madhab-changed', handleMethodChange as EventListener);
     window.addEventListener(PRAYER_ALARM_TOGGLE_EVENT, handleToggle as EventListener);
     window.addEventListener(PRAYER_ALARM_CONTROL_EVENT, handleControl as EventListener);
 
@@ -494,7 +514,8 @@ export const GlobalPrayerAlarm = () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('adhan-config-changed', handleConfigChange as EventListener);
       window.removeEventListener('adhan-preferences-changed', handleConfigChange as EventListener);
-      window.removeEventListener('prayer-method-changed', handleConfigChange as EventListener);
+      window.removeEventListener('prayer-method-changed', handleMethodChange as EventListener);
+      window.removeEventListener('madhab-changed', handleMethodChange as EventListener);
       window.removeEventListener(PRAYER_ALARM_TOGGLE_EVENT, handleToggle as EventListener);
       window.removeEventListener(PRAYER_ALARM_CONTROL_EVENT, handleControl as EventListener);
     };

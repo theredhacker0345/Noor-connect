@@ -3,6 +3,7 @@
  * Fetches monthly calendar data with localStorage persistence
  */
 import { getMadhab } from './storage';
+import { formatPrayerTime } from './time-formatter';
 
 export interface AladhanPrayerTime {
   Fajr: string;
@@ -116,7 +117,7 @@ export class AladhanAPI {
     longitude: number,
     year: number = new Date().getFullYear(),
     month: number = new Date().getMonth() + 1,
-    method: number = 1, // Pakistan/Karachi (1), ISNA (2)
+    method: number = 3, // Muslim World League default (callers should pass the effective method)
     school?: number // 0 for Shafi, 1 for Hanafi
   ): Promise<AladhanMonthlyData> {
     let url = `${API_BASE}/calendar/${year}/${month}?latitude=${latitude}&longitude=${longitude}&method=${method}`;
@@ -199,7 +200,7 @@ export class AladhanAPI {
   static async getTodaysPrayerTimesByCity(
     city: string,
     country: string,
-    method: number = 1,
+    method: number = 3, // Muslim World League default (callers should pass the effective method)
     school?: number // 0 for Shafi, 1 for Hanafi
   ): Promise<AladhanPrayerTime> {
     let url = `${API_BASE}/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${method}`;
@@ -233,7 +234,7 @@ export class AladhanAPI {
   static async getTodaysPrayerTimes(
     latitude: number,
     longitude: number,
-    method: number = 1,
+    method: number = 3, // Muslim World League default (callers should pass the effective method)
     school?: number // 0 for Shafi, 1 for Hanafi
   ): Promise<{ timings: AladhanPrayerTime, timezone: string }> {
     // Check if cached data is valid for this location before making API calls
@@ -241,7 +242,7 @@ export class AladhanAPI {
     // Aladhan API: 0 = Shafi, 1 = Hanafi
     // Maliki and Hanbali follow Shafi calculation for Asr
     const schoolParam = madhab === 'hanafi' ? 1 : 0;
-    const hasValidCache = this.isCachedDataValid(latitude, longitude, schoolParam);
+    const hasValidCache = this.isCachedDataValid(latitude, longitude, schoolParam, method);
 
     if (hasValidCache) {
       // Use cached data only, no API call needed
@@ -312,9 +313,9 @@ export class AladhanAPI {
   }
 
   /**
-   * Check if cached data is still valid (same month and year)
+   * Check if cached data is still valid (same month, year, location, school & method)
    */
-  static isCachedDataValid(latitude?: number, longitude?: number, school?: number): boolean {
+  static isCachedDataValid(latitude?: number, longitude?: number, school?: number, method?: number): boolean {
     const monthlyData = this.getStoredMonthlyData();
     if (!monthlyData) return false;
 
@@ -334,6 +335,13 @@ export class AladhanAPI {
 
     // If school provided, check if it matches
     if (school !== undefined && monthlyData.school !== undefined && monthlyData.school !== school) {
+      return false;
+    }
+
+    // If method provided, check if it matches — the monthly cache is a single
+    // shared slot, so without this check a cache written by another code path
+    // (e.g. notifications with a different method) would be served as-is.
+    if (method !== undefined && monthlyData.method !== method) {
       return false;
     }
 
@@ -376,7 +384,7 @@ export class AladhanAPI {
   static async getRamadanTimes(
     latitude: number,
     longitude: number,
-    method: number = 1,
+    method: number = 3, // Muslim World League default (callers should pass the effective method)
     school?: number // 0 for Shafi, 1 for Hanafi
   ): Promise<{ suhoor: string; iftar: string } | null> {
     try {
@@ -397,7 +405,7 @@ export class AladhanAPI {
   static async getNextEventCountdown(
     latitude: number,
     longitude: number,
-    method: number = 1,
+    method: number = 3, // Muslim World League default (callers should pass the effective method)
     isRamadan: boolean = false
   ): Promise<{ name: string; time: string; countdown: string; targetDate?: Date } | null> {
     try {
@@ -431,11 +439,7 @@ export class AladhanAPI {
 
           return {
             name: prayer.name,
-            time: prayer.time.toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }),
+            time: formatPrayerTime(prayer.time),
             countdown: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
             targetDate: prayer.time // Return the Date object directly
           };
@@ -458,11 +462,7 @@ export class AladhanAPI {
 
       return {
         name: 'Fajr (Tomorrow)',
-        time: firstPrayerTime.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        }),
+        time: formatPrayerTime(firstPrayerTime),
         countdown: `${hours}h ${minutes}m`,
         targetDate: firstPrayerTime
       };

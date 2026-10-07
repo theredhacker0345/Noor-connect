@@ -100,7 +100,6 @@ const PWAInstallPrompt = lazy(() => import("@/components/PWAInstallPrompt").then
 import Dashboard from "./pages/Dashboard";
 
 // Lazy load route components
-const DashboardWidgets = lazy(() => import("./pages/DashboardWidgets"));
 const SurahList = lazy(() => import("./pages/SurahList"));
 const QuranReader = lazy(() => import("./pages/QuranReader"));
 const QuranProgress = lazy(() => import("./pages/QuranProgress"));
@@ -197,7 +196,7 @@ function AppRoutes() {
       <Routes location={location}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard-widgets" element={<DashboardWidgets />} />
+        <Route path="/dashboard-widgets" element={<Navigate to="/dashboard" replace />} />
         {/* Widget deep-link targets (WidgetDeeplink.kt) that have no dedicated page */}
         <Route path="/prayers" element={<Navigate to="/dashboard" replace />} />
         <Route path="/quran/reading" element={<Navigate to="/quran-progress" replace />} />

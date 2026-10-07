@@ -5,6 +5,7 @@
 
 import { calculatePrayerTimes, getCalculationMethod } from "./prayer-calculator";
 import { AladhanAPI, ALADHAN_METHODS } from "./aladhan-api";
+import { getEffectiveCalculationMethod } from "./prayer-method-resolver";
 import { getFallbackLocationByTimezone } from "./location-config";
 import { getHaidhData, detectIstihadhah, type CycleEntry, type HaidhTrackerData } from "./haidh-tracker";
 
@@ -124,7 +125,7 @@ export const resolvePrayerTimes = (): Record<string, { start: Date; end: Date }>
       maghribStart = parseTime(cachedDay.timings.Maghrib, now);
       ishaStart = parseTime(cachedDay.timings.Isha, now);
     } else {
-      const offlineResult = calculatePrayerTimes(lat, lon, now);
+      const offlineResult = calculatePrayerTimes(lat, lon, now, getEffectiveCalculationMethod(lat, lon));
       fajrStart = offlineResult.fajr;
       sunriseStart = offlineResult.sunrise;
       dhuhrStart = offlineResult.dhuhr;
@@ -141,7 +142,7 @@ export const resolvePrayerTimes = (): Record<string, { start: Date; end: Date }>
     if (cachedTomorrow) {
       tomorrowFajr = parseTime(cachedTomorrow.timings.Fajr, tomorrow);
     } else {
-      const tomorrowOffline = calculatePrayerTimes(lat, lon, tomorrow);
+      const tomorrowOffline = calculatePrayerTimes(lat, lon, tomorrow, getEffectiveCalculationMethod(lat, lon));
       tomorrowFajr = tomorrowOffline.fajr;
     }
 

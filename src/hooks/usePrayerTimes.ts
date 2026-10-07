@@ -5,9 +5,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { calculatePrayerTimes, getCalculationMethod } from '@/lib/prayer-calculator';
+import { calculatePrayerTimes } from '@/lib/prayer-calculator';
 import { GeocodingService } from '@/lib/geocoding';
-import { AladhanAPI, ALADHAN_METHODS } from '@/lib/aladhan-api';
+import { AladhanAPI } from '@/lib/aladhan-api';
+import { getEffectiveCalculationMethod, getEffectiveAladhanMethodId } from '@/lib/prayer-method-resolver';
 import { formatPrayerTime } from '@/lib/time-formatter';
 import { GeolocationService } from '@/lib/geolocation-service';
 import { getFallbackLocationByTimezone, LOCATION_STORAGE_KEY } from '@/lib/location-config';
@@ -243,8 +244,10 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         return;
       }
 
-      const methodName = getCalculationMethod();
-      const methodId = ALADHAN_METHODS[methodName] || 3; // Default to MWL (3)
+      // Resolve one effective method for every code path (user's explicit
+      // choice, or the region-recommended one, e.g. Egyptian for Egypt).
+      const methodName = getEffectiveCalculationMethod(locationData.latitude, locationData.longitude);
+      const methodId = getEffectiveAladhanMethodId(locationData.latitude, locationData.longitude);
       const locationKey = `${locationData.latitude.toFixed(4)},${locationData.longitude.toFixed(4)}`;
       const now = new Date();
       const dayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -275,7 +278,7 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         timeZone = result.timezone;
       } catch {
         console.warn('API fetch failed, using offline calculation');
-        const offlineResult = calculatePrayerTimes(locationData.latitude, locationData.longitude, now);
+        const offlineResult = calculatePrayerTimes(locationData.latitude, locationData.longitude, now, methodName);
         timings = {
           Fajr: formatPrayerTime(offlineResult.fajr, '24'),
           Sunrise: formatPrayerTime(offlineResult.sunrise, '24'),
@@ -322,7 +325,7 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
       // Tomorrow's Fajr for Isha end time
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowResult = calculatePrayerTimes(locationData.latitude, locationData.longitude, tomorrow);
+      const tomorrowResult = calculatePrayerTimes(locationData.latitude, locationData.longitude, tomorrow, methodName);
 
       const midnight = new Date(now);
       midnight.setDate(midnight.getDate() + 1);
@@ -380,7 +383,12 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
       const coords = await GeocodingService.getCityCoordinates(city, country);
 
       // Use Aladhan API to get accurate prayer times and timezone
-      const { timezone } = await AladhanAPI.getTodaysPrayerTimes(coords.latitude, coords.longitude);
+      const { timezone } = await AladhanAPI.getTodaysPrayerTimes(
+        coords.latitude,
+        coords.longitude,
+        getEffectiveAladhanMethodId(coords.latitude, coords.longitude),
+        getMadhab() === 'hanafi' ? 1 : 0
+      );
 
       const locationData: LocationData = {
         latitude: coords.latitude,

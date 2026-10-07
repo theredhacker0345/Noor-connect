@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useLocationState } from "@/lib/location-state";
 import { AladhanAPI } from "@/lib/aladhan-api";
+import { getEffectiveAladhanMethodId } from "@/lib/prayer-method-resolver";
 import { IslamicRamadanAPI } from "@/lib/islamic-fasting-api";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { RamadanNotifications } from "@/lib/ramadan-notifications";
@@ -235,11 +236,11 @@ export default function RamadanMode() {
       setDailyDua(null);
       setDailyHadith(null);
 
-      // Get countdown to next event
+      // Get countdown to next event (same effective calculation method as the app)
       const countdown = await AladhanAPI.getNextEventCountdown(
         location.latitude,
         location.longitude,
-        3,
+        getEffectiveAladhanMethodId(location.latitude, location.longitude),
         true // Ramadan mode
       );
       setNextEvent(countdown);

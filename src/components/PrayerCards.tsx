@@ -3,7 +3,8 @@ import { Clock, Moon, Sun, Sunset, Cloud, CloudMoon, AlertTriangle, Loader2 } fr
 import { Card } from "@/components/ui/card";
 import { LocationSearch } from "@/components/LocationSearch";
 import type { LocationData, PrayerTimesWithEnd } from "@/hooks/usePrayerTimes";
-import { getTimeFormat, formatPrayerTime } from "@/lib/time-formatter";
+import { formatPrayerTime } from "@/lib/time-formatter";
+import { useTimeFormat } from "@/hooks/useTimeFormat";
 import {
   getCurrentPrayer,
   type PrayerWithEndTime,
@@ -36,7 +37,7 @@ const PrayerCardsComponent = function PrayerCards({
   refresh,
   setManualLocation,
 }: PrayerCardsProps) {
-  const timeFormat = getTimeFormat();
+  const [timeFormat] = useTimeFormat();
 
   const prayersWithEndTimes: PrayerWithEndTime[] = useMemo(() => {
     if (!timings) return [];
