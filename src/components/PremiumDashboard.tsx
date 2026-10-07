@@ -10,13 +10,10 @@ import { useAnimationTier } from "@/hooks/useAnimationTier";
 // Lazy load widget components to reduce initial bundle size
 const EnhancedDailyAyah = lazy(() => import("@/components/EnhancedDailyAyah"));
 const EnhancedDailyHadith = lazy(() => import("@/components/EnhancedDailyHadith"));
-const QiblaQuickWidget = lazy(() => import("@/components/QiblaQuickWidget"));
-const TasbeehQuickWidget = lazy(() => import("@/components/TasbeehQuickWidget"));
 const RamadanWidget = lazy(() => import("@/components/RamadanWidget"));
 const WeeklySalahChart = lazy(() => import("@/components/WeeklySalahChart"));
 const QuranProgressWidget = lazy(() => import("@/components/QuranProgressWidget"));
 const IslamicEventsWidget = lazy(() => import("@/components/IslamicEventsWidget"));
-const PrayerStatsWidget = lazy(() => import("@/components/PrayerStatsWidget"));
 const QazaTracker = lazy(() => import("@/components/QazaTracker"));
 
 const WidgetFallback = () => <div className="h-40 w-full rounded-2xl bg-card/40 animate-pulse border border-border/40 backdrop-blur-sm" />;
@@ -431,28 +428,6 @@ function PremiumDashboardInner({
             <Suspense fallback={<WidgetFallback />}><EnhancedDailyHadith /></Suspense>
           </m.div>
 
-          {/* ── Qibla Quick ── */}
-          <m.div
-            {...motionProps({
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.4 }
-            })}
-          >
-            <Suspense fallback={<WidgetFallback />}><QiblaQuickWidget /></Suspense>
-          </m.div>
-
-          {/* ── Tasbeeh Quick ── */}
-          <m.div
-            {...motionProps({
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.4 }
-            })}
-          >
-            <Suspense fallback={<WidgetFallback />}><TasbeehQuickWidget /></Suspense>
-          </m.div>
-
           {/* ── Ramadan (Suhoor/Iftar) — shown only during Ramadan ── */}
           {isRamadan && (
             <m.div
@@ -504,17 +479,6 @@ function PremiumDashboardInner({
             })}
           >
             <Suspense fallback={<WidgetFallback />}><IslamicEventsWidget /></Suspense>
-          </m.div>
-
-          {/* ── Prayer Stats ── */}
-          <m.div
-            {...motionProps({
-              initial: { opacity: 0, y: 12 },
-              animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.4 }
-            })}
-          >
-            <Suspense fallback={<WidgetFallback />}><PrayerStatsWidget /></Suspense>
           </m.div>
 
           {/* ── Qaza Tracker ── */}
