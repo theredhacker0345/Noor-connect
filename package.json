@@ -5,8 +5,7 @@
   "type": "module",
   "browserslist": [
     "Android >= 7",
-    "Chrome >= 51",
-    "WebView >= 7"
+    "Chrome >= 51"
   ],
   "scripts": {
     "dev": "vite",
