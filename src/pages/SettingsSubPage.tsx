@@ -840,6 +840,11 @@ const SettingsSubPage: React.FC = () => {
                 </div>
               </div>
             </Card>
+
+            <Button
+              variant="outline"
+              className="w-full rounded-xl gap-2"
+              onClick={() => setShowChangelog(true)}
             >
               View Release Changelog
             </Button>
