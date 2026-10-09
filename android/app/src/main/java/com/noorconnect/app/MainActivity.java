@@ -20,8 +20,6 @@ import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
-import com.noorconnect.app.widgets.WidgetBridge;
-import com.noorconnect.app.widgets.WidgetForegroundService;
 
 public class MainActivity extends BridgeActivity {
     private static final int EXACT_ALARM_PERMISSION_REQUEST = 9001;
@@ -32,7 +30,6 @@ public class MainActivity extends BridgeActivity {
         // Versioned WebView data directory prevents cache corruption across installs/updates
         WebView.setDataDirectorySuffix(BuildConfig.VERSION_NAME);
 
-        registerPlugin(WidgetBridge.class);
         registerPlugin(NativeAdhanPlugin.class);
         registerPlugin(BatteryOptimizationPlugin.class);
         super.onCreate(savedInstanceState);
@@ -43,7 +40,7 @@ public class MainActivity extends BridgeActivity {
         // Request SCHEDULE_EXACT_ALARM permission on Android 12+ (API 31+)
         requestExactAlarmPermission();
 
-        // Request battery optimization whitelist for reliable widget updates
+        // Request battery optimization whitelist for reliable background playback
         requestBatteryOptimizationWhitelist();
 
         // Enable Motion Event Splitting on the WebView
@@ -143,8 +140,7 @@ public class MainActivity extends BridgeActivity {
         if (requestCode == EXACT_ALARM_PERMISSION_REQUEST) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (canScheduleExactAlarms()) {
-                    // Permission granted - start widget foreground service
-                    WidgetForegroundService.start(this);
+                    // Permission granted; background work can now run without optimization limits.
                 }
             }
         }
@@ -153,10 +149,6 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onResume() {
         super.onResume();
-        // Start widget foreground service once on resume if exact alarms are allowed
-        if (canScheduleExactAlarms()) {
-            WidgetForegroundService.start(this);
-        }
     }
 
     /**
