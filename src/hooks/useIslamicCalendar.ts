@@ -11,10 +11,29 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AladhanAPI, AladhanDayData } from '@/lib/aladhan-api';
 import { useLocationState } from '@/lib/location-state';
 import { globalTimerManager } from '@/lib/timer-manager';
 import { islamicCalendarService } from '@/lib/islamic-calendar-service';
+import i18n from '@/lib/i18n-new';
+
+/** Hijri month number (1-12) -> i18n key. All 7 locales ship these keys. */
+const HIJRI_MONTH_KEYS = [
+  '',
+  'hijriMuharram',
+  'hijriSafar',
+  'hijriRabiAwwal',
+  'hijriRabiThani',
+  'hijriJumadaAwwal',
+  'hijriJumadaThani',
+  'hijriRajab',
+  'hijriShaban',
+  'hijriRamadan',
+  'hijriShawwal',
+  'hijriDhulQidah',
+  'hijriDhulHijjah',
+] as const;
 
 export interface UseIslamicCalendarReturn {
   islamicInfo: {
@@ -61,6 +80,7 @@ function parseTimeToMinutes(timeStr: string): number {
 
 export function useIslamicCalendar(): UseIslamicCalendarReturn {
   const location = useLocationState();
+  const { t } = useTranslation(undefined, { i18n });
   const [hijriDay, setHijriDay] = useState('');
   const [hijriMonthNum, setHijriMonthNum] = useState(0);
   const [hijriMonthEn, setHijriMonthEn] = useState('');
@@ -233,7 +253,12 @@ export function useIslamicCalendar(): UseIslamicCalendarReturn {
   const isEidAlFitr = hijriMonthNumber === 10 && (hijriDayNumber >= 1 && hijriDayNumber <= 3);
   const isEidAlAdha = hijriMonthNumber === 12 && (hijriDayNumber >= 10 && hijriDayNumber <= 13);
 
-  const hijriDate = hijriDay ? `${hijriDay} ${hijriMonthEn} ${hijriYear}` : '';
+  // Localized month name — falls back to the API's English transliteration
+  // when a locale somehow lacks the key (i18next echoes the key on a miss).
+  const monthKey = HIJRI_MONTH_KEYS[hijriMonthNum] || '';
+  const monthT = monthKey ? t(monthKey) : '';
+  const monthName = monthT && monthT !== monthKey ? monthT : hijriMonthEn;
+  const hijriDate = hijriDay ? `${hijriDay} ${monthName} ${hijriYear}` : '';
 
   const islamicInfo = hijriDay ? {
     currentDate: {

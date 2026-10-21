@@ -157,6 +157,35 @@ function PremiumDashboardInner({
 
   const motionProps = (props: any) => (animationEnabled && tier !== 'low' && tier !== 'minimal') ? props : {};
 
+  // Location label with a translated "(Offline)" suffix — the stored
+  // locationName embeds a literal English " (Offline)" (see location-state.ts),
+  // which leaked into every language. Split it off and use offlineSuffix.
+  const hasOfflineSuffix = /\(\s*offline\s*\)\s*$/i.test(locationLabel || '');
+  const bareLocation = (locationLabel || '').replace(/\s*\(\s*offline\s*\)\s*$/i, '').trim();
+  const offlineSuffixT = t('offlineSuffix');
+  const displayLocation = hasOfflineSuffix && offlineSuffixT !== 'offlineSuffix'
+    ? `${bareLocation} ${offlineSuffixT}`
+    : (locationLabel || '');
+
+  // Translate the next-prayer name. The API returns names like "Fajr",
+  // "Sunrise", or "Fajr (Tomorrow)". Lowercasing the whole string made keys
+  // like "fajr (tomorrow)" miss and leak the raw key into the UI; translate
+  // the base prayer name and append the localized "tomorrow" instead.
+  const nextPrayerDisplayName = (() => {
+    const rawName = (nextPrayer.name || '').trim();
+    if (!rawName || rawName === 'Loading...') return t('loading');
+    const isTomorrow = /\(\s*tomorrow\s*\)/i.test(rawName);
+    const base = rawName.replace(/\s*\([^)]*\)\s*/g, '').trim() || rawName;
+    const baseKey = base.toLowerCase();
+    const translated = t(baseKey);
+    // i18next returns the key itself on a miss — fall back to the proper-cased name
+    const baseName = translated && translated !== baseKey ? translated : base;
+    const tomorrowT = t('tomorrow');
+    return isTomorrow && tomorrowT !== 'tomorrow'
+      ? `${baseName} (${tomorrowT})`
+      : baseName;
+  })();
+
   return (
     <div
       className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300"
@@ -241,7 +270,7 @@ function PremiumDashboardInner({
           >
             <MapPin className="w-3.5 h-3.5" style={{ color: '#C9860A' }} />
             <span className="text-xs font-semibold max-w-[130px] truncate text-foreground/85">
-              {locationLabel}
+              {displayLocation}
             </span>
             <ChevronRight className="w-3 h-3 text-muted-foreground" />
           </button>
@@ -270,12 +299,12 @@ function PremiumDashboardInner({
                 {t('nextPrayer')}
               </p>
               <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                {locationLabel}
+                {displayLocation}
               </p>
             </div>
             <div className="flex items-end justify-between mb-4">
               <p className="text-3xl font-bold text-white" style={{ fontFamily: 'inherit', fontStyle: 'italic' }}>
-                {nextPrayer.name && nextPrayer.name !== "Loading..." ? t(nextPrayer.name.toLowerCase()) : t('loading')}
+                {nextPrayerDisplayName}
               </p>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-widest text-white/40 mb-0.5">{t('inCountdownLabel')}</p>
