@@ -8,7 +8,40 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { getFavorites, toggleFavorite } from "@/lib/storage";
+import { useI18n } from "@/hooks/useI18n";
 import { duasData, duaCategories } from "@/data/duas";
+
+// Category values come from @/data/duas (data keys stay English); map them to i18n keys for display.
+const CATEGORY_KEYS: Record<string, string> = {
+  "All": "all",
+  "Morning": "morning",
+  "Evening": "evening",
+  "Travel": "duaCatTravel",
+  "Eating": "duaCatEating",
+  "Sleeping": "duaCatSleeping",
+  "Illness": "duaCatIllness",
+  "Distress": "duaCatDistress",
+  "Gratitude": "duaCatGratitude",
+  "Forgiveness": "duaCatForgiveness",
+  "Protection": "duaCatProtection",
+  "Weather": "duaCatWeather",
+  "After Prayer": "duaCatAfterPrayer",
+  "Home": "duaCatHome",
+  "Mosque": "duaCatMosque",
+  "Daily": "duaCatDaily",
+  "Special Days": "duaCatSpecialDays",
+  "Knowledge": "duaCatKnowledge",
+  "Character": "duaCatCharacter",
+  "Marriage": "duaCatMarriage",
+  "Family": "duaCatFamily",
+  "Financial": "duaCatFinancial",
+  "Afterlife": "duaCatAfterlife",
+  "Repentance": "duaCatRepentance",
+  "Parents": "duaCatParents",
+  "Fasting": "duaCatFasting",
+  "Hajj & Umrah": "duaCatHajjUmrah",
+  "New Moon": "duaCatNewMoon",
+};
 
 interface DuaCardProps {
   dua: typeof duasData[0];
@@ -19,6 +52,7 @@ interface DuaCardProps {
 }
 
 const DuaCard = memo(function DuaCard({ dua, isFavorite, onToggleFavorite, onShare, isDuaOfDay }: DuaCardProps) {
+  const { t } = useI18n();
   const [playCounter, setPlayCounter] = useState(false);
   const [counter, setCounter] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,7 +81,7 @@ const DuaCard = memo(function DuaCard({ dua, isFavorite, onToggleFavorite, onSha
           <div className="absolute top-3 right-3">
             <Badge className="bg-[#C9860A] text-white text-xs font-bold uppercase tracking-[0.2em] gap-1 px-2 py-0.5">
               <Sparkles className="w-3 h-3" />
-              Dua of the Day
+              {t('duaOfDayLabel')}
             </Badge>
           </div>
         )}
@@ -56,7 +90,7 @@ const DuaCard = memo(function DuaCard({ dua, isFavorite, onToggleFavorite, onSha
             <div className="flex items-center gap-2">
               {isDuaOfDay && <Star className="w-3 h-3 text-[#C9860A] fill-[#C9860A]" />}
               <span className="px-2 py-0.5 bg-[#C9860A]/10 text-[#C9860A] text-xs font-bold uppercase tracking-[0.2em] rounded-full">
-                {dua.category}
+                {(() => { const k = CATEGORY_KEYS[dua.category]; return k ? t(k) : dua.category; })()}
               </span>
               {dua.repeatCount && (
                 <Badge variant="outline" className="text-xs gap-1">
@@ -101,7 +135,7 @@ const DuaCard = memo(function DuaCard({ dua, isFavorite, onToggleFavorite, onSha
               ) : (
                 <Button size="sm" variant="ghost" className="w-full text-xs text-muted-foreground hover:text-foreground" onClick={() => setPlayCounter(true)}>
                   <Plus className="w-3 h-3 mr-1" />
-                  Track Repetition ({dua.repeatCount}x)
+                  {t('trackRepetition', { count: dua.repeatCount })}
                 </Button>
               )}
             </div>
@@ -121,6 +155,7 @@ const DuaCard = memo(function DuaCard({ dua, isFavorite, onToggleFavorite, onSha
 const Duas = memo(function Duas() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -155,22 +190,23 @@ const Duas = memo(function Duas() {
     const isFavorite = toggleFavorite(duaId);
     setFavorites(getFavorites());
     toast({
-      title: isFavorite ? "Added to favorites" : "Removed from favorites",
+      title: isFavorite ? t('addedToFavorites') : t('removedFromFavorites'),
     });
   };
 
   const shareDua = async (dua: typeof duasData[0]) => {
-    const shareText = `"${dua.arabic}"\n\n${dua.transliteration}\n\nTranslation: ${dua.translation}`;
+    const catKey = CATEGORY_KEYS[dua.category];
+    const shareText = `"${dua.arabic}"\n\n${dua.transliteration}\n\n${t('translation')}: ${dua.translation}`;
     
     if (navigator.share) {
       try {
-        await navigator.share({ title: `Dua - ${dua.category}`, text: shareText });
+        await navigator.share({ title: t('duaShareTitle', { category: catKey ? t(catKey) : dua.category }), text: shareText });
       } catch {
         // Error is non-critical, silently ignored
       }
     } else {
       navigator.clipboard.writeText(shareText);
-      toast({ title: "Copied to clipboard" });
+      toast({ title: t('copiedToClipboard') });
     }
   };
 
@@ -183,8 +219,8 @@ const Duas = memo(function Duas() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground font-serif italic tracking-tight">Duas</h1>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{duasData.length} Supplications</p>
+            <h1 className="text-2xl font-bold text-foreground font-serif italic tracking-tight">{t('duasTitle')}</h1>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{t('supplicationsCount', { count: duasData.length })}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C9860A]/20 to-[#E8A020]/5 flex items-center justify-center border border-[#C9860A]/10 shadow-sm">
             <BookHeart className="w-5 h-5 text-[#C9860A]" />
@@ -195,7 +231,7 @@ const Duas = memo(function Duas() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search duas..."
+            placeholder={t('searchDuas')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-12 rounded-xl bg-card border-border/40 shadow-sm focus-visible:ring-[#C9860A]/50"
@@ -224,7 +260,7 @@ const Duas = memo(function Duas() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`whitespace-nowrap text-xs rounded-full font-bold shadow-sm ${selectedCategory === cat ? 'bg-[#C9860A] text-white hover:bg-[#C9860A]/90' : 'bg-card text-muted-foreground hover:text-foreground border-border/40'}`}
               >
-                {cat}
+                {(() => { const k = CATEGORY_KEYS[cat]; return k ? t(k) : cat; })()}
               </Button>
             ))}
           </div>
@@ -233,8 +269,8 @@ const Duas = memo(function Duas() {
         {/* Results count */}
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {filteredDuas.length} {filteredDuas.length === 1 ? 'dua' : 'duas'}
-            {searchQuery && ` matching "${searchQuery}"`}
+            {filteredDuas.length === 1 ? t('oneDua') : t('duasFound', { count: filteredDuas.length })}
+            {searchQuery ? ` ${t('matchingQuery', { query: searchQuery })}` : ''}
           </p>
           {favorites.length > 0 && (
             <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setSelectedCategory("All")}>
@@ -249,9 +285,9 @@ const Duas = memo(function Duas() {
           {filteredDuas.length === 0 ? (
             <Card className="p-8 text-center bg-card border-border/40 shadow-sm">
               <BookHeart className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">No duas found</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">{t('noDuasFound')}</p>
               <Button variant="outline" size="sm" className="font-bold border-border/40 hover:bg-muted/50" onClick={() => { setSearchQuery(""); setSelectedCategory("All"); }}>
-                Clear filters
+                {t('clearFilters')}
               </Button>
             </Card>
           ) : (

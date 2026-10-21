@@ -3,7 +3,7 @@
  * Track and complete missed prayers
  */
 import { useState, useEffect, useCallback } from "react";
-import { useLanguage } from "@/contexts/LanguageContext-new";
+import { useI18n } from "@/hooks/useI18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ interface QazaTrackerProps {
 }
 
 export function QazaTracker({ compact = false }: QazaTrackerProps) {
-  const { t } = useLanguage();
+  const { t } = useI18n();
   const [prayers, setPrayers] = useState<Record<PrayerName, number>>({
     fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0
   });
@@ -61,8 +61,8 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
       completeQazaPrayer(prayer, 1);
       refresh();
       toast({
-        title: "Prayer completed",
-        description: `MashaAllah! ${prayerLabels.find(p => p.id === prayer)?.label} Qaza marked as prayed.`
+        title: t("prayerCompleted"),
+        description: t("qazaMarkedAsPrayed", { prayer: t(prayer) })
       });
     }
   };
@@ -88,11 +88,11 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-500" />
-              Qaza Prayers
+              {t('qazaPrayers')}
             </CardTitle>
             {stats.total > 0 && (
               <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full font-medium">
-                {stats.total} to make up
+                {t('toMakeUp', { count: stats.total })}
               </span>
             )}
           </div>
@@ -100,7 +100,7 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
         <CardContent className="pb-4">
           {stats.total === 0 ? (
             <p className="text-center text-xs text-muted-foreground py-2">
-              ✨ No Qaza prayers pending. Alhamdulillah!
+              {t('noQazaPending')}
             </p>
           ) : (
             <div className="grid grid-cols-5 gap-2">
@@ -117,7 +117,7 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
                     {prayers[prayer.id]}
                   </button>
                   <span className="text-xs text-muted-foreground mt-1 block">
-                    {prayer.label}
+                    {t(prayer.id)}
                   </span>
                 </div>
               ))}
@@ -134,16 +134,16 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-amber-500" />
-            Qaza Prayer Tracker
+            {t('qazaPrayerTracker')}
           </CardTitle>
           {stats.total > 0 && (
             <span className="text-sm bg-destructive/10 text-destructive px-3 py-1 rounded-full font-medium">
-              Total: {stats.total}
+              {t('totalCount', { count: stats.total })}
             </span>
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Track and complete missed prayers
+          {t('trackMissedPrayers')}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -194,7 +194,7 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
                     variant="ghost"
                     className="h-9 w-9 text-destructive hover:bg-destructive/10 rounded-full"
                     onClick={() => handleAdd(prayer.id)}
-                    title="Add 1"
+                    title={t('addOne')}
                   >
                     <Plus className="w-5 h-5" />
                   </Button>
@@ -204,7 +204,7 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
                     className="h-9 w-9 rounded-full shadow-sm bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30"
                     onClick={() => handleComplete(prayer.id)}
                     disabled={prayers[prayer.id] === 0}
-                    title="Mark 1 as complete"
+                    title={t('markOneComplete')}
                   >
                     <Check className="w-5 h-5" />
                   </Button>
@@ -216,7 +216,7 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
 
         <div className="pt-2 border-t border-border mt-4">
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quick Actions</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('quickActions')}</p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -225,10 +225,10 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
                 onClick={() => {
                   prayerLabels.forEach(p => addQazaPrayer(p.id, 30));
                   refresh();
-                  toast({ title: "Updated", description: "Added 30 days worth of Qaza for all prayers." });
+                  toast({ title: t("updated"), description: t("added30DaysQaza") });
                 }}
               >
-                +30 Days (All)
+                {t('plus30DaysAll')}
               </Button>
               <Button
                 variant="outline"
@@ -237,10 +237,10 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
                 onClick={() => {
                   prayerLabels.forEach(p => addQazaPrayer(p.id, 365));
                   refresh();
-                  toast({ title: "Updated", description: "Added 1 year worth of Qaza for all prayers." });
+                  toast({ title: t("updated"), description: t("added1YearQaza") });
                 }}
               >
-                +1 Year (All)
+                {t('plus1YearAll')}
               </Button>
             </div>
           </div>
@@ -252,10 +252,10 @@ export function QazaTracker({ compact = false }: QazaTrackerProps) {
               <Check className="w-6 h-6" />
             </div>
             <p className="text-sm font-semibold text-foreground">
-              Alhamdulillah!
+              {t('alhamdulillah')}
             </p>
             <p className="text-xs text-muted-foreground">
-              All your prayers are up to date.
+              {t('allPrayersUpToDate')}
             </p>
           </div>
         )}

@@ -33,6 +33,7 @@ import {
 } from '@/lib/changelog';
 import { CURRENT_APP_VERSION } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/hooks/useI18n';
 
 interface ChangelogProps {
   onClose?: () => void;
@@ -58,6 +59,7 @@ const ChangeTypeIcon = ({ type }: { type: ChangeType }) => {
 };
 
 const ChangelogItem = ({ change }: { change: VersionChangelog }) => {
+  const { t, formatDate } = useI18n();
   return (
     <div className="space-y-3">
       {/* Version Header */}
@@ -69,7 +71,7 @@ const ChangelogItem = ({ change }: { change: VersionChangelog }) => {
             </h3>
             {change.version === CURRENT_APP_VERSION && (
               <Badge variant="default" className="bg-primary text-primary-foreground text-xs">
-                Current
+                {t('currentBadge')}
               </Badge>
             )}
           </div>
@@ -78,7 +80,7 @@ const ChangelogItem = ({ change }: { change: VersionChangelog }) => {
           </p>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
             <Calendar className="w-3.5 h-3.5" />
-            {new Date(change.date).toLocaleDateString('en-US', {
+            {formatDate(new Date(change.date), {
               year: 'numeric',
               month: 'long',
               day: 'numeric'
@@ -117,6 +119,7 @@ const ChangelogItem = ({ change }: { change: VersionChangelog }) => {
 
 export function Changelog({ onClose, showCloseButton = true, maxHeight = '60vh' }: ChangelogProps) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
@@ -136,9 +139,9 @@ export function Changelog({ onClose, showCloseButton = true, maxHeight = '60vh' 
               <Package className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <CardTitle className="text-xl">What's New</CardTitle>
+              <CardTitle className="text-xl">{t('whatsNew')}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Version history and updates
+                {t('versionHistoryUpdates')}
               </p>
             </div>
           </div>
@@ -159,7 +162,7 @@ export function Changelog({ onClose, showCloseButton = true, maxHeight = '60vh' 
           <div className="mt-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-600" />
             <span className="text-sm text-emerald-800">
-              New updates available! Check out what's changed.
+              {t('newUpdatesAvailable')}
             </span>
           </div>
         )}
@@ -183,7 +186,7 @@ export function Changelog({ onClose, showCloseButton = true, maxHeight = '60vh' 
           {/* Footer */}
           <div className="mt-6 pt-4 border-t text-center">
             <p className="text-xs text-muted-foreground">
-              You're on version <span className="font-semibold text-foreground">{CURRENT_APP_VERSION}</span>
+              {t('youreOnVersion', { version: CURRENT_APP_VERSION })}
             </p>
           </div>
         </div>
@@ -195,6 +198,7 @@ export function Changelog({ onClose, showCloseButton = true, maxHeight = '60vh' 
 // Compact version for embedding in settings
 export function ChangelogCompact({ onViewFull }: { onViewFull?: () => void }) {
   const latest = CHANGELOG_DATA[0];
+  const { t } = useI18n();
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
@@ -208,10 +212,10 @@ export function ChangelogCompact({ onViewFull }: { onViewFull?: () => void }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h4 className="font-semibold text-sm">Latest Update</h4>
+              <h4 className="font-semibold text-sm">{t('latestUpdate')}</h4>
               {hasUnread && (
                 <Badge variant="default" className="bg-emerald-500 text-white text-xs px-1.5 py-0 h-4">
-                  New
+                  {t('newBadge')}
                 </Badge>
               )}
             </div>
@@ -219,7 +223,7 @@ export function ChangelogCompact({ onViewFull }: { onViewFull?: () => void }) {
               v{latest.version} • {latest.title}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {latest.changes.length} {latest.changes.length === 1 ? 'change' : 'changes'}
+              {t('changesLabel', { count: latest.changes.length })}
             </p>
           </div>
           
@@ -229,7 +233,7 @@ export function ChangelogCompact({ onViewFull }: { onViewFull?: () => void }) {
             onClick={onViewFull}
             className="shrink-0 text-xs h-8"
           >
-            View All
+            {t('viewAll')}
           </Button>
         </div>
       </CardContent>

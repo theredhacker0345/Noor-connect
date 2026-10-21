@@ -73,4 +73,55 @@
     <string name="prayer_asr">عصر</string>
     <string name="prayer_maghrib">مغرب</string>
     <string name="prayer_isha">عشاء</string>
+
+    <!-- Stale data badge -->
+    <string name="widget_stale_badge_text">غیر اپ ڈیٹڈ</string>
+
+    <!-- Accessibility content descriptions -->
+    <string name="widget_a11y_next_prayer">اگلی نماز %1$s، %2$s ہے</string>
+    <string name="widget_a11y_daily_ayah">آج کی آیت: %1$s</string>
+    <string name="widget_a11y_daily_ayah_default">آج کی آیت لوڈ نہیں ہوئی</string>
+    <string name="widget_a11y_quran_progress">قرآن پیش رفت: %1$d فیصد مکمل</string>
+    <string name="widget_a11y_quran_progress_empty">قرآن پیش رفت ہموار نہیں ہوئی</string>
+    <string name="widget_a11y_daily_hadith">آج کی حدیث %1$s سے</string>
+    <string name="widget_a11y_daily_hadith_default">آج کی حدیث دستیاب نہیں</string>
+    <string name="widget_a11y_tasbeeh">تسبیح کاؤنٹر، %1$s، گنتی %2$d</string>
+
+    <!-- Widget Foreground Service -->
+    <string name="widget_monitor_channel_name">وڈجٹ مانیٹر</string>
+    <string name="widget_monitor_channel_desc">درست وڈجٹ اپ ڈیٹس کے لیے قدموں اور مقام کی نگرانی۔</string>
+    <string name="widget_monitor_notif_title">وڈجٹ مانیٹر فعال</string>
+    <string name="widget_monitor_notif_text">نماز کے اوقات کی درستگی کے لیے حرکت کی نگرانی</string>
+
+    <!-- Widget Configuration Activity -->
+    <string name="widget_configure_title">وڈجٹ ترتیبات</string>
+    <string name="widget_configure_size_label">وڈجٹ کا سائز</string>
+    <string name="widget_configure_theme_label">تھیم</string>
+    <string name="widget_theme_system">سسٹم</string>
+    <string name="widget_theme_light">روشن</string>
+    <string name="widget_theme_dark">تاریک</string>
+    <string name="widget_configure_density_label">ڈیٹا کی کثافت: درمیانہ</string>
+    <string name="widget_configure_accent_label">معاون رنگ</string>
+    <string name="widget_configure_cancel">منسوخ کریں</string>
+    <string name="widget_configure_save">محفوظ کریں</string>
+
+    <!-- Empty states (completion) -->
+    <string name="widget_empty_message">نماز کے اوقات ترتیب دینے اور اپنے روحانی سفر کا ٹریک شروع کرنے کے لیے ٹیپ کریں</string>
+    <string name="widget_empty_action">ایپ کھولیں</string>
+
+    <!-- Quran Progress defaults (completion) -->
+    <string name="widget_quran_progress_streak_default">— دن کا تسلسل</string>
+    <string name="widget_quran_progress_last_read_default">آخری پڑھائی: —</string>
+    <string name="widget_quran_progress_juz_default">پارہ — از 30</string>
+    <string name="widget_quran_progress_pages_default">— / 604 صفحات</string>
+    <string name="widget_quran_progress_goal_default">رمضان کا ہدف: —%</string>
+
+    <!-- Tasbeeh defaults and actions (completion) -->
+    <string name="widget_tasbeeh_target_default">/ 33</string>
+    <string name="widget_tasbeeh_total_today_default">آج کا کل: 0</string>
+    <string name="widget_tasbeeh_reset_desc">تسبیح کاؤنٹر ری سیٹ کریں</string>
+    <string name="widget_tasbeeh_open_app_desc">نور کنیکٹ ایپ کھولیں</string>
+
+    <!-- Boot / app events (technical identifier — kept identical to base) -->
+    <string name="boot_reschedule_action">com.noorconnect.app.BOOT_REschedule</string>
 </resources>

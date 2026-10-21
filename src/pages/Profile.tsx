@@ -23,6 +23,7 @@ import {
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { CURRENT_APP_VERSION } from '@/lib/constants';
+import { useI18n } from '@/hooks/useI18n';
 
 interface SettingsRow {
   id: string;
@@ -45,13 +46,13 @@ interface SettingsGroup {
 const GROUPS: SettingsGroup[] = [
   {
     id: 'appearance',
-    title: 'Appearance & Personalization',
-    badge: 'Display',
+    title: 'appearancePersonalization',
+    badge: 'display',
     rows: [
       {
         id: 'appearance',
-        title: 'Theme & Appearance',
-        subtitle: 'Dark mode, custom themes & animation controls',
+        title: 'themeAppearance',
+        subtitle: 'darkModeThemesSubtitle',
         icon: Palette,
         gradient: 'from-amber-500/10 via-amber-500/5 to-transparent border-amber-500/20',
         iconColor: 'text-amber-600 dark:text-amber-400',
@@ -60,8 +61,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'haptics',
-        title: 'Haptic Feedback',
-        subtitle: 'Tactile vibrations & button feel',
+        title: 'hapticFeedback',
+        subtitle: 'hapticSubtitle',
         icon: Vibrate,
         gradient: 'from-purple-500/10 via-purple-500/5 to-transparent border-purple-500/20',
         iconColor: 'text-purple-600 dark:text-purple-400',
@@ -70,8 +71,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'personal',
-        title: 'Personal Information',
-        subtitle: 'Gender preferences, language & currency',
+        title: 'personalInformation',
+        subtitle: 'personalInfoSubtitle',
         icon: User,
         gradient: 'from-blue-500/10 via-blue-500/5 to-transparent border-blue-500/20',
         iconColor: 'text-blue-600 dark:text-blue-400',
@@ -81,13 +82,13 @@ const GROUPS: SettingsGroup[] = [
   },
   {
     id: 'prayer',
-    title: 'Prayer & Adhan',
-    badge: 'Spiritual',
+    title: 'prayerAdhanGroup',
+    badge: 'spiritual',
     rows: [
       {
         id: 'prayer',
-        title: 'Prayer Calculation',
-        subtitle: 'Calculation method, Madhab & Hijri offset',
+        title: 'prayerCalculation',
+        subtitle: 'prayerCalculationSubtitle',
         icon: Clock,
         gradient: 'from-teal-500/10 via-teal-500/5 to-transparent border-teal-500/20',
         iconColor: 'text-teal-600 dark:text-teal-400',
@@ -96,8 +97,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'notifications',
-        title: 'Prayer Notifications',
-        subtitle: 'Adhan reminders, daily alerts & scheduling',
+        title: 'prayerNotifications',
+        subtitle: 'prayerNotificationsSubtitle',
         icon: Bell,
         gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/20',
         iconColor: 'text-emerald-600 dark:text-emerald-400',
@@ -106,8 +107,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'adhan',
-        title: 'Adhan Sounds & Reciters',
-        subtitle: 'Adhan audio selection & custom uploads',
+        title: 'adhanSoundsReciters',
+        subtitle: 'adhanSoundsSubtitle',
         icon: Volume2,
         gradient: 'from-cyan-500/10 via-cyan-500/5 to-transparent border-cyan-500/20',
         iconColor: 'text-cyan-600 dark:text-cyan-400',
@@ -117,13 +118,13 @@ const GROUPS: SettingsGroup[] = [
   },
   {
     id: 'data',
-    title: 'Data & Storage',
-    badge: 'System',
+    title: 'dataStorageGroup',
+    badge: 'system',
     rows: [
       {
         id: 'backup',
-        title: 'Backup & Restore',
-        subtitle: 'Cloud sync, export & local snapshots',
+        title: 'backupRestore',
+        subtitle: 'backupRestoreSubtitle',
         icon: Database,
         gradient: 'from-indigo-500/10 via-indigo-500/5 to-transparent border-indigo-500/20',
         iconColor: 'text-indigo-600 dark:text-indigo-400',
@@ -131,8 +132,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'storage',
-        title: 'Storage & Cache',
-        subtitle: 'Clear cache, offline Quran & download stats',
+        title: 'storageCache',
+        subtitle: 'storageCacheSubtitle',
         icon: HardDrive,
         gradient: 'from-rose-500/10 via-rose-500/5 to-transparent border-rose-500/20',
         iconColor: 'text-rose-600 dark:text-rose-400',
@@ -141,8 +142,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'privacy',
-        title: 'Privacy & Security',
-        subtitle: 'Local data isolation, zero tracking & permissions',
+        title: 'privacySecurity',
+        subtitle: 'privacySecuritySubtitle',
         icon: ShieldCheck,
         gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/20',
         iconColor: 'text-emerald-600 dark:text-emerald-400',
@@ -152,13 +153,13 @@ const GROUPS: SettingsGroup[] = [
   },
   {
     id: 'about',
-    title: 'About & Community',
-    badge: 'Noor',
+    title: 'aboutCommunity',
+    badge: 'noorBadge',
     rows: [
       {
         id: 'about',
-        title: 'About Noor Connect',
-        subtitle: 'App version, release notes & credits',
+        title: 'aboutNoorConnect',
+        subtitle: 'aboutRowSubtitle',
         icon: Info,
         gradient: 'from-orange-500/10 via-orange-500/5 to-transparent border-orange-500/20',
         iconColor: 'text-orange-600 dark:text-orange-400',
@@ -166,8 +167,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'support',
-        title: 'Support & Donate',
-        subtitle: 'Sponsor development & crypto donations',
+        title: 'supportDonate',
+        subtitle: 'supportSubtitle',
         icon: Heart,
         gradient: 'from-pink-500/10 via-pink-500/5 to-transparent border-pink-500/20',
         iconColor: 'text-pink-600 dark:text-pink-400',
@@ -175,8 +176,8 @@ const GROUPS: SettingsGroup[] = [
       },
       {
         id: 'contact',
-        title: 'Contact & Feedback',
-        subtitle: 'Report issues or suggest features',
+        title: 'contactFeedback',
+        subtitle: 'contactFeedbackSubtitle',
         icon: Mail,
         gradient: 'from-violet-500/10 via-violet-500/5 to-transparent border-violet-500/20',
         iconColor: 'text-violet-600 dark:text-violet-400',
@@ -220,7 +221,19 @@ function getCalcMethodDisplay(val: string | null): string | null {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [asyncValues, setAsyncValues] = useState<Record<string, string | null>>({});
+
+  // Translate dynamic pill values that are app words (theme "System", haptic "On/Off");
+  // other values (theme names, calculation methods, byte sizes, counts) are shown as-is.
+  const displayAsyncValue = (asyncKey: string, val: string): string => {
+    if (asyncKey === 'haptic') {
+      if (val === 'On') return t('on');
+      if (val === 'Off') return t('off');
+    }
+    if (asyncKey === 'theme' && val === 'System') return t('system');
+    return val;
+  };
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -293,17 +306,17 @@ const Profile: React.FC = () => {
             <button
               onClick={() => navigate('/')}
               className="p-2 -ml-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
-              aria-label="Go back"
+              aria-label={t('goBack')}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
               <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-none flex items-center gap-2">
-                Settings
+                {t('settings')}
                 <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
               </h1>
               <p className="text-[11px] font-medium tracking-wide text-slate-400 dark:text-slate-400 mt-0.5">
-                Noor Connect • Mobile Control Hub
+                Noor Connect • {t('mobileControlHub')}
               </p>
             </div>
           </div>
@@ -323,13 +336,13 @@ const Profile: React.FC = () => {
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 backdrop-blur-sm">
                 <CheckCircle2 className="w-3 h-3 text-amber-400" />
-                Performance Optimized
+                {t('performanceOptimized')}
               </div>
               <h2 className="text-base font-bold tracking-tight text-amber-100">
-                Islamic Mobile Experience
+                {t('islamicMobileExperience')}
               </h2>
               <p className="text-xs text-slate-300 max-w-[240px]">
-                Configure prayer alerts, themes, and notifications with zero lag.
+                {t('configureWithZeroLag')}
               </p>
             </div>
 
@@ -347,11 +360,11 @@ const Profile: React.FC = () => {
           <section key={group.id} className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-                {group.title}
+                {t(group.title)}
               </h2>
               {group.badge && (
                 <span className="text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-md bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                  {group.badge}
+                  {t(group.badge)}
                 </span>
               )}
             </div>
@@ -375,10 +388,10 @@ const Profile: React.FC = () => {
 
                       <div className="min-w-0 flex-1 pe-2">
                         <div className="text-[14px] font-semibold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
-                          {row.title}
+                          {t(row.title)}
                         </div>
                         <div className="text-[11px] font-normal text-slate-400 dark:text-slate-400 mt-0.5 truncate">
-                          {row.subtitle}
+                          {t(row.subtitle)}
                         </div>
                       </div>
                     </div>
@@ -389,7 +402,7 @@ const Profile: React.FC = () => {
                           <div className="w-8 h-4 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
                         ) : val !== null ? (
                           <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                            {val}
+                            {displayAsyncValue(row.asyncKey!, val)}
                           </span>
                         ) : null
                       )}
@@ -406,7 +419,7 @@ const Profile: React.FC = () => {
         <div className="pt-4 text-center space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
             <Lock className="w-3 h-3" />
-            100% Private • Local Data Security
+            {t('privateLocalSecurity')}
           </div>
 
           <p className="text-xs text-slate-400 dark:text-slate-400 font-medium">

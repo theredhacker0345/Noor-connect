@@ -3,14 +3,16 @@ import { Clock, BookOpen, RotateCcw, BookHeart, BookMarked, Moon, Sun, Settings 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useI18n } from "@/hooks/useI18n";
 import { getTheme, setTheme } from "@/lib/storage";
 import { GeolocationService } from "@/lib/geolocation-service";
 import { unifiedNotifications } from '@/lib/unified-notifications';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [nextPrayer, setNextPrayer] = useState({ name: "Fajr", time: "05:30" });
+  const [nextPrayer, setNextPrayer] = useState(() => ({ name: t("fajr"), time: "05:30" }));
 
   useEffect(() => {
     setIsDarkMode(getTheme() === "dark");
@@ -39,11 +41,11 @@ const Index = () => {
         const data = await res.json();
         const timings = data.data.timings;
         const prayers = [
-          { name: "Fajr", time: timings.Fajr },
-          { name: "Dhuhr", time: timings.Dhuhr },
-          { name: "Asr", time: timings.Asr },
-          { name: "Maghrib", time: timings.Maghrib },
-          { name: "Isha", time: timings.Isha },
+          { name: t("fajr"), time: timings.Fajr },
+          { name: t("dhuhr"), time: timings.Dhuhr },
+          { name: t("asr"), time: timings.Asr },
+          { name: t("maghrib"), time: timings.Maghrib },
+          { name: t("isha"), time: timings.Isha },
         ];
         const now = new Date();
         const currentMins = now.getHours() * 60 + now.getMinutes();
@@ -82,11 +84,11 @@ const Index = () => {
   };
 
   const menuItems = [
-    { icon: Clock, label: "Prayer Times", path: "/prayer-times" },
-    { icon: BookOpen, label: "Qur'an", path: "/quran" },
-    { icon: RotateCcw, label: "Tasbeeh", path: "/tasbeeh" },
-    { icon: BookHeart, label: "Duas", path: "/duas" },
-    { icon: BookMarked, label: "Hadith", path: "/hadith" },
+    { icon: Clock, label: t("prayerTimes"), path: "/prayer-times" },
+    { icon: BookOpen, label: t("quran"), path: "/quran" },
+    { icon: RotateCcw, label: t("tasbeeh"), path: "/tasbeeh" },
+    { icon: BookHeart, label: t("duas"), path: "/duas" },
+    { icon: BookMarked, label: t("hadith"), path: "/hadith" },
   ];
 
   return (
@@ -96,7 +98,7 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground font-arabic">نُور كونيكت</h1>
-            <p className="text-xs text-muted-foreground">100% Private • Offline-first</p>
+            <p className="text-xs text-muted-foreground">{t("privacyOfflineTagline")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
@@ -112,7 +114,7 @@ const Index = () => {
         <Card className="p-5 bg-primary text-primary-foreground border-0">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs opacity-80">Next Prayer</p>
+              <p className="text-xs opacity-80">{t("nextPrayer")}</p>
               <h2 className="text-2xl font-bold">{nextPrayer.name}</h2>
             </div>
             <div className="text-3xl font-bold font-mono">{nextPrayer.time}</div>
@@ -135,7 +137,7 @@ const Index = () => {
 
         {/* Footer */}
         <p className="text-xs text-center text-muted-foreground pt-2">
-          "وَاذْكُرْ رَبَّكَ كَثِيرًا" — Remember your Lord much
+          "وَاذْكُرْ رَبَّكَ كَثِيرًا" {t("rememberYourLordMuch")}
         </p>
       </div>
     </div>

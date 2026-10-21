@@ -39,7 +39,7 @@ function SimpleBarFallback({ chartData }: { chartData: ChartData[] }) {
 }
 
 export function WeeklySalahChart() {
-  const { t: ti18n } = useI18n();
+  const { t: ti18n, formatDate } = useI18n();
   const { animationEnabled } = useSettings();
   const { tier } = useAnimationTier();
   const chartEnabled = animationEnabled && tier !== 'low' && tier !== 'minimal';
@@ -56,8 +56,8 @@ export function WeeklySalahChart() {
       const completed = [day.fajr, day.dhuhr, day.asr, day.maghrib, day.isha].filter(Boolean).length;
       const date = new Date(day.date);
       return {
-        day: date.toLocaleDateString('en', { weekday: 'short' }).slice(0, 2),
-        fullDate: date.toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+        day: formatDate(date, { weekday: 'short' }),
+        fullDate: formatDate(date, { month: 'short', day: 'numeric' }),
         completed,
         total: 5
       };
@@ -80,7 +80,7 @@ export function WeeklySalahChart() {
         percentage: Math.round((totalCompleted / totalPossible) * 100)
       });
     }
-  }, []);
+  }, [formatDate]);
 
   useEffect(() => {
     refreshData();

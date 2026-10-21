@@ -1,0 +1,17 @@
+Noor Connect est un compagnon numérique islamique complet, au design raffiné et strictement respectueux de votre vie privée. Conçu selon les standards modernes, c'est votre outil premium, sans aucun traqueur, pour votre croissance spirituelle quotidienne.
+
+Fonctionnalités et outils clés :
+• Coran et Tafsir améliorés : interface de lecture épurée avec plus de 25 éditions de Tafsir internationales et des traductions multilingues accessibles instantanément hors ligne. Inclut la récitation audio en arrière-plan.
+• Widgets natifs pour l'écran d'accueil : 5 magnifiques widgets natifs ultra-rapides (compte à rebours de la prochaine prière, Ayah du jour, Hadith du jour, progression du Coran et compteur de Tasbeeh interactif).
+• Boussole Qibla premium : intégration native de capteurs haute précision avec une interface élégante, des effets lumineux d'alignement sur la Kaaba et un retour haptique.
+• Horaires de prière et Adhan intelligents : calculs hors ligne rapides et précis (hanafite et chaféite) avec réglages audio granulaires pour chaque prière et un moteur d'alarme en arrière-plan robuste.
+• Suivi menstruel islamique (Noor Cycle) : un suivi professionnel, conscient du Fiqh, qui s'adapte intelligemment à votre phase — en coupant automatiquement les Adhans obligatoires et en suspendant les graphiques sans casser vos séries.
+• Calculateurs essentiels : outils avancés intégrés pour déterminer avec précision la Zakat annuelle et la Fitrana du Ramadan.
+• Vaste bibliothèque islamique : invocations authentiques de Hisnul Muslim, les 99 noms d'Allah animés, quiz islamiques gamifiés, Tibb-e-Nabawi (remèdes islamiques) et checklists complètes de l'Aïd.
+• Registres Qaza et habitudes : registre hors ligne à long terme pour les prières manquées (Qaza Tracker), objectifs de Tasbeeh numérique et constance hebdomadaire des habitudes spirituelles.
+• Médias riches : flux en direct 24h/24 et 7j/7 de La Mecque/Médine et une encyclopédie optimisée de plus de 87 000 hadiths.
+• Réflexions selon l'humeur : Ayahs du jour et salutations islamiques adaptées à ce que vous ressentez.
+
+Principe : la vie privée d'abord :
+Noor Connect applique strictement zéro analytique et zéro traqueur. Toutes vos données personnelles, graphiques et habitudes sont stockés uniquement sur votre appareil, avec sauvegarde et restauration intégrées. Le code est entièrement open source, pour une transparence et une sérénité totales.
+

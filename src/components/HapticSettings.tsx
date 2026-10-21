@@ -11,10 +11,12 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/hooks/useI18n';
 import hapticService, { type HapticSettings } from '@/lib/haptic-service';
 
 export function HapticSettings() {
   const { toast } = useToast();
+  const { t } = useI18n();
   const [settings, setSettings] = useState<HapticSettings>(hapticService.getSettings());
   const [isTesting, setIsTesting] = useState(false);
 
@@ -42,13 +44,13 @@ export function HapticSettings() {
     try {
       await hapticService.test();
       toast({
-        title: "Haptic Test Complete",
-        description: "Did you feel the vibration patterns?",
+        title: t('hapticTestComplete'),
+        description: t('hapticTestCompleteDesc'),
       });
     } catch (error) {
       toast({
-        title: "Haptic Test Failed",
-        description: "Haptic feedback may not be available on this device",
+        title: t('hapticTestFailed'),
+        description: t('hapticTestFailedDesc'),
         variant: "destructive"
       });
     } finally {
@@ -65,8 +67,8 @@ export function HapticSettings() {
             {settings.enabled ? <Vibrate className="w-5 h-5" /> : <VibrateOff className="w-5 h-5" />}
           </div>
           <div>
-            <Label className="text-sm font-bold">Haptic Feedback</Label>
-            <p className="text-xs text-muted-foreground">Vibration for app interactions</p>
+            <Label className="text-sm font-bold">{t('sectionHapticsTitle')}</Label>
+            <p className="text-xs text-muted-foreground">{t('hapticFeedbackDesc')}</p>
           </div>
         </div>
         <Switch
@@ -82,7 +84,7 @@ export function HapticSettings() {
             <div className="space-y-3">
               <Label className="text-sm font-bold flex items-center gap-2">
                 <HandHeart className="w-4 h-4" />
-                Vibration Intensity
+                {t('vibrationIntensity')}
               </Label>
               <Select 
                 value={settings.intensity} 
@@ -94,20 +96,20 @@ export function HapticSettings() {
                 <SelectContent>
                   <SelectItem value="light">
                     <div className="flex flex-col">
-                      <span className="font-medium">Light</span>
-                      <span className="text-xs text-muted-foreground">Subtle vibration</span>
+                      <span className="font-medium">{t('intensityLight')}</span>
+                      <span className="text-xs text-muted-foreground">{t('subtleVibration')}</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="medium">
                     <div className="flex flex-col">
-                      <span className="font-medium">Medium</span>
-                      <span className="text-xs text-muted-foreground">Balanced feedback</span>
+                      <span className="font-medium">{t('intensityMedium')}</span>
+                      <span className="text-xs text-muted-foreground">{t('balancedFeedback')}</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="heavy">
                     <div className="flex flex-col">
-                      <span className="font-medium">Heavy</span>
-                      <span className="text-xs text-muted-foreground">Strong vibration</span>
+                      <span className="font-medium">{t('intensityHeavy')}</span>
+                      <span className="text-xs text-muted-foreground">{t('strongVibration')}</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -117,7 +119,7 @@ export function HapticSettings() {
 
           {/* Feature Toggles */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">When to Vibrate</h3>
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">{t('whenToVibrate')}</h3>
             
             {/* Prayer Notifications */}
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -126,8 +128,8 @@ export function HapticSettings() {
                   <Bell className="w-4 h-4" />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Prayer Times</Label>
-                  <p className="text-xs text-muted-foreground">Adhan and prayer reminders</p>
+                  <Label className="text-sm font-medium">{t('prayerTimes')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('adhanPrayerReminders')}</p>
                 </div>
               </div>
               <Switch
@@ -143,8 +145,8 @@ export function HapticSettings() {
                   <Bookmark className="w-4 h-4" />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Bookmark Actions</Label>
-                  <p className="text-xs text-muted-foreground">Saving/deleting bookmarks</p>
+                  <Label className="text-sm font-medium">{t('bookmarkActions')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('bookmarkActionsDesc')}</p>
                 </div>
               </div>
               <Switch
@@ -160,8 +162,8 @@ export function HapticSettings() {
                   <MousePointer className="w-4 h-4" />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">UI Interactions</Label>
-                  <p className="text-xs text-muted-foreground">Buttons and navigation</p>
+                  <Label className="text-sm font-medium">{t('uiInteractions')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('uiInteractionsDesc')}</p>
                 </div>
               </div>
               <Switch
@@ -175,8 +177,8 @@ export function HapticSettings() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-sm font-bold">Test Haptics</Label>
-                <p className="text-xs text-muted-foreground">Feel different vibration patterns</p>
+                <Label className="text-sm font-bold">{t('testHaptics')}</Label>
+                <p className="text-xs text-muted-foreground">{t('testHapticsDesc')}</p>
               </div>
               <Button 
                 variant="outline" 
@@ -185,7 +187,7 @@ export function HapticSettings() {
                 className="gap-2"
               >
                 <Vibrate className="w-4 h-4" />
-                {isTesting ? 'Testing...' : 'Test Now'}
+                {isTesting ? t('testingLabel') : t('testNow')}
               </Button>
             </div>
           </Card>

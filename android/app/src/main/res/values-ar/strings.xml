@@ -73,4 +73,55 @@
     <string name="prayer_asr">العصر</string>
     <string name="prayer_maghrib">المغرب</string>
     <string name="prayer_isha">العشاء</string>
+
+    <!-- Stale data badge -->
+    <string name="widget_stale_badge_text">غير محدث</string>
+
+    <!-- Accessibility content descriptions -->
+    <string name="widget_a11y_next_prayer">الصلاة القادمة %1$s، %2$s</string>
+    <string name="widget_a11y_daily_ayah">آية اليوم: %1$s</string>
+    <string name="widget_a11y_daily_ayah_default">لم يتم تحميل آية اليوم</string>
+    <string name="widget_a11y_quran_progress">تقدم قراءة القرآن: %1$d بالمئة</string>
+    <string name="widget_a11y_quran_progress_empty">لم تتم مزامنة تقدم قراءة القرآن</string>
+    <string name="widget_a11y_daily_hadith">حديث اليوم من %1$s</string>
+    <string name="widget_a11y_daily_hadith_default">حديث اليوم غير متوفر</string>
+    <string name="widget_a11y_tasbeeh">عداد التسبيح، %1$s، العدد %2$d</string>
+
+    <!-- Widget Foreground Service -->
+    <string name="widget_monitor_channel_name">مراقب الأدوات</string>
+    <string name="widget_monitor_channel_desc">يراقب الخطوات والموقع لإجراء تحديثات دقيقة للأدوات.</string>
+    <string name="widget_monitor_notif_title">مراقب الأدوات نشط</string>
+    <string name="widget_monitor_notif_text">تتبع الحركة لضمان دقة مواقيت الصلاة</string>
+
+    <!-- Widget Configuration Activity -->
+    <string name="widget_configure_title">إعدادات الأدوات</string>
+    <string name="widget_configure_size_label">حجم الأداة</string>
+    <string name="widget_configure_theme_label">المظهر</string>
+    <string name="widget_theme_system">النظام</string>
+    <string name="widget_theme_light">فاتح</string>
+    <string name="widget_theme_dark">داكن</string>
+    <string name="widget_configure_density_label">كثافة البيانات: متوسط</string>
+    <string name="widget_configure_accent_label">لون التمييز</string>
+    <string name="widget_configure_cancel">إلغاء</string>
+    <string name="widget_configure_save">حفظ</string>
+
+    <!-- Empty states (completion) -->
+    <string name="widget_empty_message">اضغط لإعداد مواقيت الصلاة وبدء تتبع رحلتك الروحانية</string>
+    <string name="widget_empty_action">افتح التطبيق</string>
+
+    <!-- Quran Progress defaults (completion) -->
+    <string name="widget_quran_progress_streak_default">— يوم متتالي</string>
+    <string name="widget_quran_progress_last_read_default">آخر قراءة: —</string>
+    <string name="widget_quran_progress_juz_default">الجزء — من 30</string>
+    <string name="widget_quran_progress_pages_default">— / 604 صفحة</string>
+    <string name="widget_quran_progress_goal_default">هدف رمضان: —%</string>
+
+    <!-- Tasbeeh defaults and actions (completion) -->
+    <string name="widget_tasbeeh_target_default">/ 33</string>
+    <string name="widget_tasbeeh_total_today_default">إجمالي اليوم: 0</string>
+    <string name="widget_tasbeeh_reset_desc">إعادة تعيين عداد التسبيح</string>
+    <string name="widget_tasbeeh_open_app_desc">افتح تطبيق نور كونكت</string>
+
+    <!-- Boot / app events (technical identifier — kept identical to base) -->
+    <string name="boot_reschedule_action">com.noorconnect.app.BOOT_REschedule</string>
 </resources>

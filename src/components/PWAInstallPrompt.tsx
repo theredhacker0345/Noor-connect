@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, X, Smartphone } from 'lucide-react';
+import { useI18n } from '@/hooks/useI18n';
 
 const FDROID_URL = 'https://f-droid.org/en/packages/com.noorconnect.app/';
 
 export function PWAInstallPrompt() {
+  const { t } = useI18n();
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isNativeApp, setIsNativeApp] = useState(false);
@@ -57,10 +59,10 @@ export function PWAInstallPrompt() {
           
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm text-foreground mb-1">
-              Get the Android App
+              {t('pwaGetAndroidApp')}
             </h3>
             <p className="text-xs text-muted-foreground mb-3">
-              Download Noor Connect from F-Droid for the full experience — offline, faster, with native widgets and prayer alarms.
+              {t('pwaFdrDesc')}
             </p>
             
             <div className="flex gap-2">
@@ -70,7 +72,7 @@ export function PWAInstallPrompt() {
                 className="flex items-center gap-1 text-xs"
               >
                 <ExternalLink className="w-3 h-3" />
-                Get on F-Droid
+                {t('pwaGetOnFdroid')}
               </Button>
               <Button 
                 size="sm" 
@@ -78,7 +80,7 @@ export function PWAInstallPrompt() {
                 onClick={handleDismiss}
                 className="text-xs"
               >
-                Maybe later
+                {t('pwaMaybeLater')}
               </Button>
             </div>
           </div>

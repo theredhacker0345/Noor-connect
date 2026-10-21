@@ -3,6 +3,7 @@ import { Upload, Play, Pause, Trash2, Check, Music } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/hooks/useI18n";
 import { getAdhanPreferences, setAdhanForPrayer, type PrayerName, type AdhanPreferences } from "@/lib/adhan-preferences";
 
 const CUSTOM_ADHAN_KEY = 'custom-adhan-audio';
@@ -65,6 +66,7 @@ export const getCustomAdhanUrl = async (id: string): Promise<string | null> => {
 const PRAYERS: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export function CustomAdhanUpload() {
+  const { t } = useI18n();
   const [customAdhans, setCustomAdhans] = useState<CustomAdhan[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<AdhanPreferences>(getAdhanPreferences());
@@ -106,13 +108,13 @@ export function CustomAdhanUpload() {
     if (!file) return;
 
     if (!file.type.startsWith('audio/')) {
-      toast({ title: "Invalid file", description: "Please select an audio file (MP3, WAV, etc.)", variant: "destructive" });
+      toast({ title: t('invalidFile'), description: t('invalidFileDesc'), variant: "destructive" });
       return;
     }
 
     // Max 10MB
     if (file.size > 10 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Please select a file under 10MB", variant: "destructive" });
+      toast({ title: t('fileTooLarge'), description: t('fileTooLargeDesc'), variant: "destructive" });
       return;
     }
 
@@ -134,10 +136,10 @@ export function CustomAdhanUpload() {
       await adhanStore.setItem(CUSTOM_ADHAN_KEY, updated);
       setCustomAdhans(updated);
 
-      toast({ title: "Adhan uploaded", description: `${newAdhan.name} added to your collection` });
+      toast({ title: t('adhanUploaded'), description: t('adhanUploadedDesc', { name: newAdhan.name }) });
     } catch (error) {
       console.error("Upload error:", error);
-      toast({ title: "Upload failed", description: "Could not save the audio file", variant: "destructive" });
+      toast({ title: t('uploadFailed'), description: t('uploadFailedDesc'), variant: "destructive" });
     }
 
     if (fileInputRef.current) {
@@ -198,7 +200,7 @@ export function CustomAdhanUpload() {
       setPreferences(newPrefs);
     }
 
-    toast({ title: "Adhan deleted" });
+    toast({ title: t('adhanDeleted') });
   };
 
   const handleAssignToPrayer = (adhanId: string, prayer: PrayerName) => {
@@ -206,8 +208,8 @@ export function CustomAdhanUpload() {
     setPreferences(prev => ({ ...prev, [prayer]: adhanId }));
 
     toast({
-      title: "Adhan assigned",
-      description: `Assigned to ${prayer}`
+      title: t('adhanAssigned'),
+      description: t('assignedToPrayer', { prayer: t(prayer.toLowerCase()) })
     });
 
     // Trigger notification reschedule
@@ -227,7 +229,7 @@ export function CustomAdhanUpload() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Music className="w-5 h-5 text-primary" />
-          <h3 className="font-medium">Custom Adhan Library</h3>
+          <h3 className="font-medium">{t('customAdhanLibrary')}</h3>
         </div>
         <input
           type="file"
@@ -242,13 +244,13 @@ export function CustomAdhanUpload() {
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload className="w-4 h-4 mr-2" />
-          Upload MP3
+          {t('uploadMp3')}
         </Button>
       </div>
 
       {customAdhans.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
-          No custom adhans uploaded. Upload your own MP3 file to use as prayer notification.
+          {t('noCustomAdhans')}
         </p>
       ) : (
         <div className="space-y-4">
@@ -276,12 +278,12 @@ export function CustomAdhanUpload() {
                   <div className="flex flex-wrap gap-1 mt-1">
                     {getAssignedPrayers(adhan.id).map(p => (
                       <span key={p} className="px-1.5 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded uppercase">
-                        {p}
+                        {t(p.toLowerCase())}
                       </span>
                     ))}
                     {getAssignedPrayers(adhan.id).length === 0 && (
                       <span className="text-xs text-muted-foreground italic">
-                        Not assigned to any prayer
+                        {t('notAssignedToPrayer')}
                       </span>
                     )}
                   </div>
@@ -298,7 +300,7 @@ export function CustomAdhanUpload() {
               </div>
 
               <div className="pt-2 border-t border-border/50">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-2">Assign to Prayer:</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-2">{t('assignToPrayer')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {PRAYERS.map(prayer => (
                     <Button
@@ -308,7 +310,7 @@ export function CustomAdhanUpload() {
                       className="h-7 text-xs px-2"
                       onClick={() => handleAssignToPrayer(adhan.id, prayer)}
                     >
-                      {prayer}
+                      {t(prayer.toLowerCase())}
                       {isAssignedTo(adhan.id, prayer) && <Check className="w-3 h-3 ml-1" />}
                     </Button>
                   ))}
@@ -320,7 +322,7 @@ export function CustomAdhanUpload() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        Assign custom audio to specific prayers. They will automatically play at prayer times.
+        {t('customAdhanFooter')}
       </p>
     </Card>
   );

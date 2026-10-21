@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrayerTime } from "@/lib/time-formatter";
 import type { PrayerTimesWithEnd } from "@/hooks/usePrayerTimes";
+import { useI18n } from "@/hooks/useI18n";
 
 export interface RamadanWidgetProps {
   isRamadan: boolean;
@@ -41,6 +42,7 @@ export function RamadanWidget({
   timeZone,
 }: RamadanWidgetProps) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [nextInfo, setNextInfo] = useState<NextInfo>({ label: "", time: null, countdown: "" });
 
   const fajrStart = prayerTimesWithEnd?.fajr?.start ?? null;
@@ -75,13 +77,13 @@ export function RamadanWidget({
     let label: string;
     let time: Date;
     if (now < fajrStart) {
-      label = "Suhoor ends";
+      label = t('suhoorEnds');
       time = fajrStart;
     } else if (now < maghribStart) {
-      label = "Iftar";
+      label = t('iftar');
       time = maghribStart;
     } else {
-      label = "Suhoor ends (tomorrow)";
+      label = t('suhoorEndsTomorrow');
       time = new Date(fajrStart.getTime() + 24 * 60 * 60 * 1000);
     }
     const countdown = formatCountdown(time.getTime() - now.getTime());
@@ -96,7 +98,7 @@ export function RamadanWidget({
       }
       return { label, time, countdown };
     });
-  }, [isRamadan, fajrStart, maghribStart]);
+  }, [isRamadan, fajrStart, maghribStart, t]);
 
   useEffect(() => {
     computeNext();
@@ -122,7 +124,7 @@ export function RamadanWidget({
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs uppercase tracking-[0.2em] font-bold flex items-center gap-2 text-white">
               <Moon className="w-4 h-4 text-[#C9860A]" />
-              Ramadan
+              {t('ramadan')}
             </CardTitle>
             <Button
               variant="ghost"
@@ -130,21 +132,21 @@ export function RamadanWidget({
               className="h-8 px-3 rounded-xl text-[#C9860A] hover:text-[#E8A020] hover:bg-[#C9860A]/10 font-bold uppercase tracking-wider text-xs"
               onClick={() => navigate("/ramadan")}
             >
-              Open
+              {t('open')}
               <ArrowUpRight className="w-4 h-4 ms-1" />
             </Button>
           </div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-2">
-            Set goals, track fasting, and get Suhoor/Iftar times.
+            {t('ramadanWidgetDesc')}
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between gap-2 text-xs uppercase font-bold tracking-widest">
             <Badge variant="secondary" className="rounded-full bg-[#C9860A]/10 text-[#C9860A] border-none">
-              Not in Ramadan
+              {t('notInRamadan')}
             </Badge>
             <Badge variant="outline" className="rounded-full border-[#C9860A]/30 text-white/60">
-              Plan ahead
+              {t('planAhead')}
             </Badge>
           </div>
           <Button
@@ -153,7 +155,7 @@ export function RamadanWidget({
             className="w-full rounded-xl bg-[#C9860A] text-white hover:bg-[#C9860A]/90 font-bold uppercase tracking-wider text-xs"
             onClick={() => navigate("/ramadan")}
           >
-            Open Ramadan Mode
+            {t('openRamadanMode')}
           </Button>
         </CardContent>
       </Card>
@@ -169,10 +171,10 @@ export function RamadanWidget({
         <div className="flex items-center justify-between">
           <CardTitle className="text-xs uppercase tracking-[0.2em] font-bold flex items-center gap-2 text-white">
             <Moon className="w-4 h-4 text-[#C9860A]" />
-            Ramadan
+            {t('ramadan')}
           </CardTitle>
           <Badge variant="secondary" className="rounded-full bg-[#C9860A]/10 text-[#C9860A] border-none uppercase tracking-widest font-bold text-xs">
-            Day {ramadanDay || "—"}
+            {ramadanDay ? t('ramadanDayLabel', { count: ramadanDay }) : "—"}
           </Badge>
         </div>
       </CardHeader>
@@ -180,7 +182,7 @@ export function RamadanWidget({
       <CardContent className="space-y-4">
         {!hasTimes ? (
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
-            Loading Suhoor and Iftar times…
+            {t('loadingSuhoorIftar')}
           </div>
         ) : (
           <>
@@ -188,7 +190,7 @@ export function RamadanWidget({
               <div className="p-3 rounded-2xl bg-card/50 border border-border/40 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1">
                   <Sunrise className="w-3.5 h-3.5 text-[#C9860A]" />
-                  Suhoor ends
+                  {t('suhoorEnds')}
                 </div>
                 <div className="text-xl font-bold font-serif italic tabular-nums text-white">
                   {suhoorTimeText}
@@ -197,7 +199,7 @@ export function RamadanWidget({
               <div className="p-3 rounded-2xl bg-card/50 border border-border/40 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1">
                   <Sunset className="w-3.5 h-3.5 text-[#C9860A]" />
-                  Iftar
+                  {t('iftar')}
                 </div>
                 <div className="text-xl font-bold font-serif italic tabular-nums text-white">
                   {iftarTimeText}
@@ -209,7 +211,7 @@ export function RamadanWidget({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Timer className="w-4 h-4 text-[#C9860A]" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-white">{nextInfo.label || "Next"}</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-white">{nextInfo.label || t('next')}</span>
                 </div>
                 <span className="text-sm font-bold tabular-nums text-[#C9860A]">
                   {nextInfo.countdown || "—"}
@@ -219,7 +221,7 @@ export function RamadanWidget({
               {typeof fastingProgress === "number" && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                    <span>Fasting progress</span>
+                    <span>{t('fastingProgress')}</span>
                     <span className="font-bold text-[#C9860A]">{fastingProgress}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-black/50 overflow-hidden">
@@ -238,7 +240,7 @@ export function RamadanWidget({
               className="w-full rounded-xl border-[#C9860A]/30 text-white hover:bg-[#C9860A]/10 font-bold uppercase tracking-wider text-xs"
               onClick={() => navigate("/ramadan")}
             >
-              Open Ramadan Mode
+              {t('openRamadanMode')}
               <ArrowUpRight className="w-4 h-4 ms-2" />
             </Button>
           </>

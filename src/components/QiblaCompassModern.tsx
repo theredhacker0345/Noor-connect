@@ -19,6 +19,7 @@ import {
   type QiblaResult,
 } from '@/lib/qibla';
 import { useI18n } from '@/hooks/useI18n';
+import { Trans } from 'react-i18next';
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useSettings } from '@/contexts/SettingsContext';

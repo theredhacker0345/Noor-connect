@@ -4,6 +4,7 @@ import { Bell, MapPin, ChevronRight, Activity, Compass, Grid3X3 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
+import { useI18n } from "@/hooks/useI18n";
 import { globalTimerManager } from "@/lib/timer-manager";
 import { useAnimationTier } from "@/hooks/useAnimationTier";
 
@@ -143,6 +144,7 @@ function PremiumDashboardInner({
   const { animationEnabled } = useSettings();
   const { tier } = useAnimationTier();
   const { isRamadan, ramadanDay } = useIslamicCalendar();
+  const { t } = useI18n();
   const [timeFormat, setTimeFormat] = useState<'12' | '24'>(() => (localStorage.getItem('time-format') as '12' | '24') || '24');
 
   useEffect(() => {
@@ -168,7 +170,7 @@ function PremiumDashboardInner({
           >
             <div className="p-6 overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-black text-foreground">Set Location</h3>
+                <h3 className="text-xl font-black text-foreground">{t('setLocation')}</h3>
                 <button
                   onClick={() => setShowManualLocationDialog(false)}
                   className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-muted text-muted-foreground hover:bg-muted/80"
@@ -182,22 +184,22 @@ function PremiumDashboardInner({
                   onClick={async () => {
                     const success = await location.detectLocation();
                     if (success) {
-                      toast({ title: "Location Detected", description: `Updated to ${location.locationName}` });
+                      toast({ title: t('locationDetected'), description: t('updatedTo', { name: location.locationName }) });
                       setShowManualLocationDialog(false);
                     } else {
-                      toast({ title: "Detection Failed", description: "Please enable location permissions", variant: "destructive" });
+                      toast({ title: t('locationDetectionFailed'), description: t('pleaseEnableLocationPermissions'), variant: "destructive" });
                     }
                   }}
                   disabled={location.isDetecting}
                   className="w-full h-12 rounded-2xl font-bold text-white gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 border-none hover:opacity-90 transition-opacity"
                 >
                   {location.isDetecting ? <Activity className="w-4 h-4 animate-spin" /> : <Compass className="w-4 h-4" />}
-                  {location.isDetecting ? "Detecting..." : "Auto-Detect (GPS/IP)"}
+                  {location.isDetecting ? t('detecting') : t('autoDetectGpsIp')}
                 </Button>
 
                 <div className="flex items-center gap-3 py-2">
                   <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">or search</span>
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('orSearch')}</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
 
@@ -211,9 +213,9 @@ function PremiumDashboardInner({
                       location.setLocation(coords.latitude, coords.longitude, `${city}, ${country}`, result.timezone);
                       await prayerTimesHook.setManualLocation(city, country);
                       setShowManualLocationDialog(false);
-                      toast({ title: "Location Updated", description: `Time adjusted to ${result.timezone}` });
+                      toast({ title: t('locationUpdated'), description: t('timeAdjustedTo', { timezone: result.timezone }) });
                     } catch (err) {
-                      toast({ title: "Selection Failed", description: "Could not sync timezone. Please try again.", variant: "destructive" });
+                      toast({ title: t('selectionFailed'), description: t('couldNotSyncTimezone'), variant: "destructive" });
                     } finally {
                       setLoadingAPI(false);
                     }
@@ -265,7 +267,7 @@ function PremiumDashboardInner({
           <div className="relative z-10 p-5">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: '#C9860A' }}>
-                Next Prayer
+                {t('nextPrayer')}
               </p>
               <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
                 {locationLabel}
@@ -273,15 +275,15 @@ function PremiumDashboardInner({
             </div>
             <div className="flex items-end justify-between mb-4">
               <p className="text-3xl font-bold text-white" style={{ fontFamily: 'inherit', fontStyle: 'italic' }}>
-                {nextPrayer.name}
+                {nextPrayer.name && nextPrayer.name !== "Loading..." ? t(nextPrayer.name.toLowerCase()) : t('loading')}
               </p>
               <div className="text-right">
-                <p className="text-xs uppercase tracking-widest text-white/40 mb-0.5">In</p>
+                <p className="text-xs uppercase tracking-widest text-white/40 mb-0.5">{t('inCountdownLabel')}</p>
                 <LiveCountdown targetTime={nextPrayer.targetTime} />
               </div>
             </div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-white/40">at {nextPrayer.time}</span>
+              <span className="text-xs text-white/40">{t('atTime', { time: nextPrayer.time })}</span>
             </div>
             {/* Amber progress bar */}
             <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
@@ -306,12 +308,12 @@ function PremiumDashboardInner({
             className="w-full"
           >
                       <div className="flex items-center justify-between px-1 mb-4">
-                        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Prayer Times</h2>
+                        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{t('prayerTimes')}</h2>
                         <button
                           onClick={onLocationClick}
                           className="text-xs font-semibold uppercase tracking-widest transition-all text-muted-foreground hover:text-foreground"
                         >
-                          Change City
+                          {t('changeCity')}
                         </button>
                       </div>
 
@@ -345,13 +347,13 @@ function PremiumDashboardInner({
                                     className="text-xs font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full"
                                     style={{ background: 'rgba(201,134,10,0.1)', color: '#C9860A' }}
                                   >
-                                    NEXT
+                                    {t('next')}
                                   </span>
                                 )}
                               </div>
 
                               <p className="font-bold text-sm leading-tight text-foreground">
-                                {prayer.name}
+                                {t(prayer.name.toLowerCase())}
                               </p>
                               <p className="text-sm mt-0.5 font-semibold" style={{ color: prayer.isActive ? '#C9860A' : 'hsl(var(--muted-foreground))' }}>
                                 {prayer.time}
@@ -372,7 +374,7 @@ function PremiumDashboardInner({
             className="p-5 rounded-[28px] bg-card/40 border border-border/40 backdrop-blur-md"
           >
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Daily Salah</h3>
+                        <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{t('dailySalah')}</h3>
                         <div className="px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(201,134,10,0.1)', color: '#C9860A' }}>
                           {prayers.filter(p => p.isCompleted).length} / 5
                         </div>
@@ -399,7 +401,7 @@ function PremiumDashboardInner({
                               )}
                             </div>
                             <span className="text-xs font-semibold" style={{ color: prayer.isCompleted ? '#C9860A' : 'hsl(var(--muted-foreground))' }}>
-                              {prayer.name.slice(0, 3)}
+                              {t(prayer.name.toLowerCase()).slice(0, 3)}
                             </span>
                           </button>
                         ))}

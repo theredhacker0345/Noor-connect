@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, RefreshCw, Share2, Volume2, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Ayah {
   arabic: string;
@@ -15,6 +16,7 @@ interface Ayah {
   surah: string;
   ayahNumber: number;
   reflection?: string;
+  reflectionKey?: string;
 }
 
 const ayahCollection: Ayah[] = [
@@ -23,70 +25,70 @@ const ayahCollection: Ayah[] = [
     translation: "In the name of Allah, the Entirely Merciful, the Especially Merciful", 
     surah: "Al-Fatiha", 
     ayahNumber: 1,
-    reflection: "Begin every task in Allah's name for blessings and success."
+    reflectionKey: "ayahReflection1"
   },
   { 
     arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ", 
     translation: "All praise is due to Allah, Lord of the worlds", 
     surah: "Al-Fatiha", 
     ayahNumber: 2,
-    reflection: "Gratitude opens the doors to more blessings."
+reflectionKey: "ayahReflection2"
   },
   { 
     arabic: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", 
     translation: "You alone we worship, and You alone we ask for help", 
     surah: "Al-Fatiha", 
     ayahNumber: 5,
-    reflection: "True dependence is only on Allah."
+reflectionKey: "ayahReflection3"
   },
   { 
     arabic: "وَإِلَٰهُكُمْ إِلَٰهٌ وَاحِدٌ ۖ لَّا إِلَٰهَ إِلَّا هُوَ الرَّحْمَٰنُ الرَّحِيمُ", 
     translation: "And your god is one God. There is no deity except Him, the Entirely Merciful, the Especially Merciful.", 
     surah: "Al-Baqarah", 
     ayahNumber: 163,
-    reflection: "Tawhid is the foundation of faith."
+reflectionKey: "ayahReflection4"
   },
   { 
     arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ", 
     translation: "Allah - there is no deity except Him, the Ever-Living, the Sustainer of existence.", 
     surah: "Al-Baqarah", 
     ayahNumber: 255,
-    reflection: "Allah is eternal and sustains all creation."
+reflectionKey: "ayahReflection5"
   },
   { 
     arabic: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ", 
     translation: "Our Lord, give us in this world good and in the Hereafter good, and protect us from the punishment of the Fire.", 
     surah: "Al-Baqarah", 
     ayahNumber: 201,
-    reflection: "Balance between worldly and spiritual life."
+reflectionKey: "ayahReflection6"
   },
   { 
     arabic: "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا", 
     translation: "Allah does not burden a soul beyond that it can bear.", 
     surah: "Al-Baqarah", 
     ayahNumber: 286,
-    reflection: "Trust in Allah's wisdom and mercy."
+reflectionKey: "ayahReflection7"
   },
   { 
     arabic: "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ", 
     translation: "And whoever relies upon Allah - then He is sufficient for him.", 
     surah: "At-Talaq", 
     ayahNumber: 3,
-    reflection: "Complete trust in Allah brings peace."
+reflectionKey: "ayahReflection8"
   },
   { 
     arabic: "إِنَّ مَعَ الْعُسْرِ يُسْرًا", 
     translation: "Indeed, with hardship comes ease.", 
     surah: "Ash-Sharh", 
     ayahNumber: 6,
-    reflection: "Every difficulty is followed by relief."
+reflectionKey: "ayahReflection9"
   },
   { 
     arabic: "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ", 
     translation: "Unquestionably, by the remembrance of Allah hearts are assured.", 
     surah: "Ar-Ra'd", 
     ayahNumber: 28,
-    reflection: "Peace is found in Allah's remembrance."
+reflectionKey: "ayahReflection10"
   }
 ];
 
@@ -98,6 +100,7 @@ export function EnhancedDailyAyah() {
   const [loading, setLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const getDailyAyah = useCallback(() => {
     const today = new Date().toDateString();
@@ -115,7 +118,10 @@ export function EnhancedDailyAyah() {
       return selectedAyah;
     }
 
-    return JSON.parse(storedAyah);
+    const stored = JSON.parse(storedAyah);
+    // Migrate pre-i18n cache entries to the keyed-reflection shape
+    const match = ayahCollection.find(a => a.surah === stored.surah && a.ayahNumber === stored.ayahNumber);
+    return match ?? stored;
   }, []);
 
   const loadAyah = useCallback(() => {
@@ -175,8 +181,8 @@ export function EnhancedDailyAyah() {
       } else {
         await navigator.clipboard.writeText(text);
         toast({
-          title: "Copied!",
-          description: "Ayah copied to clipboard",
+          title: t('copiedToast'),
+          description: t('ayahCopiedToClipboard'),
         });
       }
     } catch (error) {
@@ -190,8 +196,8 @@ export function EnhancedDailyAyah() {
     try {
       await navigator.clipboard.writeText(ayah.translation);
       toast({
-        title: "Copied!",
-        description: "Ayah translation copied",
+        title: t('copiedToast'),
+        description: t('ayahTranslationCopied'),
       });
     } catch (error) {
       console.error('Error copying:', error);
@@ -229,7 +235,7 @@ export function EnhancedDailyAyah() {
               <BookOpen className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary">Daily Ayah</h3>
+              <h3 className="font-semibold text-primary">{t('dailyAyah')}</h3>
               <p className="text-xs text-muted-foreground">
                 {ayah.surah} : {ayah.ayahNumber}
               </p>
@@ -242,7 +248,7 @@ export function EnhancedDailyAyah() {
               size="icon"
               className="h-8 w-8 rounded-xl hover:bg-primary/10 transition-colors"
               onClick={copyAyah}
-              aria-label="Copy ayah"
+              aria-label={t('copyAyah')}
             >
               <Copy className="w-4 h-4 text-muted-foreground" />
             </Button>
@@ -251,7 +257,7 @@ export function EnhancedDailyAyah() {
               size="icon"
               className="h-8 w-8 rounded-xl hover:bg-primary/10 transition-colors"
               onClick={refreshAyah}
-              aria-label="Show another ayah"
+              aria-label={t('showAnotherAyah')}
             >
               <RefreshCw className={`w-4 h-4 text-muted-foreground transition-transform ${isAnimating ? 'animate-spin' : ''}`} />
             </Button>
@@ -260,7 +266,7 @@ export function EnhancedDailyAyah() {
               size="icon"
               className="h-8 w-8 rounded-xl hover:bg-primary/10 transition-colors"
               onClick={shareAyah}
-              aria-label="Share ayah"
+              aria-label={t('shareAyah')}
             >
               <Share2 className="w-4 h-4 text-muted-foreground" />
             </Button>
@@ -282,10 +288,10 @@ export function EnhancedDailyAyah() {
         </div>
 
         {/* Reflection */}
-        {ayah.reflection && (
+        {(ayah.reflection || ayah.reflectionKey) && (
           <div className={`p-3 rounded-xl bg-primary/5 border border-primary/10 transition-all duration-500 delay-200 ${isAnimating ? 'opacity-0 transform translate-y-2' : 'opacity-100 transform translate-y-0'}`}>
             <p className="text-sm text-muted-foreground italic">
-              💭 {ayah.reflection}
+              💭 {ayah.reflectionKey ? t(ayah.reflectionKey) : ayah.reflection}
             </p>
           </div>
         )}
@@ -299,11 +305,11 @@ export function EnhancedDailyAyah() {
             onClick={() => window.location.href = '/quran'}
           >
             <BookOpen className="w-4 h-4" />
-            Read Quran
+            {t('readQuran')}
           </Button>
           
           <div className="text-xs text-muted-foreground">
-            Updated daily at Fajr
+            {t('updatedDailyAtFajr')}
           </div>
         </div>
       </CardContent>

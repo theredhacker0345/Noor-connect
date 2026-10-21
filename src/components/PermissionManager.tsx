@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { permissionManager, type PermissionType, type PermissionInfo } from '@/lib/permission-manager';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext-new';
+import { useI18n } from '@/hooks/useI18n';
 import { GeolocationService } from '@/lib/geolocation-service';
 
 interface PermissionManagerProps {
@@ -16,7 +16,7 @@ interface PermissionManagerProps {
 
 const PermissionManager = ({ className }: PermissionManagerProps) => {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t } = useI18n();
   const [permissions, setPermissions] = useState<Map<PermissionType, PermissionInfo>>(new Map());
   const [loading, setLoading] = useState<string | null>(null);
   const [platform, setPlatform] = useState<'mobile' | 'web'>('web');
@@ -58,8 +58,8 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       
       if (success) {
         toast({
-          title: 'Permission Granted',
-          description: `The ${type} permission has been successfully granted.`,
+          title: t('permissionGranted'),
+          description: t('permissionGrantedDesc', { type: type === 'location' ? t('location') : t('notificationsLabel') }),
         });
       } else {
         // Additional handling for denied permissions
@@ -74,16 +74,16 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
         }
 
         toast({
-          title: 'Permission Required',
-          description: `Please enable ${type} permissions in your device settings to use this feature.`,
+          title: t('permissionRequired'),
+          description: t('permissionRequiredDesc', { type: type === 'location' ? t('location') : t('notificationsLabel') }),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error requesting permission:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while requesting permission.',
+        title: t('error'),
+        description: t('permissionErrorDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -113,16 +113,16 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
   const getStatusBadge = (status: PermissionInfo['status']) => {
     switch (status) {
       case 'granted':
-        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Granted</Badge>;
+        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">{t('statusGranted')}</Badge>;
       case 'denied':
-        return <Badge variant="destructive">Denied</Badge>;
+        return <Badge variant="destructive">{t('statusDenied')}</Badge>;
       case 'prompt':
       case 'prompt-with-rationale':
-        return <Badge variant="outline" className="text-amber-600 border-amber-600">Action Needed</Badge>;
+        return <Badge variant="outline" className="text-amber-600 border-amber-600">{t('statusActionNeeded')}</Badge>;
       case 'not-supported':
-        return <Badge variant="secondary">Not Supported</Badge>;
+        return <Badge variant="secondary">{t('statusNotSupported')}</Badge>;
       default:
-        return <Badge variant="secondary">Unknown</Badge>;
+        return <Badge variant="secondary">{t('statusUnknown')}</Badge>;
     }
   };
 
@@ -133,11 +133,11 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
     <Card className={`p-4 space-y-6 ${className}`}>
       <div className="flex items-center gap-2 mb-2">
         <Shield className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold">Privacy & Permissions</h3>
+        <h3 className="text-lg font-semibold">{t('privacyPermissionsTitle')}</h3>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Noor Connect is privacy-first. We only request permissions necessary for core features like prayer times and notifications. All data stays on your device.
+        {t('privacyPermissionsDesc')}
       </p>
 
       {/* Location Permission */}
@@ -162,17 +162,17 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {locationPermission?.status === 'granted' && (
               <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
-                ✅ Accurate Prayer Times & Qibla Enabled
+                {t('locationEnabledNote')}
               </div>
             )}
 
             {locationPermission?.status === 'denied' && (
               <div className="space-y-2">
                 <div className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-md">
-                  ❌ Location Access Denied
+                  {t('locationAccessDenied')}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium mb-1">Why Location Needed:</p>
+                  <p className="font-medium mb-1">{t('whyLocationNeeded')}</p>
                   <ul className="list-disc list-inside space-y-1 ml-3">
                     {locationPermission?.benefits.map((benefit, index) => (
                       <li key={index}>{benefit}</li>
@@ -185,7 +185,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
             {locationPermission?.status === 'prompt' && (
               <div className="space-y-2">
                 <div className="bg-amber-50 text-amber-700 text-xs px-2 py-1 rounded-md">
-                  ⚠️ Location Needed
+                  {t('locationNeeded')}
                 </div>
                 <Button
                   variant="default"
@@ -197,12 +197,12 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   {loading === 'location' ? (
                     <>
                       <RefreshCw className="w-4 h-4 me-2 animate-spin" />
-                      Requesting...
+                      {t('requestingLabel')}
                     </>
                   ) : (
                     <>
                       <MapPin className="w-4 h-4 me-2" />
-                      Enable Location
+                      {t('enableLocation')}
                     </>
                   )}
                 </Button>
@@ -222,12 +222,12 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
               )}
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  {platform === 'mobile' ? 'Mobile App Instructions:' : 'Browser Instructions:'}
+                  {platform === 'mobile' ? t('mobileAppInstructions') : t('browserInstructions')}
                 </p>
               </div>
             </div>
             <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
-              <strong>How to Fix:</strong> {locationPermission?.instructions?.[platform] || 'Check your device settings'}
+              <strong>{t('howToFix')}</strong> {locationPermission?.instructions?.[platform] || t('checkDeviceSettings')}
             </div>
             <div className="flex flex-col gap-2 mt-2">
               {platform === 'web' && (
@@ -239,7 +239,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                     className="w-full"
                   >
                     <MapPin className="w-4 h-4 me-2" />
-                    Request Location Again
+                    {t('requestLocationAgain')}
                   </Button>
                 </>
               )}
@@ -250,7 +250,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 className="w-full"
               >
                 <SettingsIcon className="w-4 h-4 me-2" />
-                Open {platform === 'mobile' ? 'App Settings' : 'Browser Settings'}
+                {platform === 'mobile' ? t('openAppSettings') : t('openBrowserSettings')}
               </Button>
             </div>
           </div>
@@ -279,17 +279,17 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {notificationPermission?.status === 'granted' && (
               <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
-                ✅ Notifications Enabled
+                {t('notificationsEnabledNote')}
               </div>
             )}
 
             {notificationPermission?.status === 'denied' && (
               <div className="space-y-2">
                 <div className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-md">
-                  ❌ Notifications Denied
+                  {t('notificationsDeniedNote')}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium mb-1">Why Notifications Needed:</p>
+                  <p className="font-medium mb-1">{t('whyNotificationsNeeded')}</p>
                   <ul className="list-disc list-inside space-y-1 ml-3">
                     {notificationPermission?.benefits.map((benefit, index) => (
                       <li key={index}>{benefit}</li>
@@ -302,7 +302,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
             {notificationPermission?.status === 'prompt' && (
               <div className="space-y-2">
                 <div className="bg-amber-50 text-amber-700 text-xs px-2 py-1 rounded-md">
-                  ⚠️ Notifications Needed
+                  {t('notificationsNeeded')}
                 </div>
                 <Button
                   variant="default"
@@ -314,12 +314,12 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   {loading === 'notifications' ? (
                     <>
                       <RefreshCw className="w-4 h-4 me-2 animate-spin" />
-                      Requesting...
+                      {t('requestingLabel')}
                     </>
                   ) : (
                     <>
                       <Bell className="w-4 h-4 me-2" />
-                      Enable Notifications
+                      {t('enableNotifications')}
                     </>
                   )}
                 </Button>
@@ -328,7 +328,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {notificationPermission?.status === 'not-supported' && (
               <div className="bg-gray-50 text-gray-700 text-xs px-2 py-1 rounded-md">
-                ❌ Notifications Not Supported
+                {t('notificationsNotSupportedNote')}
               </div>
             )}
           </div>
@@ -345,12 +345,12 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
               )}
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  {platform === 'mobile' ? 'Mobile Notification Instructions:' : 'Web Notification Instructions:'}
+                  {platform === 'mobile' ? t('mobileNotificationInstructions') : t('webNotificationInstructions')}
                 </p>
               </div>
             </div>
             <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
-              <strong>How to Fix:</strong> {notificationPermission?.instructions?.[platform] || 'Check your device settings'}
+              <strong>{t('howToFix')}</strong> {notificationPermission?.instructions?.[platform] || t('checkDeviceSettings')}
             </div>
             <div className="space-y-2 mt-2">
               {platform === 'web' && (
@@ -364,7 +364,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                     className="w-full"
                   >
                     <Bell className="w-4 h-4 mr-2" />
-                    Request Permission
+                    {t('requestPermission')}
                   </Button>
                   <Button
                     variant="outline"
@@ -381,19 +381,19 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                     onClick={() => {
                       // Test notification to show current status
                       if ('Notification' in window) {
-                        const testNotification = new Notification('Test Notification', {
-                          body: 'This is a test notification from Noor Connect',
+                        const testNotification = new Notification(t('testNotificationTitle'), {
+                          body: t('testNotificationBody'),
                           icon: '/favicon.ico'
                         });
                         setTimeout(() => testNotification.close(), 3000);
                         toast({
-                          title: 'Test Notification Sent',
-                          description: 'If you don\'t see this, please enable notifications in browser settings',
+                          title: t('testNotificationSent'),
+                          description: t('testNotificationHint'),
                         });
                       } else {
                         toast({
-                          title: 'Notifications Not Supported',
-                          description: 'Your browser does not support notifications',
+                          title: t('notificationsNotSupported'),
+                          description: t('notificationsNotSupportedDesc'),
                           variant: 'destructive'
                         });
                       }
@@ -401,7 +401,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                     className="w-full"
                   >
                     <Bell className="w-4 h-4 mr-2" />
-                    Test Notification
+                    {t('testNotificationTitle')}
                   </Button>
                 </>
               )}
@@ -412,7 +412,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 className="w-full"
               >
                 <SettingsIcon className="w-4 h-4 mr-2" />
-                Open {platform === 'mobile' ? 'Notification Settings' : 'Browser Settings'}
+                {platform === 'mobile' ? t('openNotificationSettings') : t('openBrowserSettings')}
               </Button>
             </div>
           </div>
@@ -423,15 +423,15 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       <div className="mt-4 p-3 bg-muted/30 rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <Info className="w-4 h-4 text-muted-foreground" />
-          <h4 className="font-medium text-sm">Permission Summary</h4>
+          <h4 className="font-medium text-sm">{t('permissionSummary')}</h4>
         </div>
         <div className="grid grid-cols-1 gap-2 text-xs">
           <div className="flex items-center justify-between p-2 bg-background rounded border">
-            <span>Platform:</span>
-            <span className="font-medium">{platform === 'mobile' ? 'Mobile App' : 'Web App'}</span>
+            <span>{t('platformLabel')}</span>
+            <span className="font-medium">{platform === 'mobile' ? t('mobileApp') : t('webApp')}</span>
           </div>
           <div className="flex items-center justify-between p-2 bg-background rounded border">
-            <span>Overall Status:</span>
+            <span>{t('overallStatusLabel')}</span>
             <span className={`font-medium ${
               Array.from(permissions.values()).every(p => p.status === 'granted') 
                 ? 'text-green-600' 
@@ -440,10 +440,10 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 : 'text-amber-600'
             }`}>
               {Array.from(permissions.values()).every(p => p.status === 'granted') 
-                ? 'All Permissions Granted' 
+                ? t('allPermissionsGranted')
                 : Array.from(permissions.values()).some(p => p.status === 'denied')
-                ? 'Some Permissions Denied' 
-                : 'Action Needed'}
+                ? t('somePermissionsDenied')
+                : t('statusActionNeeded')}
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { AppBar } from "@/components/AppBar";
 import { PageTransition } from "@/components/PageTransition";
-import { useLanguage } from "@/contexts/LanguageContext-new";
+import { useI18n } from "@/hooks/useI18n";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { shouldShowMenstrualFeatures } from "@/lib/gender-settings";
@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Services() {
-    const { t } = useLanguage();
+    const { t } = useI18n();
     const navigate = useNavigate();
     const { isEidAlFitr, isEidAlAdha, islamicInfo, isLoading } = useIslamicCalendar();
     const { animationEnabled } = useSettings();
@@ -42,37 +42,37 @@ export default function Services() {
     const showNoorCycle = shouldShowMenstrualFeatures();
 
     const baseServices = [
-        { title: "Salah Tracker", path: "/prayer-stats", icon: CheckCircle, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Qaza Tracker", path: "/qaza", icon: AlertTriangle, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        { title: "Quran Audio", path: "/quran-audio", icon: Headphones, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Nasheeds", path: "/nasheeds", icon: Music, gradient: 'from-[#10b981] to-[#047857]' },
-        { title: "Live Mecca", path: "/live", icon: Tv, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        { title: "Hadith", path: "/hadith/collections", icon: BookText, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('salahTracker'), path: "/prayer-stats", icon: CheckCircle, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('qazaTracker'), path: "/qaza", icon: AlertTriangle, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        { title: t('quranAudio'), path: "/quran-audio", icon: Headphones, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('nasheeds'), path: "/nasheeds", icon: Music, gradient: 'from-[#10b981] to-[#047857]' },
+        { title: t('liveMecca'), path: "/live", icon: Tv, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        { title: t('hadith'), path: "/hadith/collections", icon: BookText, gradient: 'from-[#C9860A] to-[#E8A020]' },
         { title: t('seerah'), path: "/seerah", icon: BookOpen, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
         { title: t('qisas'), path: "/qisas", icon: Users, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Radio", path: "/quran-radio", icon: Radio, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        { title: "Habits", path: "/habit-tracker", icon: Target, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Duas", path: "/duas", icon: Heart, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        ...(showNoorCycle ? [{ title: "Noor Cycle", path: "/noor-cycle", icon: HeartPulse as React.ComponentType<any>, gradient: 'from-[#e11d48] to-[#be123c]' as const }] : []),
-        { title: "Remedies", path: "/islamic-remedies", icon: HeartHandshake, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('radio'), path: "/quran-radio", icon: Radio, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        { title: t('habits'), path: "/habit-tracker", icon: Target, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('duas'), path: "/duas", icon: Heart, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        ...(showNoorCycle ? [{ title: t('noorCycle'), path: "/noor-cycle", icon: HeartPulse as React.ComponentType<any>, gradient: 'from-[#e11d48] to-[#be123c]' as const }] : []),
+        { title: t('remedies'), path: "/islamic-remedies", icon: HeartHandshake, gradient: 'from-[#C9860A] to-[#E8A020]' },
         { title: t('tasbih') || "Tasbih", path: "/tasbeeh", icon: Calculator, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        { title: "Names", path: "/names-of-allah", icon: Star, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Quiz", path: "/quiz", icon: Trophy, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        { title: "Zakat", path: "/zakat", icon: Coins, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Calendar", path: "/calendar", icon: Calendar, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
-        { title: "E-Books", path: "/ebooks", icon: Library, gradient: 'from-[#C9860A] to-[#E8A020]' },
-        { title: "Tafsir", path: "/tafsir", icon: BookOpen, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        { title: t('namesOfAllahShort'), path: "/names-of-allah", icon: Star, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('quiz'), path: "/quiz", icon: Trophy, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        { title: t('zakat'), path: "/zakat", icon: Coins, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('calendar'), path: "/calendar", icon: Calendar, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+        { title: t('ebooks'), path: "/ebooks", icon: Library, gradient: 'from-[#C9860A] to-[#E8A020]' },
+        { title: t('tafsir'), path: "/tafsir", icon: BookOpen, gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
     ];
 
     const conditionalServices = [];
     if (shouldShowFitranaCalculator) {
         conditionalServices.push(
-            { title: "Fitrana Calc", path: "/fitrana-calculator", icon: Calculator, gradient: 'from-[#C9860A] to-[#E8A020]' }
+            { title: t('fitranaCalc'), path: "/fitrana-calculator", icon: Calculator, gradient: 'from-[#C9860A] to-[#E8A020]' }
         );
     }
     if (shouldShowEidChecklist) {
         conditionalServices.push(
-            { title: "Eid Checklist", path: "/eid-checklist", icon: Moon, gradient: 'from-[#3B82F6] to-[#1D4ED8]' }
+            { title: t('eidChecklist'), path: "/eid-checklist", icon: Moon, gradient: 'from-[#3B82F6] to-[#1D4ED8]' }
         );
     }
 
@@ -107,13 +107,13 @@ export default function Services() {
                         <div className="relative z-10">
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 mb-4">
                                 <Sparkles className="w-4 h-4" style={{ color: '#C9860A' }} />
-                                <span className="text-white/90 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: '#C9860A' }}>Islamic Hub</span>
+                                <span className="text-white/90 text-xs font-bold uppercase tracking-[0.18em]" style={{ color: '#C9860A' }}>{t('islamicHub')}</span>
                             </div>
                             <h2 className="text-4xl font-bold text-white leading-tight tracking-tight mb-2" style={{ fontFamily: 'inherit', fontStyle: 'italic' }}>
-                                Discover<br/>Resources
+                                {t('discover')}<br/>{t('resources')}
                             </h2>
                             <p className="text-white/60 text-sm font-medium max-w-[85%] leading-relaxed">
-                                Essential tools for your spiritual journey.
+                                {t('essentialToolsSpiritualJourney')}
                             </p>
                         </div>
                     </motion.div>

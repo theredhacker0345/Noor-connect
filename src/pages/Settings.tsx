@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSettings } from '@/contexts/SettingsContext';
-import { useLanguage } from '@/contexts/LanguageContext-new';
+import { useI18n } from '@/hooks/useI18n';
 import { ChevronLeft, Sun, Moon, Monitor, Sparkles, Zap, Heart, BookOpen, Moon as MoonIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { goBackOrFallback } from "@/lib/navigation";
@@ -20,7 +20,7 @@ const Settings = () => {
     setTheme, 
     effectiveTheme 
   } = useSettings();
-  const { t } = useLanguage();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [madhab, setMadhabState] = useState<MadhabType>(() => getMadhab());
   const [bedtimeEnabled, setBedtimeEnabledState] = useState<boolean>(() => isBeforeSleepEnabled());
@@ -54,6 +54,12 @@ const Settings = () => {
 
   const motionProps = (props: any) => animationEnabled ? props : {};
 
+  const THEME_LABELS: Record<string, string> = {
+    light: t('themeLight'),
+    system: t('themeSystem'),
+    dark: t('themeDark'),
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-sans pb-24 pt-safe-top transition-colors duration-300">
       {/* ── Header ── */}
@@ -64,14 +70,14 @@ const Settings = () => {
         >
           <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
-        <h1 className="text-2xl font-bold font-serif italic text-foreground ml-4 tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold font-serif italic text-foreground ml-4 tracking-tight">{t('settings')}</h1>
       </div>
 
       <div className="px-6 py-4 space-y-8 max-w-lg mx-auto w-full">
         {/* ── Theme Section ── */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Appearance</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{t('appearance')}</h2>
           </div>
           
           <div className="bg-card border border-border rounded-[28px] p-2 flex gap-2 relative">
@@ -93,20 +99,20 @@ const Settings = () => {
                     />
                   )}
                   <Icon className="w-4 h-4 relative z-10" />
-                  <span className="text-sm font-bold capitalize relative z-10">{tOption}</span>
+                  <span className="text-sm font-bold capitalize relative z-10">{THEME_LABELS[tOption] ?? tOption}</span>
                 </button>
               );
             })}
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-4 mt-2">
-            Currently using <span className="text-[#C9860A]">{effectiveTheme}</span> theme based on preferences.
+            {t('currentThemeLabel')}: <span className="text-[#C9860A]">{THEME_LABELS[effectiveTheme] ?? effectiveTheme}</span>
           </p>
         </section>
 
         {/* ── Preferences Section ── */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Preferences</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{t('preferences')}</h2>
           </div>
 
           <div className="bg-card border border-border rounded-[28px] overflow-hidden">
@@ -117,8 +123,8 @@ const Settings = () => {
                   <Zap className="w-5 h-5 text-foreground/70" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground font-serif italic text-lg">Fluid Animations</h3>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">Enable smooth UI transitions</p>
+                  <h3 className="font-bold text-foreground font-serif italic text-lg">{t('fluidAnimations')}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t('fluidAnimationsDescription')}</p>
                 </div>
               </div>
               <button 
@@ -142,8 +148,8 @@ const Settings = () => {
                   <Heart className="w-5 h-5 text-foreground/70" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground font-serif italic text-lg">Splash Welcome</h3>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">Show "Islamic Companion" on launch</p>
+                  <h3 className="font-bold text-foreground font-serif italic text-lg">{t('splashWelcome')}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t('splashWelcomeDescription')}</p>
                 </div>
               </div>
               <button 
@@ -167,8 +173,8 @@ const Settings = () => {
                   <Sparkles className="w-5 h-5 text-foreground/70" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground font-serif italic text-lg">Home Greeting</h3>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">Show daily salam on home screen</p>
+                  <h3 className="font-bold text-foreground font-serif italic text-lg">{t('homeGreeting')}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t('showDailySalam')}</p>
                 </div>
               </div>
               <button 
@@ -190,21 +196,21 @@ const Settings = () => {
         {/* ── Prayer / Fiqh Section ── */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Prayer Times</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{t('prayerTimes')}</h2>
           </div>
 
           <div className="bg-card border border-border rounded-[28px] p-2 flex gap-2 relative">
             {([
-              { id: 'shafi',  label: 'Maliki, Shafi, Hanbali', short: 'Shafi' },
-              { id: 'hanafi', label: 'Hanafi', short: 'Hanafi' },
-            ] as { id: MadhabType; label: string; short: string }[]).map(({ id, label, short }) => {
+              { id: 'shafi',  labelKey: 'madhabShafi', shortKey: 'madhabShafiShort' },
+              { id: 'hanafi', labelKey: 'madhabHanafi', shortKey: 'madhabHanafiShort' },
+            ] as { id: MadhabType; labelKey: string; shortKey: string }[]).map(({ id, labelKey, shortKey }) => {
               const isActive = madhab === id;
               return (
                 <button
                   key={id}
                   onClick={() => handleMadhabChange(id)}
                   aria-pressed={isActive}
-                  title={label}
+                  title={t(labelKey)}
                   className={`flex-1 relative h-12 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 ${
                     isActive ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/70'
                   }`}
@@ -215,20 +221,21 @@ const Settings = () => {
                       className="absolute inset-0 bg-background rounded-2xl border border-border shadow-sm"
                     />
                   )}
-                  <span className="text-sm font-bold relative z-10">{short}</span>
+                  <span className="text-sm font-bold relative z-10">{t(shortKey)}</span>
                 </button>
               );
             })}
           </div>
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-4 mt-2">
-            Determines Asr calculation. Currently using <span className="text-[#C9860A]">{madhab === 'hanafi' ? 'Hanafi' : 'Maliki, Shafi, Hanbali'}</span> school.
+            {t('determinesAsrCalculation')} {t('currentMadhabLabel')}:{' '}
+            <span className="text-[#C9860A]">{madhab === 'hanafi' ? t('madhabHanafiShort') : t('madhabShafiShort')}</span>
           </p>
         </section>
 
         {/* ── Bedtime Section ── */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Bedtime</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{t('bedtime')}</h2>
           </div>
 
           <div className="bg-card border border-border rounded-[28px] overflow-hidden">
@@ -238,8 +245,8 @@ const Settings = () => {
                   <MoonIcon className="w-5 h-5 text-foreground/70" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground font-serif italic text-lg">Bedtime Reminder</h3>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">Get a gentle notification at bedtime</p>
+                  <h3 className="font-bold text-foreground font-serif italic text-lg">{t('bedtimeReminder')}</h3>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t('bedtimeReminderDesc')}</p>
                 </div>
               </div>
               <button
@@ -269,8 +276,8 @@ const Settings = () => {
                   <Sparkles className="w-5 h-5 text-foreground/70" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground font-serif italic text-lg">Time</h3>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">When to remind you</p>
+                    <h3 className="font-bold text-foreground font-serif italic text-lg">{t('time')}</h3>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-0.5">{t('whenToRemindYou')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

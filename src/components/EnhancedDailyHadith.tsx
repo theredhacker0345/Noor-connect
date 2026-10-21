@@ -14,6 +14,7 @@ import { getDailyHadith as getDailyHadithFromCollections } from "@/lib/hadith";
 import type { EnhancedHadith } from "@/data/hadith-collections";
 import { getGradeBadgeClass } from "@/lib/hadith-utils";
 import { useHadithBookmarks } from "@/hooks/useHadithBookmarks";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Hadith {
   id: string;
@@ -24,6 +25,7 @@ interface Hadith {
   grade: string;
   category: string;
   reflection?: string;
+  reflectionKey?: string;
   _collection?: string;
   _bookNumber?: string;
   _hadithNumber?: string;
@@ -59,7 +61,7 @@ const hadithCollection: Hadith[] = [
     source: "Sahih Bukhari 1",
     grade: "Sahih",
     category: "Intentions",
-    reflection: "Purify your intentions before every action."
+    reflectionKey: "hadithReflection1"
   },
   {
     id: "muslim-1-1",
@@ -69,7 +71,7 @@ const hadithCollection: Hadith[] = [
     source: "Sahih Muslim 1037",
     grade: "Sahih",
     category: "Knowledge",
-    reflection: "Seeking religious knowledge is a sign of Allah's favor."
+    reflectionKey: "hadithReflection2"
   },
   {
     id: "tirmidhi-1-1",
@@ -79,7 +81,7 @@ const hadithCollection: Hadith[] = [
     source: "Jami` at-Tirmidhi 1976",
     grade: "Hasan",
     category: "Good Deeds",
-    reflection: "Kind words have the reward of charity."
+    reflectionKey: "hadithReflection3"
   },
   {
     id: "abu-dawud-1-1",
@@ -89,7 +91,7 @@ const hadithCollection: Hadith[] = [
     source: "Sunan Abi Dawud 1090",
     grade: "Sahih",
     category: "Excellence",
-    reflection: "Balance between perfection and optimism in worship."
+    reflectionKey: "hadithReflection4"
   },
   {
     id: "ibn-majah-1-1",
@@ -99,7 +101,7 @@ const hadithCollection: Hadith[] = [
     source: "Sunan Ibn Majah 3933",
     grade: "Sahih",
     category: "Character",
-    reflection: "True faith manifests in protecting others from harm."
+    reflectionKey: "hadithReflection5"
   },
   {
     id: "riyad-1-1",
@@ -109,7 +111,7 @@ const hadithCollection: Hadith[] = [
     source: "Riyad as-Salihin 100",
     grade: "Sahih",
     category: "Tawhid",
-    reflection: "The declaration of faith is the key to Paradise."
+    reflectionKey: "hadithReflection6"
   }
 ];
 
@@ -124,6 +126,7 @@ export function EnhancedDailyHadith() {
   const [loading, setLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const { toast } = useToast();
+  const { t } = useI18n();
   const { isBookmarked, toggleBookmark } = useHadithBookmarks();
 
   const loadHadith = useCallback(async () => {
@@ -135,7 +138,10 @@ export function EnhancedDailyHadith() {
 
       // Use cached hadith if available
       if (lastUpdate === today && storedHadith) {
-        setHadith(JSON.parse(storedHadith));
+        const storedHadithParsed = JSON.parse(storedHadith);
+        // Migrate pre-i18n cache entries to the keyed-reflection shape
+        const match = hadithCollection.find(h => h.id === storedHadithParsed.id);
+        setHadith(match ?? storedHadithParsed);
         return;
       }
 
@@ -236,8 +242,8 @@ export function EnhancedDailyHadith() {
       } else {
         await navigator.clipboard.writeText(text);
         toast({
-          title: "Copied!",
-          description: "Hadith copied to clipboard",
+          title: t('copiedToast'),
+          description: t('hadithCopiedToClipboard'),
         });
       }
     } catch (error) {
@@ -251,8 +257,8 @@ export function EnhancedDailyHadith() {
     try {
       await navigator.clipboard.writeText(hadith.englishTranslation);
       toast({
-        title: "Copied!",
-        description: "Hadith copied to clipboard",
+        title: t('copiedToast'),
+        description: t('hadithCopiedToClipboard'),
       });
     } catch (error) {
       console.error('Error copying:', error);
@@ -290,7 +296,7 @@ export function EnhancedDailyHadith() {
                 <MessageCircle className="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">Daily Hadith</h3>
+                <h3 className="font-semibold text-foreground">{t('dailyHadith')}</h3>
               <p className="text-xs text-muted-foreground">
                 {hadith.category}
               </p>
@@ -299,7 +305,7 @@ export function EnhancedDailyHadith() {
           
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={`text-xs ${getGradeBadgeClass(hadith.grade)}`}>
-              {hadith.grade}
+              {hadith.grade === "Unspecified" ? t('unspecified') : hadith.grade}
             </Badge>
             <div className="flex gap-1">
               <Button
@@ -316,11 +322,11 @@ export function EnhancedDailyHadith() {
                       englishTranslation: hadith.englishTranslation,
                     });
                     toast({
-                      title: isBookmarked(hadith._collection, hadith._hadithNumber) ? "Bookmark removed" : "Bookmarked!",
+                      title: isBookmarked(hadith._collection, hadith._hadithNumber) ? t('bookmarkRemoved') : t('bookmarkedToast'),
                     });
                   }
                 }}
-                aria-label="Bookmark hadith"
+                aria-label={t('bookmarkHadith')}
               >
                 <Bookmark className={`w-4 h-4 ${hadith._collection && isBookmarked(hadith._collection, hadith._hadithNumber!) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
               </Button>
@@ -329,7 +335,7 @@ export function EnhancedDailyHadith() {
                 size="icon"
                 className="h-8 w-8 rounded-xl hover:bg-accent/10 transition-colors"
                 onClick={copyHadith}
-                aria-label="Copy hadith"
+                aria-label={t('copyHadith')}
               >
                 <Copy className="w-4 h-4 text-muted-foreground" />
               </Button>
@@ -338,7 +344,7 @@ export function EnhancedDailyHadith() {
                 size="icon"
                 className="h-8 w-8 rounded-xl hover:bg-accent/10 transition-colors"
                 onClick={refreshHadith}
-                aria-label="Show another hadith"
+                aria-label={t('showAnotherHadith')}
               >
                 <RefreshCw className={`w-4 h-4 text-muted-foreground transition-transform ${isAnimating ? 'animate-spin' : ''}`} />
               </Button>
@@ -347,7 +353,7 @@ export function EnhancedDailyHadith() {
                 size="icon"
                 className="h-8 w-8 rounded-xl hover:bg-accent/10 transition-colors"
                 onClick={shareHadith}
-                aria-label="Share hadith"
+                aria-label={t('shareHadith')}
               >
                 <Share2 className="w-4 h-4 text-muted-foreground" />
               </Button>
@@ -370,10 +376,10 @@ export function EnhancedDailyHadith() {
         </div>
 
         {/* Reflection */}
-        {hadith.reflection && (
+        {(hadith.reflection || hadith.reflectionKey) && (
           <div className={`p-3 rounded-xl bg-accent/5 border border-accent/10 transition-all duration-500 delay-200 ${isAnimating ? 'opacity-0 transform translate-y-2' : 'opacity-100 transform translate-y-0'}`}>
             <p className="text-sm text-muted-foreground italic">
-              {hadith.reflection}
+              {hadith.reflectionKey ? t(hadith.reflectionKey) : hadith.reflection}
             </p>
           </div>
         )}
@@ -382,7 +388,7 @@ export function EnhancedDailyHadith() {
         <div className={`space-y-2 transition-all duration-500 delay-300 ${isAnimating ? 'opacity-0 transform translate-y-2' : 'opacity-100 transform translate-y-0'}`}>
           <div className="flex items-center justify-between text-xs text-foreground">
             <span>
-              <strong>Narrated by:</strong> {hadith.narrator}
+              <strong>{t('narratedBy')}</strong> {hadith.narrator === "Unknown narrator" ? t('unknownNarrator') : hadith.narrator}
             </span>
             <span className="font-medium">
               {hadith.source}
@@ -400,7 +406,7 @@ export function EnhancedDailyHadith() {
               onClick={() => navigate('/hadith/bookmarks')}
             >
               <Bookmark className="w-4 h-4" />
-              Bookmarks
+              {t('bookmarks')}
             </Button>
             <Button
               variant="outline"
@@ -409,12 +415,12 @@ export function EnhancedDailyHadith() {
               onClick={() => navigate('/hadith/collections')}
             >
               <BookOpen className="w-4 h-4" />
-              More Hadith
+              {t('moreHadith')}
             </Button>
           </div>
           
           <div className="text-xs text-muted-foreground">
-            Updated daily
+            {t('updatedDaily')}
           </div>
         </div>
       </CardContent>

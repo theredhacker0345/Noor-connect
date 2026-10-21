@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, TrendingUp, Award, Calendar } from 'lucide-react';
 import { quranFeaturesService } from '@/lib/quran-features';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/hooks/useI18n';
 
 interface OverallProgress {
   totalSurahs: number;
@@ -29,6 +30,7 @@ interface QuranProgressWidgetProps {
 export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
   const [progress, setProgress] = useState<OverallProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useI18n();
   const { toast } = useToast();
 
   const loadProgress = async () => {
@@ -38,8 +40,8 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
     } catch (error) {
       console.error('Error loading Quran progress:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load Quran progress',
+        title: t('error'),
+        description: t('failedToLoadQuranProgress'),
         variant: 'destructive'
       });
     } finally {
@@ -65,19 +67,19 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
   }, []);
 
   const getAchievementBadge = (percentage: number) => {
-    if (percentage >= 100) return { icon: Award, text: 'Completed' };
-    if (percentage >= 75) return { icon: TrendingUp, text: 'Advanced' };
-    if (percentage >= 50) return { icon: BookOpen, text: 'Progressing' };
-    if (percentage >= 25) return { icon: Calendar, text: 'Started' };
-    return { icon: BookOpen, text: 'Beginner' };
+    if (percentage >= 100) return { icon: Award, text: t('achievementCompleted') };
+    if (percentage >= 75) return { icon: TrendingUp, text: t('achievementAdvanced') };
+    if (percentage >= 50) return { icon: BookOpen, text: t('achievementProgressing') };
+    if (percentage >= 25) return { icon: Calendar, text: t('achievementStarted') };
+    return { icon: BookOpen, text: t('achievementBeginner') };
   };
 
   const getMotivationalMessage = (percentage: number) => {
-    if (percentage >= 100) return '🎉 Congratulations! You have completed the entire Quran!';
-    if (percentage >= 75) return '🌟 Excellent progress! You\'re almost there!';
-    if (percentage >= 50) return '💪 Great job! Half way through the Quran!';
-    if (percentage >= 25) return '📚 Keep going! You\'re building momentum!';
-    return '🌱 Start your Quran journey today!';
+    if (percentage >= 100) return t('quranMotivation100');
+    if (percentage >= 75) return t('quranMotivation75');
+    if (percentage >= 50) return t('quranMotivation50');
+    if (percentage >= 25) return t('quranMotivation25');
+    return t('quranMotivation0');
   };
 
   if (loading) {
@@ -86,7 +88,7 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
         <CardHeader>
           <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2 text-white">
             <BookOpen className="w-5 h-5 text-[#C9860A]" />
-            Quran Progress
+            {t('quranProgress')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -106,19 +108,19 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
         <CardHeader>
           <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2 text-white">
             <BookOpen className="w-5 h-5 text-[#C9860A]" />
-            Quran Progress
+            {t('quranProgress')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">No progress data available</p>
+            <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">{t('noProgressData')}</p>
             <Button
               variant="outline"
               size="sm"
               className="mt-4 border-[#C9860A]/30 text-white hover:bg-[#C9860A]/10 font-bold uppercase tracking-wider text-xs"
               onClick={() => window.location.href = '/quran'}
             >
-              Start Reading
+              {t('startReading')}
             </Button>
           </div>
         </CardContent>
@@ -137,7 +139,7 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
       <CardHeader className="relative z-10">
         <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2 text-white">
           <BookOpen className="w-5 h-5 text-[#C9860A]" />
-          Quran Progress
+          {t('quranProgress')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 relative z-10">
@@ -162,7 +164,7 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
             <p className="text-3xl font-bold font-serif italic text-[#C9860A]">
               {progress.completedSurahs} / {progress.totalSurahs}
             </p>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Surahs fully Completed</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t('surahsFullyCompleted')}</p>
           </div>
         </div>
 
@@ -170,7 +172,7 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
         <div className="space-y-2">
           <Progress value={progress.percentage} className="h-2 bg-black/50" />
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
-            {progress.pagesRead} / {progress.totalPages} Pages Read
+            {t('pagesReadOf', { read: progress.pagesRead, total: progress.totalPages })}
           </p>
         </div>
 
@@ -196,7 +198,7 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
             className="gap-2 bg-[#C9860A] text-white hover:bg-[#C9860A]/90 font-bold uppercase tracking-wider text-xs w-full"
           >
             <BookOpen className="w-4 h-4" />
-            Continue Reading
+            {t('continueReading')}
           </Button>
           <Button
             variant="outline"
@@ -205,7 +207,7 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
             className="gap-2 w-full border-[#C9860A]/30 text-white hover:bg-[#C9860A]/10 font-bold uppercase tracking-wider text-xs"
           >
             <TrendingUp className="w-4 h-4" />
-            View Details
+            {t('viewDetails')}
           </Button>
         </div>
       </CardContent>

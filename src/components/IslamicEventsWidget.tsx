@@ -11,6 +11,7 @@ import { Calendar, Bell, Clock, Star } from 'lucide-react';
 import { islamicEventsService } from '@/lib/islamic-events-service';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/hooks/useI18n';
 
 interface IslamicEvent {
   id: string;
@@ -24,6 +25,7 @@ interface IslamicEvent {
 
 export function IslamicEventsWidget() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [todayEvent, setTodayEvent] = useState<IslamicEvent | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<IslamicEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +75,8 @@ export function IslamicEventsWidget() {
     } catch (error) {
       console.error('Error loading Islamic events:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load Islamic events',
+        title: t('error'),
+        description: t('failedToLoadIslamicEvents'),
         variant: 'destructive'
       });
     } finally {
@@ -86,14 +88,14 @@ export function IslamicEventsWidget() {
     try {
       await islamicEventsService.scheduleUpcomingEvents();
       toast({
-        title: 'Notifications Scheduled',
-        description: 'Islamic event notifications have been scheduled',
+        title: t('notificationsScheduled'),
+        description: t('islamicEventNotificationsScheduled'),
       });
     } catch (error) {
       console.error('Error scheduling notifications:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to schedule notifications',
+        title: t('error'),
+        description: t('failedToScheduleNotifications'),
         variant: 'destructive'
       });
     }
@@ -133,7 +135,7 @@ export function IslamicEventsWidget() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2 text-white">
             <Calendar className="w-4 h-4 text-[#C9860A]" />
-            Islamic Events
+            {t('islamicEvents')}
           </CardTitle>
 
           <Button
@@ -143,10 +145,10 @@ export function IslamicEventsWidget() {
             className="h-8 px-3 rounded-xl gap-2 text-[#C9860A] hover:bg-[#C9860A]/10 font-bold uppercase tracking-wider text-xs"
           >
             <Bell className="w-4 h-4" />
-            Notify
+            {t('notify')}
           </Button>
         </div>
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">Upcoming holidays &amp; special days</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mt-1">{t('upcomingHolidaysSpecialDays')}</p>
       </CardHeader>
 
       <CardContent className="space-y-4 relative z-10">
@@ -164,7 +166,7 @@ export function IslamicEventsWidget() {
                 </p>
               </div>
               <Badge className="rounded-full text-xs uppercase tracking-widest font-bold bg-[#C9860A]/10 text-[#C9860A] border-none">
-                Today
+                {t('today')}
               </Badge>
             </div>
             <p className="text-xs font-medium text-muted-foreground mt-2">
@@ -173,7 +175,7 @@ export function IslamicEventsWidget() {
           </div>
         ) : (
           <div className="p-3 rounded-2xl bg-card/50 border border-border/40 text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
-            No special events today.
+            {t('noSpecialEventsToday')}
           </div>
         )}
 
@@ -181,7 +183,7 @@ export function IslamicEventsWidget() {
         {upcomingEvents.length > 0 ? (
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-              Next up
+              {t('nextUp')}
             </p>
             <div className="space-y-2">
               {upcomingEvents.slice(0, 2).map((event) => (
@@ -200,7 +202,7 @@ export function IslamicEventsWidget() {
                       </p>
                     </div>
                     <Badge className="rounded-full text-xs uppercase tracking-widest font-bold bg-[#C9860A]/10 text-[#C9860A] border-none">
-                      {event.daysUntil === 1 ? "Tomorrow" : `${event.daysUntil}d`}
+                      {event.daysUntil === 1 ? t('tomorrow') : t('daysAbbrev', { count: event.daysUntil })}
                     </Badge>
                   </div>
                 </div>
@@ -209,7 +211,7 @@ export function IslamicEventsWidget() {
           </div>
         ) : (
           <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-center">
-            No upcoming events in the next 7 days.
+            {t('noUpcomingEvents7Days')}
           </div>
         )}
 
@@ -219,7 +221,7 @@ export function IslamicEventsWidget() {
           className="w-full rounded-xl border-[#C9860A]/30 text-white hover:bg-[#C9860A]/10 font-bold uppercase tracking-wider text-xs"
           onClick={() => navigate("/calendar")}
         >
-          View Calendar
+          {t('viewCalendar')}
         </Button>
       </CardContent>
     </Card>

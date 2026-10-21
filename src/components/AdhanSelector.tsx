@@ -19,6 +19,7 @@ import {
   type AdhanPreferences
 } from '@/lib/adhan-preferences';
 import { adhanService, type AdhanConfig } from '@/lib/adhan-service';
+import { useI18n } from '@/hooks/useI18n';
 
 const ADHAN_STORAGE_KEY = 'selected-adhan-id';
 
@@ -42,6 +43,7 @@ export const stopAllAdhanPreviews = () => {
 const PRAYERS: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export const AdhanSelector = () => {
+  const { t } = useI18n();
   const [preferences, setPreferences] = useState<AdhanPreferences>(getAdhanPreferences);
   const [adhanConfig, setAdhanConfig] = useState<AdhanConfig>(adhanService.getAdhanConfig());
   const [isExpanded, setIsExpanded] = useState(false);
@@ -55,7 +57,7 @@ export const AdhanSelector = () => {
     // transition completes before we spin up IndexedDB connections,
     // which otherwise cause a synchronous IDBFactory.open() call on
     // the main thread inside React's commit phase.
-    let t: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+    let deferTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
       void (async () => {
         try {
           const localforage = (await import('localforage')).default;
@@ -66,13 +68,13 @@ export const AdhanSelector = () => {
           });
           const saved = await adhanStore.getItem<any[]>('custom-adhan-audio');
           if (saved) {
-            setCustomAdhans(saved.map(a => ({ id: a.id, name: `Custom: ${a.name}` })));
+            setCustomAdhans(saved.map(a => ({ id: a.id, name: `${t('customLabel', { name: a.name })}` })));
           }
         } catch (error) {
           console.error("Error loading custom adhan metadata:", error);
         }
       })();
-      t = null;
+      deferTimer = null;
     }, 600);
 
     // Sync preferences when storage changes or external events fire
@@ -85,7 +87,7 @@ export const AdhanSelector = () => {
     window.addEventListener('adhan-config-changed' as any, handleSync);
 
     return () => {
-      if (t !== null) clearTimeout(t);
+      if (deferTimer !== null) clearTimeout(deferTimer);
       stopAllAdhanPreviews();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -203,9 +205,9 @@ export const AdhanSelector = () => {
         <div className="flex items-center gap-3">
           <Volume2 className="w-5 h-5 text-primary" />
           <div>
-            <h3 className="font-semibold text-foreground">Adhan Sounds</h3>
+            <h3 className="font-semibold text-foreground">{t('adhanSounds')}</h3>
             <p className="text-xs text-muted-foreground">
-              Customize adhan for each prayer
+              {t('customizeAdhanPerPrayer')}
             </p>
           </div>
         </div>
@@ -223,7 +225,7 @@ export const AdhanSelector = () => {
           {PRAYERS.map((prayer) => (
             <div key={prayer} className="flex items-center gap-2">
               <span className="w-20 text-sm font-medium text-foreground">
-                {prayer}
+                {t(prayer.toLowerCase())}
               </span>
               <Switch
                 checked={Boolean(adhanConfig[prayerToggleMap[prayer]])}
@@ -235,7 +237,7 @@ export const AdhanSelector = () => {
                 onValueChange={(value) => handleAdhanChange(prayer, value)}
               >
                 <SelectTrigger className="flex-1 bg-background h-9">
-                  <SelectValue placeholder="Select Adhan" />
+                  <SelectValue placeholder={t('selectAdhan')} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border z-50">
                   {combinedOptions.map((adhan) => (
@@ -261,7 +263,7 @@ export const AdhanSelector = () => {
           ))}
 
           <p className="text-xs text-primary/70 mt-3 pt-2 border-t border-border/50">
-            💡 Fajr defaults to a special Adhan, but you can change it
+            {t('fajrDefaultNote')}
           </p>
         </div>
       )}

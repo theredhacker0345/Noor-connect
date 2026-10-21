@@ -8,7 +8,7 @@ import { getTasbeehTotal, getTasbeehHistory, addTasbeehEntry, setTasbeehTotal } 
 import { motion, AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { AppBar } from "@/components/AppBar";
-import { useLanguage } from "@/contexts/LanguageContext-new";
+import { useI18n } from "@/hooks/useI18n";
 
 const DHIKR_OPTIONS = [
   { value: "subhanallah", label: "سُبْحَانَ اللَّهِ", transliteration: "SubhanAllah", translation: "Glory be to Allah" },
@@ -18,9 +18,12 @@ const DHIKR_OPTIONS = [
   { value: "astagfirullah", label: "أَسْتَغْفِرُ ٱللَّٰهَ", transliteration: "Astagfirullah", translation: "I seek forgiveness from Allah" },
 ];
 
+const dhikrMeaningKey = (value: string) =>
+  `dhikrMeaning${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+
 const Tasbeeh = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, formatNumber } = useI18n();
   const [count, setCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedDhikr, setSelectedDhikr] = useState(DHIKR_OPTIONS[0].value);
@@ -134,17 +137,17 @@ const Tasbeeh = () => {
         </div>
 
         {/* Count */}
-        <span className="text-[15rem] font-black text-white leading-none select-none">{count}</span>
+        <span className="text-[15rem] font-black text-white leading-none select-none">{formatNumber(count)}</span>
 
         {/* Next goal */}
         <div className="absolute bottom-12 left-0 right-0 text-center">
-          <p className="text-white/30 text-xs font-bold uppercase tracking-[0.3em] mb-2">Next Goal</p>
-          <p className="text-[#C9860A] text-2xl font-bold font-serif italic">{nextMilestone}</p>
+          <p className="text-white/30 text-xs font-bold uppercase tracking-[0.3em] mb-2">{t('nextGoal')}</p>
+          <p className="text-[#C9860A] text-2xl font-bold font-serif italic">{formatNumber(nextMilestone)}</p>
         </div>
 
         {/* Exit hint */}
         <div className="absolute top-4 left-4">
-          <p className="text-white/15 text-xs tracking-wide">Hold to exit</p>
+          <p className="text-white/15 text-xs tracking-wide">{t('holdToExit')}</p>
         </div>
       </div>
     );
@@ -177,7 +180,7 @@ const Tasbeeh = () => {
                   </button>
                   <div className="flex items-center gap-1.5 px-3 py-1 bg-[#C9860A]/10 rounded-full text-xs font-bold tracking-widest uppercase text-[#C9860A]">
                     <History className="w-3 h-3" />
-                    {t('total')}: <span className="font-serif italic ml-1 text-sm tracking-normal">{totalCount.toLocaleString()}</span>
+                    {t('total')}: <span className="font-serif italic ml-1 text-sm tracking-normal">{formatNumber(totalCount)}</span>
                   </div>
                 </div>
               </div>
@@ -254,7 +257,7 @@ const Tasbeeh = () => {
                   animate={{ scale: 1 }}
                   className="text-7xl font-bold text-foreground font-serif italic tracking-tight"
                 >
-                  {count}
+                  {formatNumber(count)}
                 </motion.span>
 
                 <div className="absolute bottom-10 flex items-center gap-1">
@@ -277,7 +280,7 @@ const Tasbeeh = () => {
 
               <div className="flex-1 h-14 bg-muted/20 border border-border/40 rounded-2xl flex flex-col items-center justify-center px-4 shadow-sm">
                 <span className="text-xs font-bold uppercase text-muted-foreground tracking-[0.2em]">{t('nextGoal')}</span>
-                <span className="text-base font-bold text-[#C9860A] font-serif italic">{nextMilestone}</span>
+                <span className="text-base font-bold text-[#C9860A] font-serif italic">{formatNumber(nextMilestone)}</span>
               </div>
             </div>
           </div>
@@ -288,13 +291,13 @@ const Tasbeeh = () => {
               <Sparkles className="w-24 h-24 text-primary" />
             </div>
             <p className="text-center text-sm font-medium italic text-primary leading-relaxed">
-              "{currentDhikr.translation}"
+              "{t(dhikrMeaningKey(currentDhikr.value))}"
             </p>
           </Card>
 
           {/* Today's History Tab */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#C9860A] ms-2 mb-2">Today's Progress</h3>
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#C9860A] ms-2 mb-2">{t('todaysProgress')}</h3>
             <Card className="p-5 border-border/40 bg-card shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -302,15 +305,15 @@ const Tasbeeh = () => {
                     <History className="w-5 h-5 text-[#C9860A]" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-foreground">Sessions Completed</p>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Based on your activity today</p>
+                    <p className="text-sm font-bold text-foreground">{t('sessionsCompleted')}</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">{t('basedOnActivityToday')}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-[#C9860A] font-serif italic">
-                    {dailyHistory.find(h => h.date === new Date().toLocaleDateString() && h.label === label)?.count || 0}
+                    {formatNumber(dailyHistory.find(h => h.date === new Date().toLocaleDateString() && h.label === label)?.count || 0)}
                   </p>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">Dhikr</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">{t('dhikr')}</p>
                 </div>
               </div>
             </Card>

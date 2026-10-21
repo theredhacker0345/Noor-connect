@@ -1,15 +1,15 @@
 ﻿import { AppBar } from "@/components/AppBar";
 import QiblaCompassModern from "@/components/QiblaCompassModern";
 import { PageTransition } from "@/components/PageTransition";
-import { useLanguage } from "@/contexts/LanguageContext-new";
+import { useI18n } from "@/hooks/useI18n";
 
 const Qibla = () => {
-  const { t } = useLanguage();
+  const { t } = useI18n();
 
   return (
     <PageTransition>
       <div className="min-h-screen bg-background pb-20">
-        <AppBar title={t("qibla") || "Qibla"} />
+        <AppBar title={t("qibla")} />
         <div className="flex flex-col min-h-[calc(100vh-64px)]">
           <div className="flex-grow">
             <QiblaCompassModern />

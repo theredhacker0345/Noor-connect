@@ -34,6 +34,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useLanguage } from '@/contexts/LanguageContext-new';
+import { useI18n } from '@/hooks/useI18n';
+import { LANGUAGES, SUPPORTED_CODES } from '@/lib/language-config';
 
 import { getMadhab, setMadhab, type MadhabType } from '@/lib/storage';
 import { AladhanAPI } from '@/lib/aladhan-api';
@@ -55,20 +57,26 @@ import PermissionManager from '@/components/PermissionManager';
 import { Changelog } from '@/components/Changelog';
 import { AutoBackupCard } from '@/components/AutoBackupCard';
 
-const SECTION_TITLES: Record<string, { title: string; subtitle: string; icon: any }> = {
-  appearance: { title: 'Theme & Appearance', subtitle: 'Display, animations & splash settings', icon: Palette },
-  haptics: { title: 'Haptic Feedback', subtitle: 'Vibration & tactile feedback settings', icon: Vibrate },
-  personal: { title: 'Personal Information', subtitle: 'Gender, language & preferred currency', icon: User },
-  prayer: { title: 'Prayer Calculation', subtitle: 'Calculation method, Madhab & Hijri offset', icon: Clock },
-  notifications: { title: 'Prayer Notifications', subtitle: 'Reminders, daily notifications & alerts', icon: Bell },
-  adhan: { title: 'Adhan & Sounds', subtitle: 'Adhan audio selection & custom uploads', icon: Volume2 },
-  backup: { title: 'Backup & Restore', subtitle: 'Cloud backup, sync & export settings', icon: Database },
-  storage: { title: 'Storage & Cache', subtitle: 'Clear cache, offline Quran & download stats', icon: HardDrive },
-  privacy: { title: 'Privacy & Security', subtitle: 'Data usage, local storage & permissions', icon: ShieldCheck },
-  about: { title: 'About Noor Connect', subtitle: 'App version, changelog & developer', icon: Info },
-  support: { title: 'Support Noor Connect', subtitle: 'Help support development — contact us to donate', icon: Heart },
-  contact: { title: 'Contact & Hire Developer', subtitle: 'WhatsApp, portfolio & email contacts', icon: Mail },
+// H-2b i18n retrofit: titles/subtitles are translation KEYS, resolved via t() at
+// render time so switching languages updates the header instantly.
+// NOTE: the 'personal' subtitle previously claimed "Gender, language & preferred
+// currency" but the language control actually lives in the 'appearance' section.
+const SECTION_TITLES: Record<string, { titleKey: string; subtitleKey: string; icon: any }> = {
+  appearance: { titleKey: 'sectionAppearanceTitle', subtitleKey: 'sectionAppearanceSubtitle', icon: Palette },
+  haptics: { titleKey: 'sectionHapticsTitle', subtitleKey: 'sectionHapticsSubtitle', icon: Vibrate },
+  personal: { titleKey: 'personalInformation', subtitleKey: 'sectionPersonalSubtitle', icon: User },
+  prayer: { titleKey: 'sectionPrayerTitle', subtitleKey: 'sectionPrayerSubtitle', icon: Clock },
+  notifications: { titleKey: 'prayerNotifications', subtitleKey: 'sectionNotificationsSubtitle', icon: Bell },
+  adhan: { titleKey: 'sectionAdhanTitle', subtitleKey: 'sectionAdhanSubtitle', icon: Volume2 },
+  backup: { titleKey: 'sectionBackupTitle', subtitleKey: 'sectionBackupSubtitle', icon: Database },
+  storage: { titleKey: 'sectionStorageTitle', subtitleKey: 'sectionStorageSubtitle', icon: HardDrive },
+  privacy: { titleKey: 'sectionPrivacyTitle', subtitleKey: 'sectionPrivacySubtitle', icon: ShieldCheck },
+  about: { titleKey: 'sectionAboutTitle', subtitleKey: 'sectionAboutSubtitle', icon: Info },
+  support: { titleKey: 'sectionSupportTitle', subtitleKey: 'sectionSupportSubtitle', icon: Heart },
+  contact: { titleKey: 'sectionContactTitle', subtitleKey: 'sectionContactSubtitle', icon: Mail },
 };
+
+const DEFAULT_SECTION = { titleKey: 'settings', subtitleKey: 'settingsSubtitle', icon: Palette };
 
 
 /**
@@ -79,18 +87,19 @@ const SECTION_TITLES: Record<string, { title: string; subtitle: string; icon: an
 const TimeFormatControl = ({ withBorder = false }: { withBorder?: boolean }) => {
   const [timeFormat, setTimeFormat] = useTimeFormat();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   return (
     <div className={`flex items-center justify-between py-1 ${withBorder ? 'border-t border-slate-100 dark:border-slate-800 pt-3' : ''}`}>
       <div>
-        <Label className="text-sm font-bold">Time Format</Label>
-        <p className="text-xs text-slate-400">Prayer times, clock & countdowns</p>
+        <Label className="text-sm font-bold">{t('timeFormat')}</Label>
+        <p className="text-xs text-slate-400">{t('timeFormatDescription')}</p>
       </div>
       <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
         <button
           onClick={() => {
             setTimeFormat('12');
-            toast({ title: 'Time format set to 12-hour' });
+            toast({ title: t('timeFormat12Toast') });
           }}
           className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${timeFormat === '12' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-400'}`}
         >
@@ -99,7 +108,7 @@ const TimeFormatControl = ({ withBorder = false }: { withBorder?: boolean }) => 
         <button
           onClick={() => {
             setTimeFormat('24');
-            toast({ title: 'Time format set to 24-hour' });
+            toast({ title: t('timeFormat24Toast') });
           }}
           className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${timeFormat === '24' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-400'}`}
         >
@@ -116,6 +125,7 @@ const SettingsSubPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language, setLanguage } = useLanguage();
+  const { t } = useI18n();
   const {
     theme,
     setTheme,
@@ -182,14 +192,14 @@ const SettingsSubPage: React.FC = () => {
       .catch(() => {});
   }, []);
 
-  const meta = SECTION_TITLES[sectionId] || { title: 'Settings', subtitle: 'Noor Connect Preferences', icon: Palette };
+  const meta = SECTION_TITLES[sectionId] || DEFAULT_SECTION;
   const IconComponent = meta.icon;
 
 
   const handleClearCache = async () => {
     await clearCache();
     setStorageStats({ totalBooks: 0, totalSize: 0 });
-    toast({ title: 'Cache cleared successfully' });
+    toast({ title: t('cacheCleared') });
     setShowClearCacheDialog(false);
   };
 
@@ -197,9 +207,9 @@ const SettingsSubPage: React.FC = () => {
     try {
       await downloadManager.clearAll();
       setQuranDownloads({ count: 0, size: 0, reciters: 0 });
-      toast({ title: 'Offline surahs deleted', description: 'All downloaded Quran audio has been removed from this device.' });
+      toast({ title: t('offlineSurahsDeleted'), description: t('offlineSurahsDeletedDesc') });
     } catch {
-      toast({ title: 'Could not delete downloads', variant: 'destructive' });
+      toast({ title: t('couldNotDeleteDownloads'), variant: 'destructive' });
     }
     setShowClearQuranDialog(false);
   };
@@ -208,14 +218,14 @@ const SettingsSubPage: React.FC = () => {
     await clearAllBooks();
     const stats = await getStorageStats();
     setStorageStats(stats);
-    toast({ title: 'E-books deleted' });
+    toast({ title: t('ebooksDeleted') });
   };
 
   const handleNotificationToggle = (key: keyof NotificationPreferences, checked: boolean) => {
     const updated = { ...notificationPrefs, [key]: checked };
     setNotificationPrefs(updated);
     notificationManager.updatePreferences({ [key]: checked });
-    toast({ title: `Notification ${checked ? 'enabled' : 'disabled'}` });
+    toast({ title: t(checked ? 'notificationEnabledToast' : 'notificationDisabledToast') });
   };
 
   return (
@@ -226,16 +236,16 @@ const SettingsSubPage: React.FC = () => {
           <button
             onClick={() => navigate('/profile')}
             className="p-2 -ml-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
-            aria-label="Go back to Profile"
+            aria-label={t('goBackToProfile')}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1">
             <h1 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
-              {meta.title}
+              {t(meta.titleKey)}
             </h1>
             <p className="text-[11px] text-slate-400 dark:text-slate-400">
-              {meta.subtitle}
+              {t(meta.subtitleKey)}
             </p>
           </div>
           <div className="w-9 h-9 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
@@ -252,20 +262,18 @@ const SettingsSubPage: React.FC = () => {
             <Card className="p-4 space-y-4 rounded-2xl">
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <Globe className="w-4 h-4" />
-                Language
+                {t('language')}
               </Label>
               <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
                 <SelectTrigger className="w-full h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="ar">العربية (Arabic)</SelectItem>
-                  <SelectItem value="ur">اردو (Urdu)</SelectItem>
-                  <SelectItem value="bn">বাংলা (Bengali)</SelectItem>
-                  <SelectItem value="ru">Русский (Russian)</SelectItem>
-                  <SelectItem value="fr">Français (French)</SelectItem>
-                  <SelectItem value="ko">한국어 (Korean)</SelectItem>
+                  {SUPPORTED_CODES.map((code) => (
+                    <SelectItem key={code} value={code}>
+                      {LANGUAGES[code].nativeLabel}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Card>
@@ -273,27 +281,27 @@ const SettingsSubPage: React.FC = () => {
             <Card className="p-4 space-y-4 rounded-2xl">
               <div className="flex items-center justify-between py-1">
                 <div>
-                  <Label className="text-sm font-bold">App Theme</Label>
-                  <p className="text-xs text-slate-400">Switch between light & dark mode</p>
+                  <Label className="text-sm font-bold">{t('appTheme')}</Label>
+                  <p className="text-xs text-slate-400">{t('switchLightDark')}</p>
                 </div>
                 <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                   <button
                     onClick={() => setTheme('light')}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${theme === 'light' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-400'}`}
                   >
-                    Light
+                    {t('themeLight')}
                   </button>
                   <button
                     onClick={() => setTheme('system')}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${theme === 'system' ? 'bg-white dark:bg-slate-700 shadow text-amber-600' : 'text-slate-400'}`}
                   >
-                    System
+                    {t('themeSystem')}
                   </button>
                   <button
                     onClick={() => setTheme('dark')}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-white dark:bg-slate-700 shadow text-amber-400' : 'text-slate-400'}`}
                   >
-                    Dark
+                    {t('themeDark')}
                   </button>
                 </div>
               </div>
@@ -302,32 +310,32 @@ const SettingsSubPage: React.FC = () => {
 
               <div className="flex items-center justify-between py-1 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <div>
-                  <Label className="text-sm font-bold">Fluid Animations</Label>
-                  <p className="text-xs text-slate-400">Enable smooth UI transitions</p>
+                  <Label className="text-sm font-bold">{t('fluidAnimations')}</Label>
+                  <p className="text-xs text-slate-400">{t('fluidAnimationsDescription')}</p>
                 </div>
                 <Switch checked={animationEnabled} onCheckedChange={setAnimationEnabled} />
               </div>
 
               <div className="flex items-center justify-between py-1 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <div>
-                  <Label className="text-sm font-bold">Salam Greeting</Label>
-                  <p className="text-xs text-slate-400">Show daily salam on home screen</p>
+                  <Label className="text-sm font-bold">{t('salamGreeting')}</Label>
+                  <p className="text-xs text-slate-400">{t('showDailySalam')}</p>
                 </div>
                 <Switch checked={greetingEnabled} onCheckedChange={setGreetingEnabled} />
               </div>
 
               <div className="flex items-center justify-between py-1 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <div>
-                  <Label className="text-sm font-bold">Splash Welcome</Label>
-                  <p className="text-xs text-slate-400">Show "Islamic Companion" on launch</p>
+                  <Label className="text-sm font-bold">{t('splashWelcome')}</Label>
+                  <p className="text-xs text-slate-400">{t('splashWelcomeDescription')}</p>
                 </div>
                 <Switch checked={splashGreetingEnabled} onCheckedChange={setSplashGreetingEnabled} />
               </div>
 
               <div className="flex items-center justify-between py-1 border-t border-slate-100 dark:border-slate-800 pt-3">
                 <div>
-                  <Label className="text-sm font-bold">Splash Screen</Label>
-                  <p className="text-xs text-slate-400">Enable app startup animation</p>
+                  <Label className="text-sm font-bold">{t('splashScreen')}</Label>
+                  <p className="text-xs text-slate-400">{t('splashScreenDescription')}</p>
                 </div>
                 <Switch checked={splashEnabled} onCheckedChange={setSplashEnabled} />
               </div>
@@ -344,16 +352,16 @@ const SettingsSubPage: React.FC = () => {
             <Card className="p-4 space-y-3 rounded-2xl">
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <User className="w-4 h-4" />
-                Gender Preference
+                {t('genderPreference')}
               </Label>
               <Select value={genderSettings.gender} onValueChange={(v: Gender) => setGenderSettingsState(setGender(v))}>
                 <SelectTrigger className="w-full h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="male">Man</SelectItem>
-                  <SelectItem value="female">Woman (Includes Menstrual Mode)</SelectItem>
-                  <SelectItem value="prefer-not-to-say">Prefer Not to Say</SelectItem>
+                  <SelectItem value="male">{t('man')}</SelectItem>
+                  <SelectItem value="female">{t('womanIncludesMenstrual')}</SelectItem>
+                  <SelectItem value="prefer-not-to-say">{t('preferNotToSay')}</SelectItem>
                 </SelectContent>
               </Select>
             </Card>
@@ -361,27 +369,27 @@ const SettingsSubPage: React.FC = () => {
             <Card className="p-4 space-y-3 rounded-2xl">
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
-                Preferred Currency
+                {t('preferredCurrency')}
               </Label>
               <Select
                 value={preferredCurrency}
                 onValueChange={(curr) => {
                   setPreferredCurrency(curr);
                   localStorage.setItem('preferred-currency', curr);
-                  toast({ title: 'Preferred currency updated' });
+                  toast({ title: t('preferredCurrencyUpdated') });
                 }}
               >
                 <SelectTrigger className="w-full h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="USD">USD - US Dollar ($)</SelectItem>
-                  <SelectItem value="PKR">PKR - Pakistani Rupee (Rs)</SelectItem>
-                  <SelectItem value="SAR">SAR - Saudi Riyal (SR)</SelectItem>
-                  <SelectItem value="AED">AED - UAE Dirham (AED)</SelectItem>
-                  <SelectItem value="EUR">EUR - Euro (€)</SelectItem>
-                  <SelectItem value="GBP">GBP - British Pound (£)</SelectItem>
-                  <SelectItem value="INR">INR - Indian Rupee (₹)</SelectItem>
+                  <SelectItem value="USD">{t('currencyUSD')}</SelectItem>
+                  <SelectItem value="PKR">{t('currencyPKR')}</SelectItem>
+                  <SelectItem value="SAR">{t('currencySAR')}</SelectItem>
+                  <SelectItem value="AED">{t('currencyAED')}</SelectItem>
+                  <SelectItem value="EUR">{t('currencyEUR')}</SelectItem>
+                  <SelectItem value="GBP">{t('currencyGBP')}</SelectItem>
+                  <SelectItem value="INR">{t('currencyINR')}</SelectItem>
                 </SelectContent>
               </Select>
             </Card>
@@ -396,12 +404,12 @@ const SettingsSubPage: React.FC = () => {
             </Card>
 
             <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Calculation Method</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('calculationMethod')}</Label>
               <PrayerMethodSelector />
             </Card>
 
             <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Madhab (Asr School of Jurisprudence)</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('madhabAsrSchool')}</Label>
               <div className="flex gap-2">
                 <Button
                   variant={madhab === 'shafi' ? 'default' : 'outline'}
@@ -413,10 +421,10 @@ const SettingsSubPage: React.FC = () => {
                       localStorage.removeItem('cached_prayer_times');
                       localStorage.removeItem('cached-prayer-times');
                     } catch { /* ignore */ }
-                    toast({ title: 'Madhab set to Shafi / Maliki / Hanbali' });
+                    toast({ title: t('madhabSetShafi') });
                   }}
                 >
-                  Shafi / Maliki / Hanbali
+                  {t('madhabShafi')}
                 </Button>
                 <Button
                   variant={madhab === 'hanafi' ? 'default' : 'outline'}
@@ -428,16 +436,16 @@ const SettingsSubPage: React.FC = () => {
                       localStorage.removeItem('cached_prayer_times');
                       localStorage.removeItem('cached-prayer-times');
                     } catch { /* ignore */ }
-                    toast({ title: 'Madhab set to Hanafi' });
+                    toast({ title: t('madhabSetHanafi') });
                   }}
                 >
-                  Hanafi
+                  {t('madhabHanafi')}
                 </Button>
               </div>
             </Card>
 
             <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Hijri Date Offset</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('hijriDateAdjustment')}</Label>
               <Select
                 value={hijriOffset}
                 onValueChange={(val) => {
@@ -445,18 +453,18 @@ const SettingsSubPage: React.FC = () => {
                   localStorage.setItem('hijri-date-offset', val);
                   AladhanAPI.clearCachedData();
                   window.dispatchEvent(new Event('hijri-date-offset-changed'));
-                  toast({ title: 'Hijri offset updated' });
+                  toast({ title: t('hijriOffsetUpdated') });
                 }}
               >
                 <SelectTrigger className="w-full h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="-2">-2 Days</SelectItem>
-                  <SelectItem value="-1">-1 Day</SelectItem>
-                  <SelectItem value="0">0 Days (Standard)</SelectItem>
-                  <SelectItem value="1">+1 Day</SelectItem>
-                  <SelectItem value="2">+2 Days</SelectItem>
+                  <SelectItem value="-2">{t('hijriOffsetMinus2')}</SelectItem>
+                  <SelectItem value="-1">{t('hijriOffsetMinus1')}</SelectItem>
+                  <SelectItem value="0">{t('hijriOffset0')}</SelectItem>
+                  <SelectItem value="1">{t('hijriOffsetPlus1')}</SelectItem>
+                  <SelectItem value="2">{t('hijriOffsetPlus2')}</SelectItem>
                 </SelectContent>
               </Select>
             </Card>
@@ -468,8 +476,8 @@ const SettingsSubPage: React.FC = () => {
           <Card className="p-4 space-y-3 rounded-2xl divide-y divide-slate-100 dark:divide-slate-800">
             <div className="flex items-center justify-between pb-3">
               <div>
-                <Label className="text-sm font-bold">Friday Surah Al-Kahf Reminders</Label>
-                <p className="text-xs text-slate-400">Weekly reminder on Friday mornings</p>
+                <Label className="text-sm font-bold">{t('fridayKahfAlert')}</Label>
+                <p className="text-xs text-slate-400">{t('fridayKahfReminderDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.fridayKahfReminders}
@@ -479,8 +487,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Ramadan & Eid Reminders</Label>
-                <p className="text-xs text-slate-400">Countdown & event notifications</p>
+                <Label className="text-sm font-bold">{t('ramadanEidReminders')}</Label>
+                <p className="text-xs text-slate-400">{t('ramadanEidRemindersDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.ramadanCountdowns}
@@ -490,8 +498,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Dhikr & Quran Verses</Label>
-                <p className="text-xs text-slate-400">Daily spiritual verse pushes</p>
+                <Label className="text-sm font-bold">{t('dhikrQuranVerses')}</Label>
+                <p className="text-xs text-slate-400">{t('dhikrQuranVersesDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.quranicVerses}
@@ -501,8 +509,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Tahajjud & Night Prayer</Label>
-                <p className="text-xs text-slate-400">Pre-Fajr reminders during last third of night</p>
+                <Label className="text-sm font-bold">{t('tahajjudNightPrayer')}</Label>
+                <p className="text-xs text-slate-400">{t('tahajjudNightPrayerDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.tahajjudReminders ?? true}
@@ -512,8 +520,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Salat al-Duha Reminders</Label>
-                <p className="text-xs text-slate-400">Mid-morning Duha prayer alerts</p>
+                <Label className="text-sm font-bold">{t('salatDuhaReminders')}</Label>
+                <p className="text-xs text-slate-400">{t('salatDuhaRemindersDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.duhaReminders ?? true}
@@ -523,8 +531,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Sunnah Fasting Alerts</Label>
-                <p className="text-xs text-slate-400">Monday & Thursday Sunnah fasting reminders</p>
+                <Label className="text-sm font-bold">{t('sunnahFastingAlerts')}</Label>
+                <p className="text-xs text-slate-400">{t('sunnahFastingAlertsDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.fastingDaysReminders ?? true}
@@ -534,8 +542,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Daily Quran Tilawat Goal</Label>
-                <p className="text-xs text-slate-400">Evening recitation reminder</p>
+                <Label className="text-sm font-bold">{t('quranTilawatGoal')}</Label>
+                <p className="text-xs text-slate-400">{t('quranTilawatGoalDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.quranTrackerReminders ?? true}
@@ -545,8 +553,8 @@ const SettingsSubPage: React.FC = () => {
 
             <div className="flex items-center justify-between py-3">
               <div>
-                <Label className="text-sm font-bold">Bedtime Sunnah Azkar</Label>
-                <p className="text-xs text-slate-400">Nightly Ayatul Kursi & protection dua alerts</p>
+                <Label className="text-sm font-bold">{t('bedtimeSunnahAzkar')}</Label>
+                <p className="text-xs text-slate-400">{t('bedtimeSunnahAzkarDesc')}</p>
               </div>
               <Switch
                 checked={notificationPrefs.bedtimeDuaReminders ?? true}
@@ -560,10 +568,10 @@ const SettingsSubPage: React.FC = () => {
                 className="w-full rounded-xl"
                 onClick={async () => {
                   const res = await unifiedNotifications.testNotification();
-                  toast({ title: res.success ? 'Test notification sent' : 'Notification failed' });
+                  toast({ title: res.success ? t('testNotificationSent') : t('notificationFailed') });
                 }}
               >
-                Send Test Notification
+                {t('testNotification')}
               </Button>
             </div>
           </Card>
@@ -575,8 +583,8 @@ const SettingsSubPage: React.FC = () => {
             <Card className="p-4 space-y-3 rounded-2xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-sm font-bold">Prayer Alarm</Label>
-                  <p className="text-xs text-slate-400">Play full Adhan sound at prayer times</p>
+                  <Label className="text-sm font-bold">{t('prayerAlarm')}</Label>
+                  <p className="text-xs text-slate-400">{t('prayerAlarmDescription')}</p>
                 </div>
                 <Switch
                   checked={isAlarmEnabled}
@@ -585,17 +593,17 @@ const SettingsSubPage: React.FC = () => {
               </div>
               <Button variant="outline" className="w-full rounded-xl gap-2 mt-2" onClick={testAdhan}>
                 <Volume2 className="w-4 h-4" />
-                Test Adhan Sound
+                {t('testAdhan')}
               </Button>
             </Card>
 
             <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Adhan Reciter Selection</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('adhanReciterSelection')}</Label>
               <AdhanSelector />
             </Card>
 
             <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Custom Adhan Sound</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('customAdhan')}</Label>
               <CustomAdhanUpload />
             </Card>
           </div>
@@ -608,20 +616,20 @@ const SettingsSubPage: React.FC = () => {
         {sectionId === 'storage' && (
           <div className="space-y-4">
             <Card className="p-4 space-y-3 rounded-2xl">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage Usage</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('storageUsed')}</Label>
               <div className="flex justify-between items-center text-sm font-semibold">
-                <span>Offline Quran Audio</span>
+                <span>{t('offlineQuranAudio')}</span>
                 <span className="text-amber-600">
-                  {quranDownloads.reciters} reciter{quranDownloads.reciters !== 1 ? "s" : ""} • {quranDownloads.count} surah{quranDownloads.count !== 1 ? "s" : ""} • {formatFileSize(quranDownloads.size)}
+                  {t('recitersLabel', { count: quranDownloads.reciters })} • {t('surahsCountLabel', { count: quranDownloads.count })} • {formatFileSize(quranDownloads.size)}
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm font-semibold">
-                <span>Downloaded E-books</span>
+                <span>{t('downloadedEbooks')}</span>
                 <span className="text-amber-600">{formatFileSize(storageStats.totalSize)}</span>
               </div>
               <div className="flex justify-between items-center text-sm font-semibold border-t border-slate-100 dark:border-slate-800 pt-2">
-                <span>Books Cached</span>
-                <span>{storageStats.totalBooks} files</span>
+                <span>{t('booksCached')}</span>
+                <span>{t('filesLabel', { count: storageStats.totalBooks })}</span>
               </div>
             </Card>
 
@@ -632,7 +640,7 @@ const SettingsSubPage: React.FC = () => {
                 onClick={() => setShowClearCacheDialog(true)}
               >
                 <Trash2 className="w-4 h-4" />
-                Clear Temporary Cache
+                {t('clearTemporaryCache')}
               </Button>
               <Button
                 variant="outline"
@@ -640,14 +648,14 @@ const SettingsSubPage: React.FC = () => {
                 onClick={() => setShowClearQuranDialog(true)}
                 disabled={quranDownloads.count === 0}
               >
-                Delete Downloaded Surahs
+                {t('deleteDownloadedSurahs')}
               </Button>
               <Button
                 variant="outline"
                 className="w-full rounded-xl gap-2"
                 onClick={handleClearBooks}
               >
-                Delete Downloaded E-books
+                {t('deleteDownloadedEbooks')}
               </Button>
             </Card>
 
@@ -656,38 +664,38 @@ const SettingsSubPage: React.FC = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-amber-500" />
-                    Clear Cache?
+                    {t('clearCacheConfirmTitle')}
                   </AlertDialogTitle>
                   <AlertDialogDescription asChild>
                     <div className="space-y-4">
-                      <p>This will remove temporary files and downloaded content to free up space.</p>
+                      <p>{t('clearCacheDialogDesc')}</p>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-foreground">Will be removed:</p>
+                        <p className="text-sm font-medium text-foreground">{t('willBeRemoved')}</p>
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 text-sm">
                             <X className="w-3.5 h-3.5 text-destructive shrink-0" />
-                            <span>Downloaded e-book PDFs</span>
+                            <span>{t('downloadedEbookPdfs')}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <X className="w-3.5 h-3.5 text-destructive shrink-0" />
-                            <span>Offline cached assets (re-downloads on next visit)</span>
+                            <span>{t('offlineCachedAssets')}</span>
                           </div>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-foreground">Your data is safe:</p>
+                        <p className="text-sm font-medium text-foreground">{t('yourDataIsSafe')}</p>
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2 text-sm">
                             <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            <span>Prayer records, bookmarks, qaza tracker</span>
+                            <span>{t('safePrayerRecords')}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            <span>Settings, preferences, habit tracker</span>
+                            <span>{t('safeSettingsPreferences')}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            <span>Auto backup snapshot</span>
+                            <span>{t('safeAutoBackup')}</span>
                           </div>
                         </div>
                       </div>
@@ -695,9 +703,9 @@ const SettingsSubPage: React.FC = () => {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="rounded-xl">{t('cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearCache} className="rounded-xl bg-destructive text-white">
-                    Clear Cache
+                    {t('clearCache')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -709,22 +717,24 @@ const SettingsSubPage: React.FC = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-amber-500" />
-                    Delete Downloaded Surahs?
+                    {t('deleteDownloadedSurahsTitle')}
                   </AlertDialogTitle>
 <AlertDialogDescription asChild>
                     <div className="space-y-3">
                       <p>
-                        This removes all offline Quran recitations from {quranDownloads.reciters} reciter{quranDownloads.reciters !== 1 ? "s" : ""}
-                        ({quranDownloads.count} surah{quranDownloads.count !== 1 ? "s" : ""}, {formatFileSize(quranDownloads.size)}).
+                        {t('deleteQuranDesc1', {
+                          surahs: t('surahsCountLabel', { count: quranDownloads.count }),
+                          size: formatFileSize(quranDownloads.size),
+                        })}
                       </p>
-                      <p>Streaming will still work online. You can re-download any surah anytime from the Quran Audio page.</p>
+                      <p>{t('deleteQuranDesc2')}</p>
                     </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="rounded-xl">{t('cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearQuranDownloads} className="rounded-xl bg-destructive text-white">
-                    Delete Surahs
+                    {t('deleteSurahs')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -736,9 +746,9 @@ const SettingsSubPage: React.FC = () => {
         {sectionId === 'privacy' && (
           <div className="space-y-4">
             <Card className="p-4 space-y-2 rounded-2xl bg-emerald-500/5 border-emerald-500/20">
-              <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600">Privacy First Guarantee</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600">{t('privacyFirstGuarantee')}</Label>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Noor Connect stores all your prayer history, bookmarks, and settings locally on your device. We do not track or sell user data.
+                {t('privacyFirstDesc')}
               </p>
             </Card>
 
@@ -753,10 +763,10 @@ const SettingsSubPage: React.FC = () => {
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center">
                 <Sparkles className="w-6 h-6" />
               </div>
-              <h2 className="text-lg font-bold">Noor Connect</h2>
-              <p className="text-xs text-slate-400">Version {CURRENT_APP_VERSION}</p>
+              <h2 className="text-lg font-bold">{t('appTitle')}</h2>
+              <p className="text-xs text-slate-400">{t('version')} {CURRENT_APP_VERSION}</p>
               <p className="text-xs text-slate-500 max-w-xs mx-auto pt-2">
-                Built end-to-end: 6 languages, 400+ licensed nasheeds. Built for the sake of Allah.
+                {t('aboutTagline')}
               </p>
             </Card>
 
@@ -764,7 +774,7 @@ const SettingsSubPage: React.FC = () => {
             {/* Contributors Section */}
             <Card className="p-5 rounded-2xl space-y-4 bg-gradient-to-br from-blue-500/5 to-purple-500/5 border-blue-500/20">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span className="text-lg">👥</span> Contributors
+                <span className="text-lg">👥</span> {t('contributors')}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all">
@@ -774,7 +784,7 @@ const SettingsSubPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">HSLN</p>
-                      <p className="text-xs text-slate-400">🇫🇷 French Translation</p>
+                      <p className="text-xs text-slate-400">{t('contributorFrench')}</p>
                     </div>
                   </div>
                   <a
@@ -793,7 +803,7 @@ const SettingsSubPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Nuraqueer</p>
-                      <p className="text-xs text-slate-400">🇰🇷 Korean Translation</p>
+                      <p className="text-xs text-slate-400">{t('contributorKorean')}</p>
                     </div>
                   </div>
                   <a
@@ -811,7 +821,7 @@ const SettingsSubPage: React.FC = () => {
             {/* Feedback Contributors Section */}
             <Card className="p-5 rounded-2xl space-y-4 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border-emerald-500/20">
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span className="text-lg">💬</span> Feedback Contributors
+                <span className="text-lg">💬</span> {t('feedbackContributors')}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 transition-all">
@@ -821,10 +831,10 @@ const SettingsSubPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Haris</p>
-                      <p className="text-xs text-slate-400">🇱🇰 Sri Lanka</p>
+                      <p className="text-xs text-slate-400">{t('countrySriLanka')}</p>
                     </div>
                   </div>
-                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">✓ Feedback</span>
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{t('feedbackBadge')}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-teal-400 dark:hover:border-teal-500 transition-all">
                   <div className="flex items-center gap-3">
@@ -833,10 +843,10 @@ const SettingsSubPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Ibrahim Bn Tariq</p>
-                      <p className="text-xs text-slate-400">🇪🇬 Egypt</p>
+                      <p className="text-xs text-slate-400">{t('countryEgypt')}</p>
                     </div>
                   </div>
-                  <span className="text-xs font-medium text-teal-600 dark:text-teal-400">✓ Feedback</span>
+                  <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('feedbackBadge')}</span>
                 </div>
               </div>
             </Card>
@@ -846,7 +856,7 @@ const SettingsSubPage: React.FC = () => {
               className="w-full rounded-xl gap-2"
               onClick={() => setShowChangelog(true)}
             >
-              View Release Changelog
+              {t('viewChangelog')}
             </Button>
 
             {showChangelog && <Changelog onClose={() => setShowChangelog(false)} />}
@@ -862,19 +872,19 @@ const SettingsSubPage: React.FC = () => {
                   <Heart className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Support Development</h3>
-                  <p className="text-xs text-slate-400">100% free. No ads. Built for the sake of Allah.</p>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">{t('supportDevelopment')}</h3>
+                  <p className="text-xs text-slate-400">{t('supportSubtitle')}</p>
                 </div>
               </div>
 
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Noor Connect is completely free with no ads or subscriptions. If you'd like to support development and help keep it free, we'd be truly grateful.
+                {t('supportBody')}
               </p>
 
               <div className="bg-slate-100 dark:bg-slate-800/60 rounded-xl p-4 space-y-1">
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">How to donate</p>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{t('howToDonate')}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  If you would like to donate, kindly contact on WhatsApp via the number given in the app. Jazak Allah Khair.
+                  {t('howToDonateDesc')}
                 </p>
               </div>
 
@@ -883,7 +893,7 @@ const SettingsSubPage: React.FC = () => {
                 onClick={() => window.open('https://wa.me/923352706540', '_blank')}
               >
                 <MessageCircle className="w-4 h-4" />
-                <span className="font-medium">Contact on WhatsApp</span>
+                <span className="font-medium">{t('contactOnWhatsapp')}</span>
               </Button>
             </Card>
           </div>
@@ -898,13 +908,13 @@ const SettingsSubPage: React.FC = () => {
                   <Briefcase className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Love this app? I built it.</h3>
-                  <p className="text-xs text-slate-400">One developer. Zero trackers. Built for the sake of Allah.</p>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">{t('contactHeadline')}</h3>
+                  <p className="text-xs text-slate-400">{t('contactSubtitle')}</p>
                 </div>
               </div>
 
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                I also build production software, websites, and security audits for businesses and startups. If you need a developer who delivers quality work, let's talk.
+                {t('contactBody')}
               </p>
 
               <div className="space-y-2.5 pt-2">
@@ -913,7 +923,7 @@ const SettingsSubPage: React.FC = () => {
                   onClick={() => window.open('https://wa.me/923352706540', '_blank')}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
-                  <span className="font-medium">Let's Talk on WhatsApp</span>
+                  <span className="font-medium">{t('letsTalkWhatsapp')}</span>
                 </Button>
 
                 <Button
@@ -922,7 +932,7 @@ const SettingsSubPage: React.FC = () => {
                   onClick={() => window.open('https://ubaid-ur-rehmanportfolio.vercel.app/', '_blank')}
                 >
                   <ExternalLink className="w-4 h-4 mr-2 text-emerald-600" />
-                  <span className="font-medium">View my work</span>
+                  <span className="font-medium">{t('viewMyWork')}</span>
                 </Button>
 
                 <button
@@ -941,7 +951,7 @@ const SettingsSubPage: React.FC = () => {
                 >
                   <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>
-                    Other email: <span className="font-semibold text-slate-800 dark:text-slate-200">Proton</span> — ubaid0345@proton.me
+                    {t('otherEmail')} <span className="font-semibold text-slate-800 dark:text-slate-200">Proton</span> — ubaid0345@proton.me
                   </span>
                 </button>
               </div>

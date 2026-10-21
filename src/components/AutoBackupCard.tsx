@@ -14,28 +14,33 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext-new';
+import { useI18n } from '@/hooks/useI18n';
+import i18n from '@/lib/i18n-new';
 import { autoBackup, downloadBackup, getLastAutoBackupTime, importBackup } from '@/lib/backup';
 import { downloadBook, isBookDownloaded } from '@/lib/ebooks-storage';
 
-function formatRelativeTime(iso: string): string {
+// H-2b i18n: relative time is produced by Intl.RelativeTimeFormat in the active
+// app language (correct plurals for ar/ur/bn/ru/fr/ko without extra keys).
+function formatRelativeTime(iso: string, locale: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
   const diffMs = Date.now() - then;
-  if (diffMs < 45_000) return 'just now';
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 60) return `${mins} min ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} d ago`;
-  return new Date(iso).toLocaleDateString();
+  const rtf = new Intl.RelativeTimeFormat(locale || 'en', { numeric: 'auto' });
+  if (diffMs < 45_000) return rtf.format(0, 'second');
+  const mins = Math.round(diffMs / 60_000);
+  if (mins < 60) return rtf.format(-mins, 'minute');
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return rtf.format(-hours, 'hour');
+  const days = Math.round(hours / 24);
+  if (days < 7) return rtf.format(-days, 'day');
+  return new Date(iso).toLocaleDateString(locale);
 }
 
 type BusyAction = 'none' | 'now' | 'export' | 'restore';
 
 export function AutoBackupCard() {
-  const { t } = useLanguage();
+  const { t } = useI18n();
+  const locale = i18n.language || 'en';
   const { toast } = useToast();
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -83,13 +88,13 @@ export function AutoBackupCard() {
         setNow(Date.now());
         flashSuccess('backup');
         toast({
-          title: '✅ Backup Saved',
-          description: 'Your latest data is now saved on this device.',
+          title: t('backupSavedToast'),
+          description: t('backupSavedDesc'),
         });
       } catch {
         toast({
-          title: '❌ Backup Failed',
-          description: 'Could not save a backup right now. Please try again.',
+          title: t('backupFailed'),
+          description: t('backupFailedDesc'),
           variant: 'destructive',
         });
       }
@@ -99,16 +104,16 @@ export function AutoBackupCard() {
   const handleExport = useCallback(() => {
     void runAction('export', async () => {
       const { id: toastId, update } = toast({
-        title: 'Creating Backup...',
-        description: 'Please wait while we prepare your backup file.',
+        title: t('creatingBackup'),
+        description: t('pleaseWaitBackup'),
       });
       try {
         const result = await downloadBackup();
         if (!result.success) {
           update({
             id: toastId,
-            title: '❌ Backup Failed',
-            description: result.error || 'Failed to create backup. Please try again.',
+            title: t('backupFailed'),
+            description: result.error || t('backupCreationFailed'),
             variant: 'destructive',
           });
           return;
@@ -117,22 +122,21 @@ export function AutoBackupCard() {
         if (result.data?.platform === 'native') {
           update({
             id: toastId,
-            title: '✅ Backup File Ready',
-            description:
-              'Choose where to save it (Downloads, Drive, Files) — keep it somewhere safe.',
+            title: t('backupFileReady'),
+            description: t('backupFileReadyDesc'),
           });
         } else {
           update({
             id: toastId,
-            title: '✅ Backup Downloaded',
-            description: 'Your backup file was downloaded to your device.',
+            title: t('backupDownloadedToast'),
+            description: t('backupDownloadedDesc'),
           });
         }
       } catch {
         update({
           id: toastId,
-          title: '❌ Backup Failed',
-          description: 'Failed to create backup. Please try again.',
+          title: t('backupFailed'),
+          description: t('backupCreationFailed'),
           variant: 'destructive',
         });
       }
@@ -146,17 +150,17 @@ export function AutoBackupCard() {
       if (!file) return;
       void runAction('restore', async () => {
         const { id: toastId, update } = toast({
-          title: 'Restoring Backup...',
-          description: 'Please wait while we restore your data.',
+          title: t('restoringBackup'),
+          description: t('pleaseWaitRestore'),
         });
         try {
           const result = await importBackup(file);
           if (!result.success || !result.data) {
             update({
               id: toastId,
-              title: '❌ Restore Failed',
+              title: t('restoreFailed'),
               description:
-                result.error || 'Failed to restore backup. Please check the file and try again.',
+                result.error || t('restoreFileCheckFailed'),
               variant: 'destructive',
             });
             return;
@@ -166,8 +170,8 @@ export function AutoBackupCard() {
           if (summary.warning) {
             update({
               id: toastId,
-              title: '⚠️ Older Backup',
-              description: `${summary.warning} Restoring it now...`,
+              title: t('restoreOlderBackup'),
+              description: t('restoreOlderBackupDesc', { warning: summary.warning }),
               variant: 'destructive',
             });
           }
@@ -175,8 +179,8 @@ export function AutoBackupCard() {
           if (summary.booksToDownload.length > 0) {
             update({
               id: toastId,
-              title: '📚 Downloading Library...',
-              description: `Restoring ${summary.booksToDownload.length} books. This may take a few minutes.`,
+              title: t('downloadingLibrary'),
+              description: t('restoringBooksDesc', { count: summary.booksToDownload.length }),
             });
             let downloadedCount = 0;
             for (const book of summary.booksToDownload) {
@@ -192,8 +196,8 @@ export function AutoBackupCard() {
                 ) {
                   update({
                     id: toastId,
-                    title: '📚 Downloading Library...',
-                    description: `Progress: ${downloadedCount}/${summary.booksToDownload.length} books restored.`,
+                    title: t('downloadingLibrary'),
+                    description: t('restoreProgressDesc', { done: downloadedCount, total: summary.booksToDownload.length }),
                   });
                 }
               } catch (err) {
@@ -202,21 +206,21 @@ export function AutoBackupCard() {
             }
             update({
               id: toastId,
-              title: '✅ Restore Complete',
-              description: `Successfully restored ${downloadedCount}/${summary.booksToDownload.length} books. App will refresh in 2 seconds.`,
+              title: t('restoreComplete'),
+              description: t('restoreCompleteBooksDesc', { done: downloadedCount, total: summary.booksToDownload.length }),
             });
           } else if (summary.failedKeys > 0) {
             update({
               id: toastId,
-              title: '⚠️ Restored with some issues',
-              description: `Most of your data was restored, but ${summary.failedKeys} item(s) could not be restored. App will refresh in 2 seconds.`,
+              title: t('restoredWithIssues'),
+              description: t('restoredWithIssuesDesc', { count: summary.failedKeys }),
               variant: 'destructive',
             });
           } else {
             update({
               id: toastId,
-              title: '✅ Restore Complete',
-              description: 'Your data has been restored successfully. App will refresh in 2 seconds.',
+              title: t('restoreComplete'),
+              description: t('dataRestoredSuccessfully'),
             });
           }
 
@@ -224,8 +228,8 @@ export function AutoBackupCard() {
         } catch {
           update({
             id: toastId,
-            title: '❌ Restore Failed',
-            description: 'Failed to restore backup. Please check file and try again.',
+            title: t('restoreFailed'),
+            description: t('restoreFileCheckFailed'),
             variant: 'destructive',
           });
         }
@@ -315,7 +319,7 @@ export function AutoBackupCard() {
                 <>
                   {t('lastSaved') || 'Last saved'}:{' '}
                   <span className="text-foreground/70 font-medium">
-                    {formatRelativeTime(lastSavedAt)}
+                    {formatRelativeTime(lastSavedAt, locale)}
                   </span>
                 </>
               ) : (
@@ -353,7 +357,7 @@ export function AutoBackupCard() {
           ) : showBackupSuccess ? (
             <>
               <Check className="w-4 h-4 me-2" />
-              Saved
+              {t('saved')}
             </>
           ) : (
             <>

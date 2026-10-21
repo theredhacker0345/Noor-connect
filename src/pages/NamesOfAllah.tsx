@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
-import { useLanguage } from "@/contexts/LanguageContext-new";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Name {
   number: number;
@@ -122,7 +122,7 @@ const namesOfAllah: Name[] = [
 const FAVORITES_KEY = 'names-of-allah-favorites';
 
 export default function NamesOfAllah() {
-  const { t } = useLanguage();
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<number[]>(() => {
     const saved = localStorage.getItem(FAVORITES_KEY);
@@ -157,7 +157,7 @@ export default function NamesOfAllah() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background pb-20">
-        <AppBar title={t("namesOfAllahFull") || "99 Names of Allah"} showBack />
+        <AppBar title={t("namesOfAllahFull")} showBack />
 
         <div className="max-w-lg mx-auto px-5 pt-4 space-y-6">
           {/* Premium Hero Card */}
@@ -168,11 +168,11 @@ export default function NamesOfAllah() {
             <div className="relative z-10 text-center space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#C9860A]/10 rounded-full text-xs font-bold uppercase tracking-[0.2em] border border-[#C9860A]/20 text-[#C9860A]">
                 <Sparkles className="w-3 h-3" />
-                Asma'ul Husna
+                {t('asmaUlHusna')}
               </div>
               <h1 className="text-4xl font-arabic font-bold leading-tight mt-2 text-white drop-shadow-md">أَسْمَاءُ اللهِ الْحُسْنَى</h1>
               <p className="text-[#C9860A]/80 font-serif italic text-sm tracking-wide">
-                Memorize and reflect upon the beautiful attributes of the Creator.
+                {t('namesMemorizeHint')}
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function NamesOfAllah() {
                 <Search className="w-4 h-4" />
               </div>
               <Input
-                placeholder="Search by name or meaning..."
+                placeholder={t('searchNameOrMeaning')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="ps-11 h-12 bg-card border-border/40 rounded-2xl focus-visible:ring-[#C9860A]/50 transition-all shadow-sm font-medium"
@@ -263,13 +263,13 @@ export default function NamesOfAllah() {
               <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground font-medium">No matches found for your search.</p>
+              <p className="text-muted-foreground font-medium">{t('noNameMatches')}</p>
               <Button
                 variant="link"
                 className="mt-2 text-[#C9860A] font-bold"
                 onClick={() => setSearchQuery("")}
               >
-                Clear all filters
+                {t('clearAllFilters')}
               </Button>
             </div>
           )}
@@ -304,7 +304,7 @@ export default function NamesOfAllah() {
 
                 <div className="p-8 space-y-6">
                   <div className="text-center">
-                    <span className="text-xs font-bold tracking-[0.2em] text-[#C9860A] uppercase mb-2 block">Attribute {selectedName.number}</span>
+                    <span className="text-xs font-bold tracking-[0.2em] text-[#C9860A] uppercase mb-2 block">{t('attributeNumber', { number: selectedName.number })}</span>
                     <h3 className="text-4xl font-bold font-serif italic text-foreground">{selectedName.transliteration}</h3>
                     <p className="text-muted-foreground font-bold text-sm tracking-wide mt-2">{selectedName.meaning}</p>
                   </div>
@@ -322,7 +322,7 @@ export default function NamesOfAllah() {
                       variant="outline"
                       onClick={() => setSelectedName(null)}
                     >
-                      Close
+                      {t('close')}
                     </Button>
                     <Button
                       variant="outline"

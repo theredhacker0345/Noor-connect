@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getDailyHadith as getDailyHadithFromCollections } from "@/lib/hadith";
 import { getAllCollections } from "@/data/hadith-collections";
 import { PageTransition } from "@/components/PageTransition";
-import { useLanguage } from "@/contexts/LanguageContext-new";
+import { useI18n } from "@/hooks/useI18n";
 import type { HadithItem } from '@/data/hadith.json';
 
 interface HadithData {
@@ -27,7 +27,7 @@ function getDailySeed(refreshSeed?: number | null): number {
 }
 
 const Hadith = () => {
-const { t } = useLanguage();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [hadith, setHadith] = useState<HadithData | null>(null);
@@ -75,27 +75,27 @@ const { t } = useLanguage();
 
       if (importedHadith) {
         finalData = {
-          hadith: importedHadith.arabic || importedHadith.arabicPlain || "No hadith text available",
+          hadith: importedHadith.arabic || importedHadith.arabicPlain || "",
           translation: importedHadith.englishTranslation || "",
           book: importedHadith.collection.replace(/[-_]/g, " "),
           number: String(importedHadith.hadithNumber || importedHadith.id),
         };
 } else {
          if (!hadithDataList) {
-             // Fallback if data hasn't loaded yet
+             // Fallback if data hasn't loaded yet (render shows t('noHadithText'); source line hidden when book is empty)
              finalData = {
-                 hadith: "No hadith text available",
+                 hadith: "",
                  translation: "",
-                 book: "Unknown",
+                 book: "",
                  number: "1",
              };
          } else {
              const randomIdx = Math.floor(Math.random() * hadithDataList.length);
              const item = hadithDataList[randomIdx];
              finalData = {
-                 hadith: item.text || 'No hadith text available',
+                 hadith: item.text || "",
                  translation: item.translation || '',
-                 book: item.source || 'Unknown',
+                 book: item.source || "",
                  number: String(item.number || randomIdx + 1),
              };
          }
@@ -122,12 +122,12 @@ const { t } = useLanguage();
 
   const handleShare = async () => {
     if (hadith) {
-      const shareText = `"${hadith.hadith}"\n\nSource: ${hadith.book} #${hadith.number}`;
+      const shareText = `"${hadith.hadith}"\n\n${t('hadithShareSource', { book: hadith.book, number: hadith.number })}`;
       
       if (navigator.share) {
         try {
           await navigator.share({
-            title: "Hadith of the Day",
+            title: t('hadithOfDay'),
             text: shareText,
           });
         } catch (error) {
@@ -136,8 +136,8 @@ const { t } = useLanguage();
       } else {
         navigator.clipboard.writeText(shareText);
         toast({
-          title: "Copied to clipboard",
-          description: "Hadith has been copied to your clipboard",
+          title: t('copiedToClipboard'),
+          description: t('hadithCopiedDesc'),
         });
       }
     }
@@ -167,7 +167,7 @@ const { t } = useLanguage();
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground font-serif italic tracking-tight">حديث اليوم</h1>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">Daily Hadith</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">{t('dailyHadith')}</p>
           </div>
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C9860A]/20 to-[#E8A020]/5 flex items-center justify-center border border-[#C9860A]/10 shadow-sm">
             <BookOpen className="w-5 h-5 text-[#C9860A]" />
@@ -181,7 +181,7 @@ const { t } = useLanguage();
                 <div className="w-16 h-16 rounded-xl bg-[#C9860A]/10 animate-pulse border border-[#C9860A]/20" />
                 <Loader2 className="w-8 h-8 animate-spin text-[#C9860A] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Loading Hadith...</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{t('loadingHadith')}</p>
             </div>
           </Card>
         ) : hadith ? (
@@ -199,13 +199,13 @@ const { t } = useLanguage();
                       <BookOpen className="w-6 h-6 text-[#C9860A]" />
                     </div>
                     <h2 className="text-xs uppercase tracking-[0.2em] text-[#C9860A] font-bold">
-                      Hadith of the Day
+                      {t('hadithOfDay')}
                     </h2>
                   </div>
  
                   {/* Hadith text */}
                   <blockquote className="text-xl md:text-3xl leading-relaxed text-center font-arabic font-bold mt-6 mb-2">
-                    {hadith.hadith}
+                    {hadith.hadith || t('noHadithText')}
                   </blockquote>
  
                   {/* Translation */}
@@ -219,7 +219,7 @@ const { t } = useLanguage();
                   {hadith.book && (
                     <div className="pt-6 mt-4 border-t border-white/10 text-center">
                       <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">
-                        {hadith.number ? `Reference: ${hadith.book} #${hadith.number}` : hadith.book}
+                        {hadith.number ? t('hadithReference', { book: hadith.book, number: hadith.number }) : hadith.book}
                       </p>
                     </div>
                   )}
@@ -235,7 +235,7 @@ const { t } = useLanguage();
                 variant="outline"
               >
                 <Share2 className="w-4 h-4 me-2 text-[#C9860A]" />
-                Share
+                {t('share')}
               </Button>
               <Button
                 onClick={() => navigate("/hadith/collections")}
@@ -243,7 +243,7 @@ const { t } = useLanguage();
                 variant="outline"
               >
                 <Library className="w-4 h-4 me-2 text-[#C9860A]" />
-                Browse
+                {t('browse')}
               </Button>
               <Button
                 onClick={() => navigate("/hadith/bookmarks")}
@@ -267,15 +267,15 @@ const { t } = useLanguage();
             {/* Footer message */}
             <Card className="p-5 bg-muted/20 border-border/40 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-wider text-center text-muted-foreground">
-                May Allah (SWT) help us implement these teachings in our daily lives. Ameen.
+                {t('hadithFooterDua')}
               </p>
             </Card>
           </div>
         ) : (
           <Card className="p-8 text-center space-y-4 bg-card border-border/40 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Unable to load hadith. Please try again later.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{t('unableToLoadHadith')}</p>
             <Button onClick={fetchHadith} variant="outline" className="bg-[#1A1A1A] text-white hover:bg-[#333333] border-border/40 font-bold rounded-xl px-6 h-12">
-              Try Again
+              {t('tryAgain')}
             </Button>
           </Card>
         )}

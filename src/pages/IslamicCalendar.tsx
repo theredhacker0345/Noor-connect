@@ -9,15 +9,26 @@ import { calendarApiResponseSchema, safeParseApiResponse } from "@/lib/api-schem
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { useNavigate } from "react-router-dom";
 import { goBackOrFallback } from "@/lib/navigation";
+import { useI18n } from "@/hooks/useI18n";
+
+// Localized Hijri month names (index 0 = month 1 Muharram ... index 11 = month 12 Dhul Hijjah)
+const HIJRI_MONTH_KEYS = [
+  "hijriMuharram", "hijriSafar", "hijriRabiAwwal", "hijriRabiThani",
+  "hijriJumadaAwwal", "hijriJumadaThani", "hijriRajab", "hijriShaban",
+  "hijriRamadan", "hijriShawwal", "hijriDhulQidah", "hijriDhulHijjah",
+];
+
+// Jan 1 2023 was a Sunday — one fixed week for localized short weekday headers
+const DAY_HEADER_DATES = Array.from({ length: 7 }, (_, i) => new Date(2023, 0, 1 + i));
 
 const importantDates = [
-  { name: "Ramadan", icon: "🌙", description: "Month of Fasting", color: "bg-primary/10 text-foreground border border-primary/20" },
-  { name: "Laylat al-Qadr", icon: "✨", description: "Night of Power", color: "bg-primary/20 text-foreground border border-primary/30" },
-  { name: "Eid al-Fitr", icon: "🎉", description: "Festival of Breaking the Fast", color: "bg-accent/10 text-foreground border border-accent/20" },
-  { name: "Eid al-Adha", icon: "🐑", description: "Festival of Sacrifice", color: "bg-secondary/20 text-foreground border border-primary/30" },
-  { name: "Dhul Hijjah", icon: "🕋", description: "Month of Hajj", color: "bg-primary/15 text-foreground border border-primary/25" },
-  { name: "Muharram", icon: "🌟", description: "Islamic New Year", color: "bg-accent/15 text-foreground border border-accent/25" },
-  { name: "Ashura", icon: "⭐", description: "Day of Ashura", color: "bg-secondary/25 text-foreground border border-primary/20" },
+  { nameKey: "evRamadan", icon: "🌙", descKey: "evRamadanDesc", color: "bg-primary/10 text-foreground border border-primary/20" },
+  { nameKey: "evLaylatQadr", icon: "✨", descKey: "evLaylatQadrDesc", color: "bg-primary/20 text-foreground border border-primary/30" },
+  { nameKey: "evEidFitr", icon: "🎉", descKey: "evEidFitrDesc", color: "bg-accent/10 text-foreground border border-accent/20" },
+  { nameKey: "evEidAdha", icon: "🐑", descKey: "evEidAdhaDesc", color: "bg-secondary/20 text-foreground border border-primary/30" },
+  { nameKey: "evDhulHijjah", icon: "🕋", descKey: "evDhulHijjahDesc", color: "bg-primary/15 text-foreground border border-primary/25" },
+  { nameKey: "evMuharram", icon: "🌟", descKey: "evMuharramDesc", color: "bg-accent/15 text-foreground border border-accent/25" },
+  { nameKey: "evAshura", icon: "⭐", descKey: "evAshuraDesc", color: "bg-secondary/25 text-foreground border border-primary/20" },
 ];
 
 interface CalendarDay {
@@ -36,6 +47,7 @@ interface CalendarDay {
 
 export default function IslamicCalendar() {
   const navigate = useNavigate();
+  const { t, formatNumber, formatDate } = useI18n();
   // Use the Maghrib-aware hook (same as Dashboard) for the header date
   const { islamicInfo, isLoading: dateLoading } = useIslamicCalendar();
 
@@ -106,7 +118,7 @@ export default function IslamicCalendar() {
       }
     } catch (error) {
       console.error('Error fetching calendar:', error);
-      toast.error('Failed to load calendar');
+      toast.error(t('failedToLoadCalendar'));
     } finally {
       setLoading(false);
     }
@@ -203,13 +215,14 @@ export default function IslamicCalendar() {
   const hijriMonthHeader = useMemo(() => {
     if (calendarDays.length === 0) return "";
     const activeDays = calendarDays.filter(d => d.isCurrentMonth);
-    const months = Array.from(new Set(activeDays.map(d => d.hijriMonth.en)));
+    const months = Array.from(new Set(activeDays.map(d => d.hijriMonth.number)));
     const years = Array.from(new Set(activeDays.map(d => d.hijriYear)));
+    const monthLabel = (n: number) => (n >= 1 && n <= 12 ? t(HIJRI_MONTH_KEYS[n - 1]) : "");
 
-    if (months.length === 1) return `${months[0]} ${years[0]}`;
-    if (years.length === 1) return `${months.join(" / ")} ${years[0]}`;
-    return `${months[0]} ${years[0]} / ${months[1]} ${years[1]}`;
-  }, [calendarDays]);
+    if (months.length === 1) return `${monthLabel(months[0])} ${years[0]}`;
+    if (years.length === 1) return `${months.map(monthLabel).join(" / ")} ${years[0]}`;
+    return `${monthLabel(months[0])} ${years[0]} / ${monthLabel(months[1])} ${years[1]}`;
+  }, [calendarDays, t]);
 
   return (
     <div className="min-h-screen bg-background pt-6 px-4">
@@ -220,8 +233,8 @@ export default function IslamicCalendar() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-black text-foreground tracking-tight">Islamic Calendar</h1>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Hijri Dates</p>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">{t('islamicCalendar')}</h1>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t('hijriDates')}</p>
           </div>
         </div>
 
@@ -230,9 +243,9 @@ export default function IslamicCalendar() {
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Calendar className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Islamic Calendar</CardTitle>
+              <CardTitle className="text-2xl">{t('islamicCalendar')}</CardTitle>
             </div>
-            <CardDescription>Today's Hijri Date</CardDescription>
+            <CardDescription>{t('todaysHijriDate')}</CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             {dateLoading && (
@@ -248,7 +261,7 @@ export default function IslamicCalendar() {
               <>
                 <div className="bg-gradient-primary rounded-xl p-6 space-y-2 text-primary-foreground">
                   <div className="text-4xl font-bold mb-2">
-                    {islamicInfo.currentDate.hijri.day} {islamicInfo.currentDate.hijri.month.en} {islamicInfo.currentDate.hijri.year} AH
+                    {islamicInfo.currentDate.hijri.day} {islamicInfo.currentDate.hijri.month.en} {islamicInfo.currentDate.hijri.year} {t('hijriEra')}
                   </div>
                   <div className="text-3xl quran-arabic mb-4" dir="rtl">
                     {islamicInfo.currentDate.hijri.day} {islamicInfo.currentDate.hijri.month.ar} {islamicInfo.currentDate.hijri.year}
@@ -257,7 +270,7 @@ export default function IslamicCalendar() {
                     {islamicInfo.currentDate.hijri.weekday.en}
                   </div>
                   <div className="text-sm opacity-80 mt-2">
-                    Gregorian: {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {t('gregorian')}: {formatDate(new Date(), { day: 'numeric', month: 'long', year: 'numeric' })}
                   </div>
                 </div>
 
@@ -266,7 +279,7 @@ export default function IslamicCalendar() {
                   <div className="bg-gradient-secondary rounded-lg p-4 border-2 border-accent">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Star className="h-5 w-5 text-accent" />
-                      <h3 className="font-semibold text-foreground">Special Day</h3>
+                      <h3 className="font-semibold text-foreground">{t('specialDay')}</h3>
                     </div>
                     {islamicInfo.currentDate.hijri.holidays.map((holiday: string, index: number) => (
                       <p key={index} className="text-center text-foreground font-medium">
@@ -289,7 +302,7 @@ export default function IslamicCalendar() {
                 {hijriMonthHeader || (
                   <span className="inline-block h-5 w-40 bg-muted rounded animate-pulse" />
                 )}
-                {" AH"}
+                {" "}{t('hijriEra')}
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Button
@@ -297,7 +310,7 @@ export default function IslamicCalendar() {
                   size="sm"
                   onClick={handleToday}
                 >
-                  Today
+                  {t('today')}
                 </Button>
                 <Button
                   variant="outline"
@@ -325,10 +338,10 @@ export default function IslamicCalendar() {
           <CardContent style={{ contentVisibility: "auto", containIntrinsicSize: "800px" }}>
             <div className="w-full overflow-x-auto sm:overflow-x-visible">
               <div className="grid grid-cols-7 gap-1 px-0.5 sm:px-0 sm:min-w-[320px]" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                {/* Day headers */}
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-center font-semibold text-xs md:text-sm text-muted-foreground p-1 md:p-2">
-                    {day}
+                {/* Day headers (localized via Intl short weekday) */}
+                {DAY_HEADER_DATES.map((date, i) => (
+                  <div key={i} className="text-center font-semibold text-xs md:text-sm text-muted-foreground p-1 md:p-2">
+                    {formatDate(date, { weekday: 'short' })}
                   </div>
                 ))}
 
@@ -366,9 +379,9 @@ export default function IslamicCalendar() {
                             <span className={`text-xs sm:text-sm md:text-base font-bold ${day.isToday ? 'text-primary' : 'text-foreground'}`}>
                               {day.hijriDay}
                             </span>
-                            {day.hijriDay === 1 && (
-                              <span className="text-[0.5rem] font-bold text-primary uppercase leading-none mt-1">
-                                {day.hijriMonth.en.substring(0, 3)}
+                            {day.hijriDay === 1 && day.hijriMonth.number >= 1 && (
+                              <span className="text-[0.5rem] font-bold text-primary uppercase leading-none mt-1 truncate max-w-[56%]">
+                                {t(HIJRI_MONTH_KEYS[day.hijriMonth.number - 1])}
                               </span>
                             )}
                           </div>
@@ -421,7 +434,7 @@ export default function IslamicCalendar() {
               <div className="p-6 space-y-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Islamic Date Details</h3>
+                  <h3 className="text-lg font-semibold">{t('islamicDateDetails')}</h3>
                   <Button variant="ghost" size="icon" onClick={closeDateModal}>
                     <X className="w-4 h-4" />
                   </Button>
@@ -431,10 +444,10 @@ export default function IslamicCalendar() {
                 <div className="space-y-2">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">
-                      {selectedDate.hijriDay} {selectedDate.hijriMonth.en} {selectedDate.hijriYear} AH
+                      {selectedDate.hijriDay} {selectedDate.hijriMonth.en} {selectedDate.hijriYear} {t('hijriEra')}
                     </div>
                     <div className="text-xl quran-arabic" dir="rtl">
-                      {selectedDate.hijriDay} {selectedDate.hijriMonth.ar} {selectedDate.hijriYear} AH
+                      {selectedDate.hijriDay} {selectedDate.hijriMonth.ar} {selectedDate.hijriYear} {t('hijriEra')}
                     </div>
                   </div>
                   <div className="text-center text-sm text-muted-foreground">
@@ -447,7 +460,7 @@ export default function IslamicCalendar() {
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
                       <Star className="w-4 h-4 text-primary" />
-                      Events & Holidays
+                      {t('eventsAndHolidays')}
                     </h4>
                     <div className="space-y-1">
                       {selectedDate.holidays.map((holiday, idx) => (
@@ -462,7 +475,7 @@ export default function IslamicCalendar() {
                 {/* Special note if today */}
                 {selectedDate.isToday && (
                   <div className="text-center text-sm text-primary font-medium">
-                    🌙 Today
+                    🌙 {t('today')}
                   </div>
                 )}
               </div>
@@ -475,10 +488,10 @@ export default function IslamicCalendar() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Star className="h-5 w-5 text-primary" />
-              Important Islamic Dates
+              {t('importantIslamicDates')}
             </CardTitle>
             <CardDescription>
-              Key events in the Islamic calendar
+              {t('keyEventsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -491,8 +504,8 @@ export default function IslamicCalendar() {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{event.icon}</span>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{event.name}</h3>
-                      <p className="text-sm text-muted-foreground">{event.description}</p>
+                      <h3 className="font-semibold text-foreground">{t(event.nameKey)}</h3>
+                      <p className="text-sm text-muted-foreground">{t(event.descKey)}</p>
                     </div>
                   </div>
                 </div>
@@ -506,25 +519,21 @@ export default function IslamicCalendar() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Moon className="h-5 w-5 text-primary" />
-              Islamic Months
+              {t('islamicMonthsTitle')}
             </CardTitle>
             <CardDescription>
-              The 12 months of the Hijri calendar
+              {t('monthsOfHijriDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                "Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani",
-                "Jumada al-awwal", "Jumada al-thani", "Rajab", "Sha'ban",
-                "Ramadan", "Shawwal", "Dhul Qi'dah", "Dhul Hijjah"
-              ].map((month, index) => (
+              {HIJRI_MONTH_KEYS.map((monthKey, index) => (
                 <Badge
-                  key={index}
+                  key={monthKey}
                   variant={islamicInfo?.currentDate.hijri.month.number === index + 1 ? "default" : "outline"}
                   className="justify-center py-2 text-sm"
                 >
-                  {index + 1}. {month}
+                  {formatNumber(index + 1)}. {t(monthKey)}
                 </Badge>
               ))}
             </div>
