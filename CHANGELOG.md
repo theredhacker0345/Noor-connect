@@ -8,22 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-10-23
+
+### Added
+
+- Noor Cycle gains pregnancy mode: weeks/days + trimester + due-date countdown with a 40-week progress ring, an honest fiqh note (pregnancy bleeding is istiḥāḍah — prayers continue), a "Baby arrived — start Nifās" handoff, duʿās of pregnancy and birth, and suppression of period predictions while expecting. Old tracker data migrates safely.
+- Pregnancy Mode is now easy to find: a dedicated **Pregnancy** button in the Noor Cycle header (visible whenever tracking is idle) and a prominent sky-tinted "Pregnancy Mode" card directly under the Today-tab hero — no more hunting for the old collapsed "Expecting?" row.
+- Noor Cycle Fiqh tab: the recommended-dhikr list is now a tap-to-count counter (per-dhikr goals like 33/34/100, daily totals, counts reset each day and persist in a dedicated storage key).
+- Noor Cycle Today tab: a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.
+- The Qisas library is complete: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the 24 existing stories — 25 prophets, from Adam to the Final Messenger.
+- 60 new authentic duʿās across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — 140 duʿās total, every entry sourced from the Qur'an or the six hadith collections.
+
 ### Fixed
 
+- The category bar on the Duas page was impossible to scroll: it was built on a vertical-only scroll container that clipped the 35 category chips, so categories beyond the first few were unreachable on any screen size. It is now a native horizontally-scrollable chip row (touch-friendly, consistent with the rest of the app).
 - The console spam after app updates is gone at the root: the service worker served a stale cached index.html that referenced deleted chunks, so chunk requests were answered with HTML ("Expected a JavaScript-or-Wasm module script…" / "Failed to fetch dynamically imported module" / ErrorBoundary crash). Navigations are now network-first with a 3 s timeout and only fall back to the precached HTML offline; asset caching rejects text/html responses so a missing chunk can never poison the cache; cache names bumped to v2 for a clean rebuild; index.html and sw.js are served must-revalidate; and the nasheed cache is no longer wiped on every service-worker activation.
 - Self-healing on stale chunks: Vite's preload-error event and dynamic-import failures now purge the app caches and reload once per tab session (skipped offline so the cached app can't be bricked), and the ErrorBoundary shows an "updating" spinner instead of an error screen for this specific failure.
 - "Failed to register notification action types: Not implemented on web" no longer appears on browsers: notification action types are only registered on native platforms.
 - Removed an unused image preload from index.html that produced "preloaded using link preload but not used" console warnings on every load.
 - The home prayer grid showed a gold "NEXT" pill on every remaining prayer of the day; only the actual next prayer is marked now.
 - Three prophet stories (Nuh, Hud, Saleh) carried an invalid "antediluvian" era value that excluded them from the "Pre-Flood" filter; they are now classified as "pre-flood".
-
-### Added
-
-- Noor Cycle gains pregnancy mode: weeks/days + trimester + due-date countdown with a 40-week progress ring, an honest fiqh note (pregnancy bleeding is istiḥāḍah — prayers continue), a "Baby arrived — start Nifās" handoff, duʿās of pregnancy and birth, and suppression of period predictions while expecting. Old tracker data migrates safely.
-- Noor Cycle Fiqh tab: the recommended-dhikr list is now a tap-to-count counter (per-dhikr goals like 33/34/100, daily totals, counts reset each day and persist in a dedicated storage key).
-- Noor Cycle Today tab: a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.
-- The Qisas library is complete: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the 24 existing stories — 25 prophets, from Adam to the Final Messenger.
-- 60 new authentic duʿās across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — 140 duʿās total, every entry sourced from the Qur'an or the six hadith collections.
 
 ### Fixed (previous batch)
 
@@ -32,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Storage no longer wipes user data when local storage fills up: if a write fails due to storage pressure, the app now clears only re-downloadable caches (surah lists, reciter directory, daily ayah/hadith, cached prayer times, daily remedy, exchange rates) and retries once. Bookmarks, Quran progress, tasbeeh counts, notes, history and settings are never deleted; if space still cannot be freed the write is skipped and logged instead.
 - Added a boot-time update-safety check that records the app version, dispatches an internal event when the version changes, and logs a diagnostic report if previously present user data appears empty after an update. It is read-only and never modifies user data.
 
-### Added
+### Added (previous batch)
 
 - Haptic settings now detect devices without a vibration motor (desktop browsers, tablets, TV boxes, emulators) and show a clear popup explaining that vibration won't work, plus a persistent banner and a disabled "Test now" button. Settings are kept in case the user switches devices. Detection uses the W3C Vibration API contract (a 0 ms cancel probe returning false on motor-less devices) rather than API presence, which desktop browsers falsely report.
 - Haptics page redesigned with consistent cards, unified icon chips and typography rhythm.

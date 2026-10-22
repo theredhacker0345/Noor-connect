@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.3.0 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.4.0 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -20,26 +20,33 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ---
 
-## 🆕 What's New in v2.3.0
+## 🆕 What's New in v2.4.0
 
-### 🔔 Enhanced Adhan & Notification System
-- **Stop Adhan from Notification**: Tap "⏹ Stop Adhan" on any prayer notification to immediately stop the adhan playback (works on both native Android and web/PWA)
-- **Notification Dismisses After Adhan**: The adhan notification automatically disappears when the adhan finishes playing — no manual dismiss needed
-- **More Prayer Quotes**: Expanded notification quotes for all prayers (Fajr, Dhuhr, Asr, Maghrib, Isha, Jummah) — 5+ quotes per prayer from Quran & authentic Hadith
-- **Tablet Sleep Fix (Lenovo, Samsung, etc.)**: Fixed adhan cutting off early on aggressive battery-saver tablets by keeping CPU awake during playback via `MediaPlayer.setWakeMode()` and 60s WakeLock timeout
-- **Web Notification Actions**: "Stop Adhan" and "Open App" buttons on web/PWA notifications
+### 🤰 Noor Cycle — Pregnancy Mode
+- **Full pregnancy tracking**: 40-week progress ring, weeks + days count, trimester badge, and a live due-date countdown
+- **Easy to find**: a dedicated **Pregnancy** button in the Noor Cycle header and a prominent "Pregnancy Mode" card directly under the Today-tab hero
+- **Honest fiqh guidance**: pregnancy bleeding is treated as Istiḥāḍah — prayer alerts stay ON during pregnancy, with madhab-aware notes
+- **"Baby arrived" handoff**: one tap ends pregnancy tracking and starts Nifās, pausing prayer alerts as with ḥaidh
+- **Duʿās of pregnancy & birth** built right into the pregnancy view
+- **Safe migration**: starting pregnancy never deletes existing cycle data, and period predictions pause while expecting
 
-### 🇰🇷 Korean Language Support
-- Full Korean (한국어) translation for all app UI strings
-- Korean is now a first-class supported language alongside English, Arabic, Urdu, Bengali, Russian, and French
+### 📿 Noor Cycle — More for Every Day
+- **Tap-to-count dhikr counter** in the Fiqh tab with per-dhikr goals (33/33/34/100), haptic ticks, daily totals, and counts that reset each day
+- **Phase-aware self-care card**: hydration, iron-rich and sunnah foods (with cited sources), sleep, movement and self-compassion — adapting to haidh / tuhr / premenstrual / fertile / pregnancy phases
+- **Daily water tracker** right on the Today tab
 
-### 🗑️ Widget System Removed
-- Removed native Android home-screen widgets to simplify the codebase
-- All widget-related infrastructure deleted
+### 📖 Complete Qisas & 140 Duʿās
+- **25 prophet stories — the collection is complete**: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the library, from Adam to the Final Messenger
+- **60 new authentic duʿās** across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — **140 duʿās total**, every entry sourced from the Qur'an or the six hadith collections
+- **Dua category bar fixed**: all 35 category chips now scroll horizontally on every screen size (they were previously clipped and unreachable)
 
-### 💚 Simplified Donation Section
-- Replaced crypto wallet addresses with a clean WhatsApp contact card
-- Contact the developer directly on WhatsApp to donate — Jazak Allah Khair
+### 🛡️ Stability & Performance
+- **Update console spam eliminated at the root**: stale service-worker chunks now self-heal (purge caches + one reload) instead of crashing the app with MIME errors
+- **E-book PDFs fixed**: archive.org books no longer fail with a pdf.js initialization error
+- **Quran page opens much faster** via smarter preloading and fewer stacked GPU blur layers
+- **Your data is safer than ever**: low-storage conditions now clear only re-downloadable caches — bookmarks, Quran progress, tasbeeh counts, notes and settings are never deleted; a boot-time update-safety check guards against silent data loss after updates
+- **Haptics honesty**: devices without a vibration motor now show a clear popup explaining vibration won't work, and the Haptics page received a full visual polish
+- Web-only notification errors ("Not implemented on web") and unused preload warnings removed; the home "NEXT" prayer pill now marks only the actual next prayer
 
 ---
 
@@ -72,7 +79,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### 📿 Spiritual Tracking
 - **Gender-Adaptive Onboarding**: Features adapt based on user profile
-- **Menstrual Mode**: Track cycles with automatic Adhan silencing and habit adjustment
+- **Noor Cycle — Menstrual & Pregnancy Mode**: Cycle tracking with automatic Adhan silencing, pregnancy week-by-week tracking with due-date countdown and trimester badges, tap-to-count dhikr counter, and phase-aware self-care with a daily water tracker
 - **Qaza Tracker**: Ledger of missed prayers
 - **Digital Tasbeeh**: 5 dhikrs with Zen Mode, lifetime totals, and haptic feedback
 - **Salah Focus Timer**: Do-Not-Disturb timer for prayer focus
@@ -80,7 +87,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### 📚 Islamic Education
 - **Zakat & Fitrana Calculators**: Offline calculators with real-time exchange rates
-- **Hisnul Muslim & Duas**: 80+ authentic supplications with search and audio
+- **Hisnul Muslim & Duas**: 140 authentic supplications across 35 categories with search, audio and repetition counters
 - **Names of Allah (Asma-ul-Husna)**: 99 Names with meanings and favorites
 - **Islamic Quiz**: Gamified quizzes with XP system, levels, and achievements
 - **Islamic Remedies (Tibb-e-Nabawi)**: Mood-based prophetic medicine index
@@ -89,7 +96,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### 📖 History & Literature
 - **Seerah of the Prophet (ﷺ)**: Comprehensive biography with progress tracking
-- **Qisas Al-Anbiya**: Stories of the Prophets
+- **Qisas Al-Anbiya**: Stories of the 25 Prophets — complete, from Adam to Muhammad ﷺ
 - **Ebooks Library**: Modern Islamic ebooks reader
 
 ### 📻 Media & Library

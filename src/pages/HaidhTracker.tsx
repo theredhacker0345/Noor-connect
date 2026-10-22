@@ -49,6 +49,14 @@ export default function HaidhTracker() {
   const [isAuthenticated, setIsAuthenticated] = useState(!getHaidhData().pinCode);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  // "Pregnancy Mode" start card on the Today tab — openable from the header.
+  const [pregEntryOpen, setPregEntryOpen] = useState(false);
+  const canShowPregnancyEntry = !data.isActive && !data.pregnancy?.active;
+
+  const openPregnancyMode = () => {
+    setActiveTab("today");
+    setPregEntryOpen(true);
+  };
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -218,25 +226,38 @@ export default function HaidhTracker() {
             <h1 className="text-base font-black tracking-tight bg-gradient-to-r from-rose-600 to-rose-400 dark:from-rose-400 dark:to-rose-300 bg-clip-text text-transparent">
               Noor Cycle
             </h1>
-            {data.isActive && (
-              <span className="ml-auto flex items-center gap-1.5 text-[10px] font-bold text-rose-500 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                Active
-              </span>
-            )}
-            {!data.isActive && data.pregnancy?.active && (
-              <span
-                className="ml-auto flex items-center gap-1.5 text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-full"
-                aria-label="Pregnancy mode active"
-              >
-                <Baby className="w-3 h-3" />
-                {(() => {
-                  const d = new Date();
-                  const localToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                  return weeksDaysPregnant(data.pregnancy.startDate, localToday).weeks;
-                })()}w Pregnant
-              </span>
-            )}
+            <div className="ml-auto flex items-center gap-2">
+              {canShowPregnancyEntry && (
+                <button
+                  type="button"
+                  onClick={openPregnancyMode}
+                  aria-label="Open Pregnancy Mode"
+                  className="h-8 px-2.5 rounded-full flex items-center gap-1.5 text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/25 hover:bg-sky-500/20 active:scale-95 transition-all"
+                >
+                  <Baby className="w-3.5 h-3.5" />
+                  Pregnancy
+                </button>
+              )}
+              {data.isActive && (
+                <span className="flex items-center gap-1.5 text-[10px] font-bold text-rose-500 bg-rose-500/10 border border-rose-500/20 px-2.5 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  Active
+                </span>
+              )}
+              {!data.isActive && data.pregnancy?.active && (
+                <span
+                  className="flex items-center gap-1.5 text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-full"
+                  aria-label="Pregnancy mode active"
+                >
+                  <Baby className="w-3 h-3" />
+                  {(() => {
+                    const d = new Date();
+                    const localToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    return weeksDaysPregnant(data.pregnancy!.startDate, localToday).weeks;
+                  })()}w Pregnant
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -252,7 +273,7 @@ export default function HaidhTracker() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
-              {activeTab === "today"     && <TodayTab data={data} fiqh={fiqh} onStart={handleStart} onEnd={handleEnd} onBabyArrived={handleBabyArrived} onTabChange={(t) => setActiveTab(t as TabId)} />}
+              {activeTab === "today"     && <TodayTab data={data} fiqh={fiqh} onStart={handleStart} onEnd={handleEnd} onBabyArrived={handleBabyArrived} onTabChange={(t) => setActiveTab(t as TabId)} pregEntryOpen={pregEntryOpen} onPregEntryOpenChange={setPregEntryOpen} />}
               {activeTab === "calendar"  && <CalendarTab data={data} />}
               {activeTab === "log"       && <LogTab data={data} onLog={handleLog} />}
               {activeTab === "analytics" && <AnalyticsTab data={data} />}

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, Share2, BookHeart, Search, Volume2, Plus, Minus, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -249,22 +248,30 @@ const Duas = memo(function Duas() {
           />
         )}
 
-        {/* Categories */}
-        <ScrollArea className="h-11">
-          <div className="flex gap-2 pb-2">
+        {/* Categories — native horizontal scroll (touch-friendly; the Radix
+            ScrollArea used here is vertical-only, which clipped the chips and
+            blocked scrolling entirely) */}
+        <div
+          className="overflow-x-auto -mx-4 px-4 py-1"
+          role="tablist"
+          aria-label="Dua categories"
+        >
+          <div className="flex gap-2 w-max items-center pb-1">
             {duaCategories.map((cat) => (
               <Button
                 key={cat}
                 variant={selectedCategory === cat ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap text-xs rounded-full font-bold shadow-sm ${selectedCategory === cat ? 'bg-[#C9860A] text-white hover:bg-[#C9860A]/90' : 'bg-card text-muted-foreground hover:text-foreground border-border/40'}`}
+                role="tab"
+                aria-selected={selectedCategory === cat}
+                className={`shrink-0 whitespace-nowrap text-xs rounded-full font-bold shadow-sm ${selectedCategory === cat ? 'bg-[#C9860A] text-white hover:bg-[#C9860A]/90' : 'bg-card text-muted-foreground hover:text-foreground border-border/40'}`}
               >
                 {(() => { const k = CATEGORY_KEYS[cat]; return k ? t(k) : cat; })()}
               </Button>
             ))}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Results count */}
         <div className="flex items-center justify-between">

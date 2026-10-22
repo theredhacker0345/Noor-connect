@@ -31,6 +31,26 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
+    version: '2.4.0',
+    date: '2026-10-23',
+    title: 'Pregnancy Mode, Complete Prophet Stories & 140 Du\u02bf\u0101s',
+    changes: [
+      { type: 'feature', description: 'Noor Cycle \u2014 Pregnancy Mode: a 40-week progress ring with weeks/days count, trimester badge and due-date countdown; an honest fiqh note (pregnancy bleeding is isti\u1e25\u0101\u1e0dah \u2014 prayers continue); du\u02bf\u0101s of pregnancy and birth; and a "Baby arrived \u2014 start Nif\u0101s" handoff. Period predictions pause while expecting, prayer alerts never do, and old tracker data migrates safely. Pregnancy Mode is now front and centre: a dedicated Pregnancy button in the Noor Cycle header and a prominent "Pregnancy Mode" card on the Today tab.' },
+      { type: 'feature', description: 'Noor Cycle Fiqh tab \u2014 the recommended-dhikr list is now a tap-to-count counter with per-dhikr goals (33/33/34/100), haptic ticks, daily totals and a reset-today button; counts persist and reset each day.' },
+      { type: 'feature', description: 'Noor Cycle Today tab \u2014 a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.' },
+      { type: 'feature', description: 'The Qisas library is complete: the story of Prophet Muhammad \ufdfa (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the 24 existing stories \u2014 25 prophets, from Adam to the Final Messenger.' },
+      { type: 'feature', description: '60 new authentic du\u02bf\u0101s across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) \u2014 140 du\u02bf\u0101s total, every entry sourced from the Qur\u02bean or the six hadith collections.' },
+      { type: 'fix', description: 'Duas page \u2014 the category bar now scrolls horizontally: all 35 category chips are reachable on every screen size (previously the chips were clipped and the bar could not be scrolled at all).' },
+      { type: 'fix', description: 'The console spam after app updates is gone at the root: the service worker no longer serves a stale cached index.html that references deleted chunks, chunk failures self-heal (purge caches + one reload), and cache names were bumped for a clean rebuild.' },
+      { type: 'fix', description: '"Failed to register notification action types: Not implemented on web" no longer appears in browsers \u2014 notification action types are only registered on native platforms.' },
+      { type: 'fix', description: 'Ebook PDFs from archive.org no longer fail with "Cannot access \u02bc$\u02bc before initialization" \u2014 the internal URL helper now lives at module scope and the pdf.js CMap CDN matches the bundled version.' },
+      { type: 'improvement', description: 'The Quran page opens much faster \u2014 the real surah-list chunk is preloaded on idle and on Quran-tab press, and stacked GPU blur layers above the fold were simplified.' },
+      { type: 'fix', description: 'Storage pressure can no longer wipe user data \u2014 when local storage fills, only re-downloadable caches are cleared and the write retried; bookmarks, Quran progress, tasbeeh counts, notes and settings are never deleted. A read-only boot-time update-safety check now logs diagnostics if data ever appears missing after an update.' },
+      { type: 'improvement', description: 'Haptics \u2014 devices without a vibration motor (desktops, tablets, TV boxes) now get a clear popup explaining vibration won\u02bct work, plus a persistent banner and a disabled Test button; the Haptics page was redesigned with consistent cards and typography.' },
+      { type: 'fix', description: 'The home prayer grid no longer shows a gold "NEXT" pill on every remaining prayer of the day \u2014 only the actual next prayer is marked. Three prophet stories (Nuh, Hud, Saleh) are correctly classified as "pre-flood" again.' },
+    ],
+  },
+  {
     version: '2.3.0',
     date: '2026-10-06',
     title: 'Korean Language, Widget System Removal & Donation Simplification',

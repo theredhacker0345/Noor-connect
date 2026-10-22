@@ -31,6 +31,9 @@ interface Props {
   onEnd: () => void;
   onBabyArrived: () => void;
   onTabChange: (t: string) => void;
+  /** Controlled visibility of the "Pregnancy Mode" start card (idle state). */
+  pregEntryOpen: boolean;
+  onPregEntryOpenChange: (open: boolean) => void;
 }
 
 const toDateStr = (d: Date) => {
@@ -40,7 +43,7 @@ const toDateStr = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
-export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTabChange }: Props) {
+export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTabChange, pregEntryOpen, onPregEntryOpenChange }: Props) {
   const cycle = getCurrentCycle(data);
   const today = toDateStr(new Date());
   const pregnancy = data.pregnancy?.active ? data.pregnancy : null;
@@ -50,8 +53,9 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
   });
   const [painLevel, setPainLevel] = useState(() => getLogForDate(data, today)?.painLevel ?? 0);
 
-  // Subtle pregnancy entry (idle state only)
-  const [pregEntryOpen, setPregEntryOpen] = useState(false);
+  // Pregnancy start card visibility is controlled by the page (header button +
+  // the card itself both toggle it) so it can be opened from anywhere.
+  const setPregEntryOpen = onPregEntryOpenChange;
   const [pregLmp, setPregLmp] = useState(today);
   const [pregDue, setPregDue] = useState("");
   const [duasOpen, setDuasOpen] = useState(false);
@@ -130,7 +134,7 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
       window.dispatchEvent(new CustomEvent(PRAYER_ALARM_TOGGLE_EVENT, { detail: { enabled: true } }));
     }
     startPregnancy({ startDate: pregLmp, dueDate: pregDue || null });
-    setPregEntryOpen(false);
+    onPregEntryOpenChange(false);
   };
 
   return (
@@ -395,61 +399,32 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
         )}
       </motion.div>
 
-      {/* Ghusl checklist — appears right after a period ends */}
-      {justEnded && <GhuslChecklist data={data} />}
-
-      {/* Islamic Status Banner */}
-      <div className="bg-card border border-primary/20 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-        <div className="absolute -right-6 -top-6 text-primary/5">
-          <BookOpen className="w-32 h-32" />
-        </div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-            <Star className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Fiqh Exemption Status</span>
-          </div>
-          <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-            {[
-              { label: "Ṣalāh", exempt: fiqh.salahExempt, icon: Sparkles },
-              { label: "Fasting", exempt: fiqh.fastingExempt, icon: Moon },
-              { label: "Ṭawāf", exempt: !fiqh.tawafPermitted, icon: Wind },
-              { label: "Dhikr", exempt: false, icon: Star },
-            ].map(item => (
-              <div key={item.label} className="flex items-center gap-3 min-w-0">
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                  item.exempt ? "bg-rose-500/15 text-rose-500" : "bg-emerald-500/15 text-emerald-500"
-                )}>
-                  <item.icon className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground font-medium truncate">{item.label}</p>
-                  <p className={cn("font-bold text-sm truncate", item.exempt ? "text-rose-500" : "text-emerald-500")}>
-                    {item.exempt ? "Exempt" : "Active"}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Subtle pregnancy entry — only when idle (no cycle, not pregnant) */}
+      {/* Pregnancy Mode entry — prominent, directly under the hero (idle only).
+          Visibility is controlled from the page so the header button can open it. */}
       {!data.isActive && !pregnancy && (
-        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div
+          className="rounded-2xl border bg-card shadow-sm overflow-hidden"
+          style={{
+            borderColor: pregEntryOpen ? "rgba(14,165,233,0.45)" : "rgba(14,165,233,0.25)",
+            background: "linear-gradient(135deg, rgba(14,165,233,0.06) 0%, rgba(14,165,233,0.02) 100%), oklch(var(--card))",
+          }}
+        >
           <button
             type="button"
-            onClick={() => setPregEntryOpen(o => !o)}
+            onClick={() => onPregEntryOpenChange(!pregEntryOpen)}
             aria-expanded={pregEntryOpen}
-            aria-label="Expecting? Track your pregnancy"
-            className="w-full min-h-[48px] flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+            aria-label="Pregnancy Mode — track your pregnancy"
+            className="w-full min-h-[56px] flex items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/30 transition-colors"
           >
-            <span className="w-8 h-8 rounded-xl bg-sky-500/15 flex items-center justify-center shrink-0">
-              <Baby className="w-4 h-4 text-sky-500" />
+            <span className="w-10 h-10 rounded-2xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
+              <Baby className="w-5 h-5 text-sky-500" />
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block text-sm font-bold text-foreground">Expecting?</span>
-              <span className="block text-xs text-muted-foreground">Track your pregnancy — prayers continue as normal</span>
+              <span className="block text-sm font-black text-foreground tracking-tight">Pregnancy Mode</span>
+              <span className="block text-xs text-muted-foreground">Expecting? Track week by week — prayers continue as normal</span>
+            </span>
+            <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">
+              {pregEntryOpen ? "Close" : "Start"}
             </span>
             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", pregEntryOpen && "rotate-180")} />
           </button>
@@ -490,6 +465,45 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
           )}
         </div>
       )}
+
+      {/* Ghusl checklist — appears right after a period ends */}
+      {justEnded && <GhuslChecklist data={data} />}
+
+      {/* Islamic Status Banner */}
+      <div className="bg-card border border-primary/20 rounded-3xl p-5 shadow-lg relative overflow-hidden">
+        <div className="absolute -right-6 -top-6 text-primary/5">
+          <BookOpen className="w-32 h-32" />
+        </div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Star className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Fiqh Exemption Status</span>
+          </div>
+          <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+            {[
+              { label: "Ṣalāh", exempt: fiqh.salahExempt, icon: Sparkles },
+              { label: "Fasting", exempt: fiqh.fastingExempt, icon: Moon },
+              { label: "Ṭawāf", exempt: !fiqh.tawafPermitted, icon: Wind },
+              { label: "Dhikr", exempt: false, icon: Star },
+            ].map(item => (
+              <div key={item.label} className="flex items-center gap-3 min-w-0">
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                  item.exempt ? "bg-rose-500/15 text-rose-500" : "bg-emerald-500/15 text-emerald-500"
+                )}>
+                  <item.icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground font-medium truncate">{item.label}</p>
+                  <p className={cn("font-bold text-sm truncate", item.exempt ? "text-rose-500" : "text-emerald-500")}>
+                    {item.exempt ? "Exempt" : "Active"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Phase-based self-care card */}
       <HaidhSelfCareCard phase={selfCarePhase} />
