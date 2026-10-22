@@ -61,8 +61,14 @@ export const calculatePrayerEndTimes = (
     endTimeFormatted: formatTime(todayPrayers.isha.datetime)
   });
 
-  // Isha ends at tomorrow's Fajr (or Islamic Midnight if no tomorrow data)
-  const ishaEndTime = tomorrowPrayers?.fajr?.datetime || calculateIslamicMidnight(todayPrayers.isha.datetime);
+  // Isha ends at tomorrow's Fajr (Subh Sadiq). Without tomorrow data, estimate
+  // it as today's Fajr advanced one calendar day (DST-safe; drift ≈ 1 min/day).
+  // NOTE: the jumhur limit is Islamic midnight — callers with location data
+  // should prefer calculateSunnahTimes().middleOfTheNight (see
+  // docs/research/prayer-end-times.md for the fiqh table).
+  const estimatedTomorrowFajr = new Date(todayPrayers.fajr.datetime);
+  estimatedTomorrowFajr.setDate(estimatedTomorrowFajr.getDate() + 1);
+  const ishaEndTime = tomorrowPrayers?.fajr?.datetime || estimatedTomorrowFajr;
   prayers.push({
     ...todayPrayers.isha,
     endTime: ishaEndTime,
@@ -80,9 +86,10 @@ export const getCurrentPrayer = (
 ): PrayerWithEndTime | null => {
   const now = new Date();
   
-  // Find prayers that have started but not ended
+  // Find prayers that have started but not ended (end is exclusive — at the
+  // exact end instant the next window has already begun)
   for (const prayer of prayersWithEndTimes) {
-    if (now >= prayer.datetime && now <= prayer.endTime) {
+    if (now >= prayer.datetime && now < prayer.endTime) {
       return prayer;
     }
   }
@@ -127,14 +134,15 @@ export const formatTime = (date: Date): string => {
 };
 
 /**
- * Calculate Islamic Midnight (middle of the night)
- * This is a fallback when tomorrow's prayer data is not available
+ * Calculate Islamic Midnight (true fiqh midnight)
+ * Midpoint between tonight's Maghrib and tomorrow's Fajr, rounded to the minute —
+ * identical to adhan's SunnahTimes.middleOfTheNight and the jumhur limit of
+ * Isha's valid time. NEVER use civil 00:00 (the old behaviour was a bug —
+ * see docs/research/prayer-end-times.md, bug #1).
  */
-export const calculateIslamicMidnight = (currentTime: Date): Date => {
-  const midnight = new Date(currentTime);
-  midnight.setDate(midnight.getDate() + 1); // Next day
-  midnight.setHours(0, 0, 0, 0);
-  return midnight;
+export const calculateIslamicMidnight = (maghrib: Date, tomorrowFajr: Date): Date => {
+  const ms = maghrib.getTime() + (tomorrowFajr.getTime() - maghrib.getTime()) / 2;
+  return new Date(Math.round(ms / 60000) * 60000);
 };
 
 /**
@@ -154,7 +162,7 @@ export const getPrayerStatus = (prayer: PrayerWithEndTime): {
       status: 'upcoming',
       timeUntilStart: Math.max(0, timeUntilStart)
     };
-  } else if (now >= prayer.datetime && now <= prayer.endTime) {
+  } else if (now >= prayer.datetime && now < prayer.endTime) {
     return {
       status: 'current',
       timeUntilEnd: Math.max(0, timeUntilEnd)

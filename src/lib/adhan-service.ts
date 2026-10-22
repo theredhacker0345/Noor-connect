@@ -3,6 +3,9 @@
  * Provides Adhan audio notifications for prayer times
  */
 
+import i18n from './i18n-new';
+import { getPrayerDisplayPair } from './prayer-display';
+
 export interface AdhanConfig {
   enabled: boolean;
   volume: number;
@@ -327,8 +330,12 @@ export class AdhanService {
    */
   private showAdhanNotification(prayerName: string, muezzinName: string): void {
     if ('Notification' in window && this.notificationPermission === 'granted') {
-      const notification = new Notification(`Adhan - ${this.getPrayerDisplayName(prayerName)}`, {
-        body: `Recited by ${muezzinName}`,
+      // Localize the prayer name (keys are capitalized: "fajr" -> "Fajr").
+      const display = getPrayerDisplayPair(
+        prayerName.charAt(0).toUpperCase() + prayerName.slice(1).toLowerCase()
+      ).localized;
+      const notification = new Notification(i18n.t('adhanNotifTitle', { prayer: display }), {
+        body: i18n.t('adhanNotifReciter', { reciter: muezzinName }),
         icon: '/icon-192x192.png',
         badge: '/icon-96x96.png',
         tag: 'adhan',

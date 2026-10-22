@@ -13,9 +13,12 @@ export interface AladhanPrayerTime {
   Maghrib: string;
   Isha: string;
   Imsak: string; // For Ramadan Suhoor
-  Midnight: string;
-  Firstthird: string;
-  Lastthird: string;
+  // Do NOT default these to '00:00' anywhere: Aladhan's default (STANDARD) span
+  // is Sunset↔Sunrise which is NOT the fiqh Islamic midnight, and a fake '00:00'
+  // parses as a real (past) time downstream (see docs/research/prayer-end-times.md).
+  Midnight?: string;
+  Firstthird?: string;
+  Lastthird?: string;
 }
 
 export interface AladhanDayData {
@@ -331,10 +334,7 @@ export class AladhanAPI {
           Asr: times.asr.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           Maghrib: times.maghrib.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           Isha: times.isha.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          Imsak: times.fajr.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          Midnight: '00:00',
-          Firstthird: '00:00',
-          Lastthird: '00:00'
+          Imsak: times.fajr.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
         },
         timezone: timezone
       };

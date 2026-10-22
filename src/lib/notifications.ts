@@ -5,6 +5,8 @@
 
 import { Capacitor } from '@capacitor/core';
 import { PRAYER_QUOTES } from './prayer-quotes';
+import i18n from './i18n-new';
+import { getPrayerDisplayPair } from './prayer-display';
 
 const NOTIFICATION_PERMISSION_KEY = 'prayer-notifications-enabled';
 
@@ -245,11 +247,18 @@ export const schedulePrayerNotification = (prayerName: string, prayerTime: Date)
     clearTimeout(existingTimeout);
   }
 
-  const randomQuote = PRAYER_QUOTES[Math.floor(Math.random() * PRAYER_QUOTES.length)];
+  // PRAYER_QUOTES is a Record<prayerName, string[]> — index it per prayer
+  // (falling back to the Default pool). The old code treated it as an array
+  // (`PRAYER_QUOTES[Math.random() * PRAYER_QUOTES.length]`), which always
+  // produced `undefined` and rendered "…prayer.\nundefined".
+  const quotes = PRAYER_QUOTES[prayerName] || PRAYER_QUOTES.Default;
+  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+
+  const { localized, arabic } = getPrayerDisplayPair(prayerName);
 
   const timeoutId = window.setTimeout(() => {
-    showNotification(`${prayerName} Prayer Time`, {
-      body: `It's time for ${prayerName} prayer.\n${randomQuote}`,
+    showNotification(i18n.t('notifPrayerTimeTitle', { prayer: localized, arabic }), {
+      body: i18n.t('notifPrayerTimeBody', { prayer: localized, time: prayerTime.toTimeString().slice(0, 5) }) + `\n${randomQuote}`,
       tag: `prayer-${prayerName.toLowerCase()}`,
     });
     activeTimeouts.delete(id);

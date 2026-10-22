@@ -6,6 +6,7 @@
 import { importantIslamicDates } from '@/data/islamic-dates';
 import { islamicCalendarService, type IslamicCalendarInfo } from '@/lib/islamic-calendar-service';
 import { localNotifications } from '@/lib/local-notifications';
+import i18n from '@/lib/i18n-new';
 
 export interface IslamicEventNotification {
   id: string;
@@ -148,8 +149,8 @@ class IslamicEventsService {
 
           await localNotifications.scheduleNotification(
             `${notificationId}-reminder`,
-            `Reminder: ${event.name} Tomorrow`,
-            `Prepare for ${event.name}. ${event.notificationMessage}`,
+            i18n.t('notifEventReminderTitle', { name: event.name }),
+            i18n.t('notifEventReminderBody', { name: event.name, message: event.notificationMessage }),
             reminderDate
           );
         }
@@ -253,17 +254,19 @@ class IslamicEventsService {
       const daysUntilRamadan = calendarInfo.daysUntilRamadan;
 
       if (daysUntilRamadan > 0 && daysUntilRamadan <= 30) {
+        // Same localized copy as NotificationManager's Ramadan countdown so
+        // both countdown producers stay consistent.
         let message = '';
         let title = '';
 
         if (daysUntilRamadan <= 7) {
-          title = 'Ramadan Approaching!';
-          message = daysUntilRamadan === 1 
-            ? 'Ramadan starts tomorrow! Prepare yourself for the blessed month.'
-            : `Ramadan starts in ${daysUntilRamadan} days! Start preparing yourself.`;
+          title = i18n.t('notifRamadanAlmostTitle');
+          message = daysUntilRamadan === 1
+            ? i18n.t('notifRamadanTomorrowBody')
+            : i18n.t('notifRamadanDaysLeftBody', { count: daysUntilRamadan });
         } else {
-          title = 'Ramadan Preparation';
-          message = `Ramadan starts in ${daysUntilRamadan} days. It's time to start preparing spiritually and physically.`;
+          title = i18n.t('notifRamadanPrepTitle');
+          message = i18n.t('notifRamadanPrepBody', { count: daysUntilRamadan });
         }
 
         if (title && message) {

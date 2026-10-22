@@ -7,6 +7,7 @@
 import { importantIslamicDates, IslamicDate, isRamadanCountdownPeriod, getDaysUntilRamadan, getRamadanStartDate } from '@/data/islamic-dates';
 import { getRandomContent, getContentByType, getContentByCategory, IslamicContent } from '@/data/expanded-islamic-content';
 import { isLowEndDevice } from '@/lib/performance-optimizations';
+import i18n from '@/lib/i18n-new';
 
 export interface NotificationPreferences {
   ramadanCountdowns: boolean;
@@ -476,24 +477,25 @@ export class NotificationManager {
       const daysUntil = calendarInfo.daysUntilRamadan;
 
       if (daysUntil > 0 && daysUntil <= 30) {
-        let title = 'Ramadan Countdown';
+        let title = i18n.t('notifRamadanCountdownTitle');
         let body = '';
         
         // Contextual messages based on proximity
         if (daysUntil <= 7) {
-          title = 'Ramadan is Almost Here!';
-          body = daysUntil === 1 ? 
-            'Tomorrow begins the blessed month of Ramadan! Prepare your heart and home.' :
-            `Only ${daysUntil} days left until Ramadan! Time to prepare for the month of mercy.`;
+          title = i18n.t('notifRamadanAlmostTitle');
+          body = daysUntil === 1 ?
+            i18n.t('notifRamadanTomorrowBody') :
+            i18n.t('notifRamadanDaysLeftBody', { count: daysUntil });
         } else if (daysUntil <= 14) {
-          title = 'Ramadan Preparation';
-          body = `${daysUntil} days until Ramadan. Start planning your spiritual goals.`;
+          title = i18n.t('notifRamadanPrepTitle');
+          body = i18n.t('notifRamadanPrepBody', { count: daysUntil });
         } else {
-          const currentYear = today.getFullYear();
+          const now = new Date();
+          const currentYear = now.getFullYear();
           const ramadanStart = getRamadanStartDate(currentYear);
-          const ramadanYear = today > ramadanStart ? currentYear + 1 : currentYear;
+          const ramadanYear = now > ramadanStart ? currentYear + 1 : currentYear;
           const hijriYear = ramadanYear - 579;
-          body = `${daysUntil} day${daysUntil > 1 ? 's' : ''} until Ramadan ${hijriYear} AH`;
+          body = i18n.t('notifRamadanUntilBody', { count: daysUntil, year: hijriYear });
         }
 
         const event: NotificationEvent = {
@@ -580,30 +582,20 @@ export class NotificationManager {
     // Check if today is Friday (day 5 in JavaScript, where 0 = Sunday)
     if (today.getDay() === 5) {
       const fridayMessages = [
-        {
-          title: 'Friday Blessings',
-          body: 'Don\'t forget to read Surah Al-Kahf today! It\'s a Sunnah with great rewards.',
-          icon: ''
-        },
-        {
-          title: 'Jumu\'ah Mubarak',
-          body: 'Friday is here! Send blessings upon the Prophet and read Surah Al-Kahf.',
-          icon: ''
-        },
-        {
-          title: 'Best Day of the Week',
-          body: 'Friday is the best day! Seize its blessings with Surah Al-Kahf and good deeds.',
-          icon: ''
-        }
+        { titleKey: 'notifFridayTitle1', bodyKey: 'notifFridayBody1' },
+        { titleKey: 'notifFridayTitle2', bodyKey: 'notifFridayBody2' },
+        { titleKey: 'notifFridayTitle3', bodyKey: 'notifFridayBody3' }
       ];
       
       const message = fridayMessages[Math.floor(Math.random() * fridayMessages.length)];
+      const messageTitle = i18n.t(message.titleKey);
+      const messageBody = i18n.t(message.bodyKey);
       
       const event: NotificationEvent = {
         id: 'friday-kahf',
-        title: message.title,
-        body: message.body,
-        icon: message.icon,
+        title: messageTitle,
+        body: messageBody,
+        icon: '',
         type: 'friday-kahf',
         timestamp: Date.now(),
         priority: 'medium'
@@ -642,7 +634,7 @@ export class NotificationManager {
       if (content) {
         const event: NotificationEvent = {
           id: `daily-hadith-${today}`,
-          title: 'Daily Hadith',
+          title: i18n.t('notifDailyHadithTitle'),
           body: content.translation,
           type: 'daily-hadith',
           contentType: 'hadith',
@@ -672,7 +664,7 @@ export class NotificationManager {
       if (content) {
         const event: NotificationEvent = {
           id: `quran-verse-${now.toDateString()}`,
-          title: 'Quranic Verse',
+          title: i18n.t('notifQuranVerseTitle'),
           body: content.translation,
           type: 'quranic-verse',
           contentType: 'quran',
@@ -701,10 +693,10 @@ export class NotificationManager {
       const content = getRandomContent('dhikr');
       
       if (content) {
-        const timeOfDay = hour < 12 ? 'Morning' : 'Evening';
+        const timeOfDay = hour < 12 ? i18n.t('notifMorningWord') : i18n.t('notifEveningWord');
         const event: NotificationEvent = {
-          id: `dhikr-${timeOfDay.toLowerCase()}-${now.toDateString()}`,
-          title: `${timeOfDay} Dhikr`,
+          id: `dhikr-${hour < 12 ? 'morning' : 'evening'}-${now.toDateString()}`,
+          title: i18n.t('notifDhikrTitle', { timeOfDay }),
           body: content.translation,
           type: 'dhikr-reminder',
           contentType: 'dhikr',
@@ -735,7 +727,7 @@ export class NotificationManager {
       if (content) {
         const event: NotificationEvent = {
           id: `islamic-knowledge-${now.toDateString()}`,
-          title: 'Islamic Knowledge',
+          title: i18n.t('notifKnowledgeTitle'),
           body: content.translation,
           type: 'islamic-knowledge',
           contentType: 'knowledge',
@@ -766,7 +758,7 @@ export class NotificationManager {
       if (content) {
         const event: NotificationEvent = {
           id: `motivation-${now.toDateString()}`,
-          title: 'Daily Motivation',
+          title: i18n.t('notifMotivationTitle'),
           body: content.translation,
           type: 'motivational-message',
           contentType: 'motivation',
@@ -790,8 +782,8 @@ export class NotificationManager {
     if (hour >= 3 && hour < 5) {
       const event: NotificationEvent = {
         id: `tahajjud-${now.toDateString()}`,
-        title: 'Tahajjud & Night Prayer',
-        body: 'The Lord descends every night during the last third of the night. Stand in prayer and seek His forgiveness.',
+        title: i18n.t('notifTahajjudTitle'),
+        body: i18n.t('notifTahajjudBody'),
         type: 'tahajjud-reminder',
         timestamp: Date.now(),
         priority: 'high'
@@ -810,8 +802,8 @@ export class NotificationManager {
     if (hour >= 9 && hour < 11) {
       const event: NotificationEvent = {
         id: `duha-${now.toDateString()}`,
-        title: 'Salat al-Duha Reminder',
-        body: 'Offer two Rak\'ahs of Duha prayer today — fulfilling charity for every joint in your body.',
+        title: i18n.t('notifDuhaTitle'),
+        body: i18n.t('notifDuhaBody'),
         type: 'duha-reminder',
         timestamp: Date.now(),
         priority: 'medium'
@@ -829,11 +821,11 @@ export class NotificationManager {
     const day = now.getDay();
     // 0 = Sunday, 1 = Monday, 4 = Thursday
     if (day === 1 || day === 4) {
-      const dayName = day === 1 ? 'Monday' : 'Thursday';
+      const dayName = day === 1 ? i18n.t('notifMondayWord') : i18n.t('notifThursdayWord');
       const event: NotificationEvent = {
         id: `fasting-${now.toDateString()}`,
-        title: `Sunnah Fasting — ${dayName}`,
-        body: `Deeds are presented on ${dayName}s. Prepare for Sunnah fasting today to earn immense rewards.`,
+        title: i18n.t('notifFastingTitle', { day: dayName }),
+        body: i18n.t('notifFastingBody', { day: dayName }),
         type: 'fasting-reminder',
         timestamp: Date.now(),
         priority: 'medium'
@@ -852,8 +844,8 @@ export class NotificationManager {
     if (hour >= 17 && hour < 19) {
       const event: NotificationEvent = {
         id: `quran-tracker-${now.toDateString()}`,
-        title: 'Daily Quran Tilawat',
-        body: 'Have you recited your daily portion of the Noble Quran today? Spend 10 minutes with the Book of Allah.',
+        title: i18n.t('notifQuranTrackerTitle'),
+        body: i18n.t('notifQuranTrackerBody'),
         type: 'quran-tracker',
         timestamp: Date.now(),
         priority: 'medium'
@@ -872,8 +864,8 @@ export class NotificationManager {
     if (hour >= 21 && hour < 23) {
       const event: NotificationEvent = {
         id: `bedtime-dua-${now.toDateString()}`,
-        title: 'Bedtime Sunnah Azkar',
-        body: 'Recite Ayatul Kursi, Surah Al-Ikhlas, Al-Falaq, and An-Nas before sleep for divine protection through the night.',
+        title: i18n.t('notifBedtimeAzkarTitle'),
+        body: i18n.t('notifBedtimeAzkarBody'),
         type: 'bedtime-dua',
         timestamp: Date.now(),
         priority: 'medium'
@@ -995,7 +987,7 @@ export class NotificationManager {
     if (content) {
       const event: NotificationEvent = {
         id: `test-${Date.now()}`,
-        title: 'Test Notification',
+        title: i18n.t('testNotificationTitle'),
         body: content.translation,
         type: 'motivational-message',
         contentType: content.type,

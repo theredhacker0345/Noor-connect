@@ -1,58 +1,33 @@
-import { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy, type MouseEvent, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun, Sunset, Cloud, CloudMoon, Bell, Compass, LayoutGrid, Settings as SettingsIcon, Wallet, Calendar, MapPin } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { AppBar } from "@/components/AppBar";
-const DailyAyah = lazy(() => import("@/components/EnhancedDailyAyah").then(module => ({ default: module.EnhancedDailyAyah })));
-const DailyHadith = lazy(() => import("@/components/EnhancedDailyHadith").then(module => ({ default: module.EnhancedDailyHadith })));
+import { Moon, Sun, Sunset, Cloud, CloudMoon } from "lucide-react";
 import { PremiumDashboard } from "@/components/PremiumDashboard";
 import { LocationSearch } from "@/components/LocationSearch";
-import { LayoutManager } from "@/components/LayoutManager";
-import { useLanguage } from "@/contexts/LanguageContext-new";
-import { useI18n } from "@/hooks/useI18n";
-import { shouldShowMenstrualFeatures } from "@/lib/gender-settings";
-import { cn } from "@/lib/utils";
-import { EidCelebrationOverlay } from "@/components/EidCelebrationOverlay";
-import { CheckCircle, AlertTriangle } from "lucide-react";
 import { getTodayPrayers, togglePrayer, resolvePrayerTimes, checkStreakReset, type PrayerName, type DailyPrayers } from "@/lib/salah-tracker";
 import { syncMissedPrayersToQaza } from "@/lib/qaza-tracker";
-import { BatteryOptimizationDialog } from "@/components/BatteryOptimizationDialog";
-import { FeatureCards } from "@/components/DashboardFeatureCards";
 
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { getTimeFormat, formatTime } from "@/lib/time-formatter";
 import { useLocationState } from "@/lib/location-state";
-import { CURRENT_APP_VERSION } from "@/lib/constants";
 import { AladhanAPI } from "@/lib/aladhan-api";
 import { getEffectiveAladhanMethodId, getEffectiveCalculationMethod } from "@/lib/prayer-method-resolver";
 import { getMadhab } from "@/lib/storage";
 import { type PrayerTime } from "@/lib/local-notifications";
 import { useToast } from "@/hooks/use-toast";
-import { LocationCardSkeleton, LoadingSpinner } from "@/components/LoadingSkeleton";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GeocodingService } from "@/lib/geocoding";
 import { PageTransition } from "@/components/PageTransition";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
-  const { t: ti18n } = useI18n();
   const [minuteTick, setMinuteTick] = useState(0);
-  const [greeting, setGreeting] = useState("");
   const [prayers, setPrayers] = useState<PrayerTime[]>([]);
-  const [loading, setLoading] = useState(true);
   // Use Islamic calendar hook for accurate Hijri dates
   const { hijriDate, isEidAlFitr, isEidAlAdha } = useIslamicCalendar();
-  const isEid = isEidAlFitr || isEidAlAdha;
   const [timeFormat, setTimeFormat] = useState<'12' | '24'>('24');
   const [nextPrayerName, setNextPrayerName] = useState<string>("");
   const [nextPrayerTime, setNextPrayerTime] = useState<string>("");
   const [loadingAPI, setLoadingAPI] = useState(false);
-  const [timezone, setTimezone] = useState<string>("");
-  const [initialLoad, setInitialLoad] = useState(true);
   const [targetTime, setTargetTime] = useState<Date | null>(null);
   const { toast } = useToast();
 
@@ -137,21 +112,8 @@ export default function Dashboard() {
     return location.locationName;
   }, [location, prayerLocation]);
 
-  // Similar priority for timezone
-  const timezoneLabel = useMemo(() => {
-    // If GPS location is set, use it (even if default Karachi)
-    if (location.latitude && location.longitude && location.timeZone) {
-      return location.timeZone;
-    }
-
-    // Otherwise, use VPN/API location if available
-    if (prayerLocation?.timeZone) {
-      return prayerLocation.timeZone;
-    }
-
-    // Fallback to default location timezone
-    return location.timeZone;
-  }, [location, prayerLocation]);
+  // Similar priority for timezone — consumed by PremiumDashboard's location
+  // state; the dashboard itself only needs the human-readable label.
 
 
   useEffect(() => {
@@ -260,7 +222,6 @@ export default function Dashboard() {
       }
     } finally {
       setLoadingAPI(false);
-      setInitialLoad(false);
     }
   }, [location.latitude, location.longitude, location.timeZone, location.locationName, location.setLocation, formatTimeFromAPI, parseTimeToDate, timeFormat]);
 
@@ -277,36 +238,7 @@ export default function Dashboard() {
     };
   }, [loadPrayerTimes]);
 
-  // Update greeting (special for Eid)
-  useEffect(() => {
-    if (isEidAlFitr) setGreeting("Eid al-Fitr Mubarak");
-    else if (isEidAlAdha) setGreeting("Eid al-Adha Mubarak");
-    else setGreeting("As-salamu alaykum");
-  }, [isEidAlFitr, isEidAlAdha]);
-
-  // Handle location detection
-  const handleDetectLocation = async () => {
-    const success = await location.detectLocation();
-    if (success) {
-      // Show appropriate message based on detection method
-      if (location.isIpBased) {
-        toast({
-          title: ti18n('locationDetected'),
-          description: `Location approximated from IP. Enable GPS for accurate results.`,
-        });
-      } else {
-        toast({ title: ti18n('locationDetected'), description: `Updated to ${location.locationName}` });
-      }
-
-      // Reload prayer times with new location
-      await loadPrayerTimes();
-    } else {
-      toast({ title: ti18n('locationDetectionFailed'), description: ti18n('pleaseEnableLocationPermissions'), variant: "destructive" });
-    }
-  };
-
-
-// Initialize prayer times when location changes
+  // Initialize prayer times when location changes
    useEffect(() => {
      if (location.latitude && location.longitude) {
        loadPrayerTimes();
@@ -410,6 +342,17 @@ const handleCheckIn = useCallback((pKey: PrayerName) => {
   const dashboardPrayers = useMemo(() => {
     void minuteTick;
     const now = new Date();
+    // Prayer end times (valid-time windows) from the canonical hook —
+    // Isha's end is madhab-aware (Hanafi: Fajr; jumhur: Islamic midnight).
+    const withEnd = prayerTimesHook.prayerTimesWithEnd;
+    const endsByName: Partial<Record<string, Date>> = withEnd ? {
+      Fajr: withEnd.fajr.end,
+      Dhuhr: withEnd.dhuhr.end,
+      Asr: withEnd.asr.end,
+      Maghrib: withEnd.maghrib.end,
+      Isha: withEnd.isha.end,
+    } : {};
+    const polarSafe = (d?: Date) => (d && !Number.isNaN(d.getTime()) ? d : undefined);
     return prayers.map(p => {
       const prayerDate = p.date;
       const isUpcoming = prayerDate && prayerDate > now;
@@ -425,10 +368,25 @@ const handleCheckIn = useCallback((pKey: PrayerName) => {
         displayName = 'Jummah';
       }
 
+      // Formatted valid-time end ("Ends HH:MM"); formatted at render time so
+      // 12/24h flips stay live. Uses the same device-local convention as every
+      // other hook-derived Date in the app (no timeZone override — start times
+      // are device-local wall-clock labels too). Guarded against polar-day
+      // Invalid Dates.
+      const endDate = polarSafe(endsByName[p.name]);
+      const endsAt = endDate ? formatTime(endDate, timeFormat) : undefined;
+      // Jumhur users see Isha end at Islamic midnight — expose the basis for a
+      // tooltip so the late hour is self-explanatory.
+      const endsBasisKey = p.name === 'Isha' && getMadhab() !== 'hanafi'
+        ? 'islamicMidnight'
+        : undefined;
+
       return {
         name: displayName,
         originalName: p.name,
         time: p.time,
+        endsAt,
+        endsBasisKey,
         icon: prayerIcons[p.name] || <Sun className="w-5 h-5" />,
         isActive: nextPrayerName === p.name,
         // "NEXT" pill must mark ONLY the actual next prayer, not every
@@ -438,7 +396,7 @@ const handleCheckIn = useCallback((pKey: PrayerName) => {
         onCheckIn: () => handleCheckIn(pKey),
       };
     });
-  }, [prayers, minuteTick, todayPrayers, nextPrayerName, handleCheckIn, prayerIcons]);
+  }, [prayers, minuteTick, todayPrayers, nextPrayerName, handleCheckIn, prayerIcons, prayerTimesHook.prayerTimesWithEnd, timeFormat]);
 
   const nextPrayerInfo = useMemo(() => {
     const nextIdx = prayers.findIndex(p => p.name === nextPrayerName);

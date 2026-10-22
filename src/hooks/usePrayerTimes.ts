@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { calculatePrayerTimes } from '@/lib/prayer-calculator';
+import { calculatePrayerTimes, calculateSunnahTimes } from '@/lib/prayer-calculator';
 import { GeocodingService } from '@/lib/geocoding';
 import { AladhanAPI } from '@/lib/aladhan-api';
 import { getEffectiveCalculationMethod, getEffectiveAladhanMethodId } from '@/lib/prayer-method-resolver';
@@ -314,30 +314,40 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         isha: parseTime(timings.Isha),
       };
 
-      // Parse optional times from API if available
+      // Parse optional times from API if available.
+      // NOTE: Aladhan's default `Midnight`/`Firstthird`/`Lastthird` fields use a
+      // Sunset↔Sunrise span, NOT the fiqh Maghrib↔Fajr span, and the offline
+      // fallback used to poison them with '00:00' — so fiqh semantics are always
+      // computed locally via calculateSunnahTimes() below (see
+      // docs/research/prayer-end-times.md, bugs #5–#8).
       const optionalTimes = {
         imsak: timings.Imsak ? parseTime(timings.Imsak) : null,
-        midnight: timings.Midnight ? parseTime(timings.Midnight) : null,
-        firstthird: timings.Firstthird ? parseTime(timings.Firstthird) : null,
-        lastthird: timings.Lastthird ? parseTime(timings.Lastthird) : null,
       };
 
-      // Tomorrow's Fajr for Isha end time
+      // Tomorrow's Fajr for Isha end time + night windows
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowResult = calculatePrayerTimes(locationData.latitude, locationData.longitude, tomorrow, methodName);
 
-      const midnight = new Date(now);
-      midnight.setDate(midnight.getDate() + 1);
-      midnight.setHours(0, 0, 0, 0);
+      // True Islamic midnight (Maghrib↔tomorrow-Fajr midpoint) and Tahajjud
+      // (last third) — same method/madhab as the prayer starts themselves.
+      const sunnah = calculateSunnahTimes(locationData.latitude, locationData.longitude, now, methodName);
+
+      // Isha's valid-time end is madhab-aware:
+      //  - Hanafi: lasts until Subh Sadiq (tomorrow's Fajr)
+      //  - Jumhur (Shafi'i/Maliki/Hanbali, the app default): until Islamic midnight
+      // Polar guard: if the midpoint does not fall after Isha begins, use tomorrow's Fajr.
+      const ishaEnd = getMadhab() === 'hanafi' || sunnah.middleOfTheNight.getTime() <= prayerDates.isha.getTime()
+        ? tomorrowResult.fajr
+        : sunnah.middleOfTheNight;
 
       const times: PrayerTimes = {
         ...prayerDates,
-        midnight: optionalTimes.midnight || midnight,
+        midnight: sunnah.middleOfTheNight,
         imsak: optionalTimes.imsak || new Date(prayerDates.fajr.getTime() - 10 * 60000),
         ishraq: new Date(prayerDates.sunrise.getTime() + 15 * 60000),
         duha: new Date(prayerDates.sunrise.getTime() + (prayerDates.dhuhr.getTime() - prayerDates.sunrise.getTime()) / 2),
-        tahajjud: optionalTimes.lastthird || new Date(midnight.getTime() + (tomorrowResult.fajr.getTime() - midnight.getTime()) / 2),
+        tahajjud: sunnah.lastThirdOfTheNight,
       };
 
       const withEnd: PrayerTimesWithEnd = {
@@ -346,7 +356,7 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         dhuhr: { start: times.dhuhr, end: times.asr },
         asr: { start: times.asr, end: times.maghrib },
         maghrib: { start: times.maghrib, end: times.isha },
-        isha: { start: times.isha, end: tomorrowResult.fajr },
+        isha: { start: times.isha, end: ishaEnd },
         imsak: { start: times.imsak!, end: times.fajr },
         ishraq: { start: times.ishraq!, end: new Date(times.ishraq!.getTime() + 20 * 60000) },
         duha: { start: times.duha!, end: new Date(times.dhuhr.getTime() - 10 * 60000) },

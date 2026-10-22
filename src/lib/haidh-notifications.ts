@@ -6,6 +6,8 @@
 
 import { localNotifications } from "@/lib/local-notifications";
 import type { HaidhTrackerData } from "@/lib/haidh-tracker";
+import i18n from "@/lib/i18n-new";
+import { NOTIFICATION_CHANNELS } from "@/lib/notification-channels";
 
 // Stable notification IDs (hashed to numeric IDs internally)
 const ID_GHUSL = "haidh-ghusl-reminder";
@@ -51,9 +53,10 @@ export const syncHaidhNotifications = async (data: HaidhTrackerData): Promise<vo
     if (fire.getTime() > now.getTime()) {
       await localNotifications.scheduleNotification(
         ID_GHUSL,
-        "Time for Ghusl 🌊",
-        "Your Haidh has ended. Perform Ghusl to resume your Salah.",
+        i18n.t("haidhNotifGhuslTitle"),
+        i18n.t("haidhNotifGhuslBody"),
         fire,
+        { channelId: NOTIFICATION_CHANNELS.noorCycle }
       );
     }
   }
@@ -65,9 +68,10 @@ export const syncHaidhNotifications = async (data: HaidhTrackerData): Promise<vo
     if (fire.getTime() > now.getTime()) {
       await localNotifications.scheduleNotification(
         ID_PREDICT,
-        "Cycle approaching",
-        "Your cycle may begin in the next couple of days. Plan ahead with duʿā.",
+        i18n.t("haidhNotifPredictTitle"),
+        i18n.t("haidhNotifPredictBody"),
         fire,
+        { channelId: NOTIFICATION_CHANNELS.noorCycle }
       );
     }
   }
@@ -79,9 +83,10 @@ export const syncHaidhNotifications = async (data: HaidhTrackerData): Promise<vo
     const next = fire.getTime() > now.getTime() ? fire : new Date(fire.getTime() + MS_PER_DAY);
     await localNotifications.scheduleNotification(
       ID_DAILY_LOG,
-      "Log your day",
-      "Take a moment to log today's flow and how you're feeling.",
+      i18n.t("haidhNotifLogTitle"),
+      i18n.t("haidhNotifLogBody"),
       next,
+      { channelId: NOTIFICATION_CHANNELS.noorCycle }
     );
   }
 
@@ -94,9 +99,10 @@ export const syncHaidhNotifications = async (data: HaidhTrackerData): Promise<vo
     if (!data.isActive && fire.getTime() > now.getTime()) {
       await localNotifications.scheduleNotification(
         ID_FERTILE,
-        "Fertile Window",
-        "Your fertile window is expected to begin today. Track your body's signs.",
+        i18n.t("haidhNotifFertileTitle"),
+        i18n.t("haidhNotifFertileBody"),
         fire,
+        { channelId: NOTIFICATION_CHANNELS.noorCycle }
       );
     }
   }
@@ -116,9 +122,10 @@ export const syncHaidhNotifications = async (data: HaidhTrackerData): Promise<vo
 
     await localNotifications.scheduleNotification(
       ID_FAST_MAKEUP,
-      "Make up your fasts",
-      `You have ${unfulfilledFasts} missed fasts. Tomorrow is Monday, a great day to make one up!`,
+      i18n.t("haidhNotifFastTitle", { count: unfulfilledFasts }),
+      i18n.t("haidhNotifFastBody"),
       fire,
+      { channelId: NOTIFICATION_CHANNELS.noorCycle }
     );
   }
 };

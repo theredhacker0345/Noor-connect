@@ -1,20 +1,23 @@
 import { isBeforeSleepEnabled, getBedtimeHour, getBedtimeMinute } from './storage';
+import i18n from './i18n-new';
 
 const SCHEDULE_KEY = 'bedtime-notification-id';
 
-const BEDTIME_CONTENT = [
-  { title: 'Time for rest', body: 'Reflect on your day and prepare for a peaceful sleep.' },
-  { title: 'Wind down', body: 'Put away your phone and remember Allah before sleep.' },
-  { title: 'Evening adhkar', body: 'Recite the morning and evening adhkar before sleeping.' },
-  { title: 'Ayat-ul-Kursi', body: 'Recite Ayat-ul-Kursi before sleeping — a protection until morning.' },
-  { title: 'Sleep with wudu', body: 'Make wudu before sleeping as the Prophet ﷺ advised.' },
-  { title: 'Forgiveness', body: 'Seek forgiveness before sleep — Allah is Al-Ghafur, the Oft-Forgiving.' },
-  { title: 'Bedtime dua', body: 'Say: "Bismika Allahumma ahya wa bismika amut" — in Your name, O Allah, I live and die.' },
-];
+// Rotating bedtime sunnah content. Body lines are i18n keys resolved at fire
+// time so the language follows the user's current preference.
+const BEDTIME_BODY_KEYS = [
+  'bedtimeNotifBody1',
+  'bedtimeNotifBody2',
+  'bedtimeNotifBody3',
+  'bedtimeNotifBody4',
+  'bedtimeNotifBody5',
+  'bedtimeNotifBody6',
+  'bedtimeNotifBody7',
+] as const;
 
-function pickContent() {
+function pickBodyKey(): string {
   const day = new Date().getDate();
-  return BEDTIME_CONTENT[day % BEDTIME_CONTENT.length];
+  return BEDTIME_BODY_KEYS[day % BEDTIME_BODY_KEYS.length];
 }
 
 export function scheduleBedtimeNotification() {
@@ -42,9 +45,8 @@ export function scheduleBedtimeNotification() {
     if (!isBeforeSleepEnabled()) return;
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-    const content = pickContent();
-    const n = new Notification(content.title, {
-      body: content.body,
+    const n = new Notification(i18n.t('bedtimeNotifTitle'), {
+      body: i18n.t(pickBodyKey()),
       icon: '/icon-192x192.png',
       tag: 'bedtime',
       requireInteraction: false,

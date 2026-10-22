@@ -1,12 +1,13 @@
 ﻿import React, { useEffect, memo, lazy, Suspense, useState } from "react";
 import { m } from "framer-motion";
-import { Bell, MapPin, ChevronRight, Activity, Compass, Grid3X3 } from "lucide-react";
+import { Bell, MapPin, ChevronRight, Activity, Compass, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { useI18n } from "@/hooks/useI18n";
 import { globalTimerManager } from "@/lib/timer-manager";
 import { useAnimationTier } from "@/hooks/useAnimationTier";
+import { PRAYER_ARABIC_NAMES } from "@/lib/prayer-display";
 
 // Lazy load widget components to reduce initial bundle size
 const EnhancedDailyAyah = lazy(() => import("@/components/EnhancedDailyAyah"));
@@ -17,12 +18,18 @@ const QuranProgressWidget = lazy(() => import("@/components/QuranProgressWidget"
 const IslamicEventsWidget = lazy(() => import("@/components/IslamicEventsWidget"));
 const QazaTracker = lazy(() => import("@/components/QazaTracker"));
 
-const WidgetFallback = () => <div className="h-40 w-full rounded-2xl bg-card/40 animate-pulse border border-border/40 backdrop-blur-sm" />;
+const WidgetFallback = () => <div className="h-40 w-full rounded-2xl bg-card/40 animate-pulse border border-border/40" />;
 
 
 interface PrayerTime {
   name: string;
+  /** Internal prayer key — differs from `name` on Fridays (Jummah display). */
+  originalName?: string;
   time: string;
+  /** Formatted END of the prayer's valid time window ("06:12") — already localized. */
+  endsAt?: string;
+  /** Optional i18n key explaining the end basis (e.g. islamicMidnight for Isha). */
+  endsBasisKey?: string;
   icon: React.ReactNode;
   isActive?: boolean;
   isUpcoming?: boolean;
@@ -186,6 +193,14 @@ function PremiumDashboardInner({
       : baseName;
   })();
 
+  // Arabic name of the upcoming prayer (decorative companion line in the hero).
+  const nextPrayerArabicName = (() => {
+    const rawName = (nextPrayer.name || '').trim();
+    if (!rawName || rawName === 'Loading...') return null;
+    const base = rawName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+    return PRAYER_ARABIC_NAMES[base] || null;
+  })();
+
   return (
     <div
       className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300"
@@ -202,9 +217,10 @@ function PremiumDashboardInner({
                 <h3 className="text-xl font-black text-foreground">{t('setLocation')}</h3>
                 <button
                   onClick={() => setShowManualLocationDialog(false)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-muted text-muted-foreground hover:bg-muted/80"
+                  aria-label={t('close')}
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-muted text-muted-foreground hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                 >
-                  <Grid3X3 className="w-4 h-4 rotate-45" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -265,20 +281,22 @@ function PremiumDashboardInner({
           {/* Location pill */}
           <button
             onClick={onLocationClick}
-            className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full transition-all active:scale-95 border"
+            aria-label={`${t('changeCity')}: ${displayLocation}`}
+            className="flex items-center gap-2 ps-3 pe-2 py-1.5 rounded-full transition-all active:scale-95 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             style={{ background: 'rgba(201,134,10,0.08)', borderColor: 'rgba(201,134,10,0.22)' }}
           >
             <MapPin className="w-3.5 h-3.5" style={{ color: '#C9860A' }} />
             <span className="text-xs font-semibold max-w-[130px] truncate text-foreground/85">
               {displayLocation}
             </span>
-            <ChevronRight className="w-3 h-3 text-muted-foreground" />
+            <ChevronRight className="w-3 h-3 text-muted-foreground chevron-right rtl-icon" />
           </button>
 
           {/* Notification bell */}
           <button
             onClick={onNotificationClick}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 bg-muted/60 border border-border"
+            aria-label={t('notificationHistory')}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90 bg-muted/60 border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
             <Bell className="w-4 h-4 text-foreground/60" />
           </button>
@@ -303,9 +321,17 @@ function PremiumDashboardInner({
               </p>
             </div>
             <div className="flex items-end justify-between mb-4">
-              <p className="text-3xl font-bold text-white" style={{ fontFamily: 'inherit', fontStyle: 'italic' }}>
-                {nextPrayerDisplayName}
-              </p>
+              <div className="min-w-0">
+                <p className="text-3xl font-bold text-white leading-tight" style={{ fontFamily: 'inherit', fontStyle: 'italic' }}>
+                  {nextPrayerDisplayName}
+                </p>
+                {/* Arabic prayer name — hidden from AT, decorative for sighted users. */}
+                {nextPrayerArabicName && (
+                  <p aria-hidden="true" dir="rtl" lang="ar" className="text-base font-semibold text-white/50 mt-1">
+                    {nextPrayerArabicName}
+                  </p>
+                )}
+              </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-widest text-white/40 mb-0.5">{t('inCountdownLabel')}</p>
                 <LiveCountdown targetTime={nextPrayer.targetTime} />
@@ -314,6 +340,9 @@ function PremiumDashboardInner({
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs text-white/40">{t('atTime', { time: nextPrayer.time })}</span>
             </div>
+            {/* NOTE: keep vertical rhythm above the progress bar — an extra
+                small "window end / iqamah-style" line is planned to slot in
+                between the 'atTime' row and this bar (orchestrator, next round). */}
             {/* Amber progress bar */}
             <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <m.div
@@ -340,13 +369,31 @@ function PremiumDashboardInner({
                         <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{t('prayerTimes')}</h2>
                         <button
                           onClick={onLocationClick}
-                          className="text-xs font-semibold uppercase tracking-widest transition-all text-muted-foreground hover:text-foreground"
+                          aria-label={t('changeCity')}
+                          className="text-xs font-semibold uppercase tracking-widest transition-all text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-full px-2 py-1 min-h-[32px]"
                         >
                           {t('changeCity')}
                         </button>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
+                        {prayers.length === 0 && (
+                          // Loading skeleton — same footprint as a prayer card
+                          // so the grid never jumps when times arrive.
+                          <>
+                            {[0, 1, 2, 3].map((i) => (
+                              <div
+                                key={`prayer-skeleton-${i}`}
+                                aria-hidden="true"
+                                className="p-4 rounded-[20px] bg-card/60 border border-border/40 animate-pulse"
+                              >
+                                <div className="w-8 h-8 rounded-xl bg-muted mb-3" />
+                                <div className="h-3.5 w-16 rounded bg-muted mb-2" />
+                                <div className="h-3 w-12 rounded bg-muted" />
+                              </div>
+                            ))}
+                          </>
+                        )}
                         {prayers.map((prayer, i) => (
                           <m.div
                             key={prayer.name}
@@ -387,6 +434,15 @@ function PremiumDashboardInner({
                               <p className="text-sm mt-0.5 font-semibold" style={{ color: prayer.isActive ? '#C9860A' : 'hsl(var(--muted-foreground))' }}>
                                 {prayer.time}
                               </p>
+                              {prayer.endsAt && (
+                                <p
+                                  className="text-[11px] mt-0.5 text-muted-foreground"
+                                  dir="auto"
+                                  title={prayer.endsBasisKey ? t(prayer.endsBasisKey) : undefined}
+                                >
+                                  {t('endsAt', { time: prayer.endsAt })}
+                                </p>
+                              )}
                             </div>
                           </m.div>
                         ))}
@@ -400,7 +456,7 @@ function PremiumDashboardInner({
               animate: { opacity: 1, y: 0 },
               transition: { duration: 0.4 }
             })}
-            className="p-5 rounded-[28px] bg-card/40 border border-border/40 backdrop-blur-md"
+            className="p-5 rounded-[28px] bg-card/80 border border-border/40"
           >
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{t('dailySalah')}</h3>
@@ -408,12 +464,31 @@ function PremiumDashboardInner({
                           {prayers.filter(p => p.isCompleted).length} / 5
                         </div>
                       </div>
+                      {prayers.length === 0 ? (
+                        // Loading skeleton — five pulse circles matching the
+                        // check-in row footprint so nothing jumps on arrival.
+                        <div className="flex items-center justify-between" aria-hidden="true">
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <div key={`salah-skeleton-${i}`} className="flex flex-col items-center gap-2">
+                              <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+                              <div className="w-7 h-2.5 rounded-full bg-muted animate-pulse" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
                       <div className="flex items-center justify-between">
-                        {prayers.map((prayer) => (
+                        {prayers.map((prayer) => {
+                          const labelPrayer = t((prayer.originalName || prayer.name).toLowerCase());
+                          return (
                           <button
                             key={`tracker-${prayer.name}`}
                             onClick={() => prayer.onCheckIn?.()}
-                            className="flex flex-col items-center gap-2 group"
+                            aria-label={
+                              prayer.isCompleted
+                                ? t('prayerCheckInCompletedAria', { prayer: labelPrayer })
+                                : t('prayerCheckInAria', { prayer: labelPrayer })
+                            }
+                            className="flex flex-col items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-full p-1"
                           >
                             <div
                               className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
@@ -433,8 +508,10 @@ function PremiumDashboardInner({
                               {t(prayer.name.toLowerCase()).slice(0, 3)}
                             </span>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
+                      )}
           </m.div>
 
           {/* ── Daily Ayah ── */}

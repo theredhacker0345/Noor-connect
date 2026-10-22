@@ -8,6 +8,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-23
+
+### Added
+
+- **Prayer end times on the home screen**: every prayer card in the dashboard grid now shows when that prayer's valid time ends ("Ends 06:12"), formatted per the user's 12/24-hour preference and re-formatted live when the preference changes. Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha.
+- **Madhab-aware Isha end**: Isha's window end follows the user's madhab — Islamic midnight (midpoint of Maghrib → tomorrow's Fajr) for the jumhur position (Shafi'i/Maliki/Hanbali, the app default), and Subh Sadiq (tomorrow's Fajr) for Hanafi. A tooltip on the Isha card explains the Islamic-midnight basis.
+- **Android notification channels**: a central registry of 8 stable channel ids (Prayer Times, Prayer Prep, Ramadan, Hydration, Noor Cycle, Reminders, Events, Sleep) with localized names/descriptions, sensible importance levels and vibration — visible and manageable in Android's notification settings.
+- **Richer notification text**: prayer notifications carry the localized prayer name with its Arabic name and a per-prayer authentic reminder; adhan, Ramadan countdown and Islamic-event notifications are fully localized (previously hard-coded English) across all 7 languages.
+- A prayer end-times research document (`docs/research/prayer-end-times.md`) covering the fiqh rules per madhab, the Aladhan API / adhan library comparison, and the integration plan.
+
+### Fixed
+
+- **Islamic midnight was civil midnight**: the fallback computed 00:00 of the next civil day instead of the fiqh midnight. It is now the true Maghrib → tomorrow-Fajr midpoint (equivalent to adhan's `SunnahTimes.middleOfTheNight`), with a polar-day guard.
+- **Tahajjud window corrected**: the old fallback midpointed civil midnight → Fajr; the window now starts at the last third of the night (`SunnahTimes.lastThirdOfTheNight`). Sleep/Tahajjud reminders inherit the corrected windows.
+- **Aladhan offline fallback poisoned night fields**: the offline path hard-coded `Midnight`/`Firstthird`/`Lastthird` to `00:00`, which parsed downstream as a real (already-past) time. The fields are now simply absent when unknown, and fiqh night semantics are always computed locally (Aladhan's default `Midnight` spans Sunset↔Sunrise, not the fiqh span).
+- **"undefined" in prayer notification bodies**: `PRAYER_QUOTES` was indexed as an array instead of a record, so bodies read "…prayer.\nundefined". Quotes are now indexed per prayer with a safe default pool.
+- **Quran-recitation notification type tag shadowed**: a duplicate `type` key in the media-style notification data silently broke the recitation-action routing; renamed to `recitationType`.
+- Isha's valid-time window no longer overstates to tomorrow's Fajr for non-Hanafi users, and current/prayer-window boundary comparisons are now end-exclusive.
+
+### Changed
+
+- **Services hub redesigned**: "Discover Resources" hero, clearly grouped sections (Worship & Prayer, Qur'an & Recitation, Learning, Media, Calculators & Tools), animations honoring the existing animation setting, dark-mode consistency, and preserved seasonal Fitrana/Eid-checklist gating.
+- **Notification History redesigned**: grouped by day, per-type icons, clearer empty state, clear-all.
+- **Home screen polish**: prayer cards show end times, the next-prayer hero shows the Arabic prayer name (shared with the notification layer so both always agree), tightened spacing/typography, dead code stripped from the Dashboard shell.
+- **README fully documented**: 226 → 485 lines with a feature index and 35 per-feature sections; corrected stale claims along the way (87,018 hadiths across 16 collections, 158 radio stations, spa5k tafsir API with 27 editions, accurate nasheed feature list).
+- i18n catalogue extended to 1,208 keys with full parity across all 7 locales (English, Arabic, Urdu, Bengali, Russian, French, Korean); new keys are RTL-aware for Arabic/Urdu.
+
 ## [2.4.0] - 2026-10-23
 
 ### Added

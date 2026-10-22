@@ -1,18 +1,22 @@
 import { isIslamicSleepReminderEnabled, getIslamicSleepOffset } from './storage';
+import i18n from './i18n-new';
+import { ensureNoorNotificationChannels, NOTIFICATION_CHANNELS, NOTIFICATION_ACCENT_COLOR } from './notification-channels';
+import { Capacitor } from '@capacitor/core';
 
-const SLEEP_CONTENT = [
-  { title: 'Islamic Sleep Reminder', body: 'Recite Ayatul Kursi before sleeping — it will protect you until morning.' },
-  { title: 'Islamic Sleep Reminder', body: 'Recite Surah Al-Ikhlas, Al-Falaq, An-Nas (3x each) before sleeping.' },
-  { title: 'Islamic Sleep Reminder', body: 'Dua: "Bismika Allahumma amutu wa ahya" — In Your name, O Allah, I die and live.' },
-  { title: 'Islamic Sleep Reminder', body: 'Say SubhanAllah (33x), Alhamdulillah (33x), Allahu Akbar (34x) before sleeping.' },
-  { title: 'Islamic Sleep Reminder', body: 'Sleep on your right side facing the Qibla — the Sunnah of the Prophet SAW.' },
-  { title: 'Islamic Sleep Reminder', body: 'Make wudu before sleeping. The Prophet SAW advised sleeping in a state of purity.' },
-  { title: 'Islamic Sleep Reminder', body: 'Recite the last 2 ayahs of Surah Al-Baqarah before sleeping — they will suffice you.' },
-];
+// Rotating sunnah sleep content, resolved via i18n at fire time.
+const SLEEP_BODY_KEYS = [
+  'sleepNotifBody1',
+  'sleepNotifBody2',
+  'sleepNotifBody3',
+  'sleepNotifBody4',
+  'sleepNotifBody5',
+  'sleepNotifBody6',
+  'sleepNotifBody7',
+] as const;
 
-function pickContent() {
+function pickBodyKey(): string {
   const day = new Date().getDate();
-  return SLEEP_CONTENT[day % SLEEP_CONTENT.length];
+  return SLEEP_BODY_KEYS[day % SLEEP_BODY_KEYS.length];
 }
 
 function getIshaTimeFromCache(): string | null {
@@ -66,21 +70,23 @@ export function scheduleIslamicSleepReminder() {
   const delay = target.getTime() - now.getTime();
   if (delay <= 0) return;
 
-  const content = pickContent();
+  const contentTitle = i18n.t('sleepNotifTitle');
+  const contentBody = i18n.t(pickBodyKey());
 
   // Use Capacitor LocalNotifications if available, fall back to Web API
-  const isCapacitor = !!(window as unknown as { Capacitor?: unknown }).Capacitor;
+  const isCapacitor = Capacitor.isNativePlatform();
   if (isCapacitor) {
+    ensureNoorNotificationChannels().catch(() => {});
     import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
       LocalNotifications.schedule({
         notifications: [{
           id: 7777,
-          title: content.title,
-          body: content.body,
+          title: contentTitle,
+          body: contentBody,
           schedule: { at: target, allowWhileIdle: true, repeats: false },
-          sound: 'default',
           smallIcon: 'ic_notification',
-          iconColor: '#1a4a4a',
+          iconColor: NOTIFICATION_ACCENT_COLOR,
+          channelId: NOTIFICATION_CHANNELS.sleep,
           extra: { type: 'islamic_sleep' }
         }]
       }).catch((e: Error) => console.warn('Failed to schedule sleep reminder:', e));
@@ -94,8 +100,8 @@ export function scheduleIslamicSleepReminder() {
       if (!isIslamicSleepReminderEnabled()) return;
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-      const n = new Notification(content.title, {
-        body: content.body,
+      const n = new Notification(i18n.t('sleepNotifTitle'), {
+        body: i18n.t(pickBodyKey()),
         icon: '/icon-192x192.png',
         tag: 'islamic-sleep',
         requireInteraction: false,
@@ -108,7 +114,7 @@ export function scheduleIslamicSleepReminder() {
 }
 
 export function cancelIslamicSleepReminder() {
-  const isCapacitor = !!(window as unknown as { Capacitor?: unknown }).Capacitor;
+  const isCapacitor = Capacitor.isNativePlatform();
   if (isCapacitor) {
     import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
       LocalNotifications.cancel({ notifications: [{ id: 7777 }] }).catch(() => {});

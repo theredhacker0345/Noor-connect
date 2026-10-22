@@ -2,7 +2,7 @@
  * Offline Prayer Times Calculator using adhan library
  * No API calls required - calculates locally
  */
-import { Coordinates, CalculationMethod, PrayerTimes, CalculationParameters, Madhab, Shafaq } from 'adhan';
+import { Coordinates, CalculationMethod, PrayerTimes, CalculationParameters, Madhab, Shafaq, SunnahTimes } from 'adhan';
 import { getMadhab, type MadhabType } from './storage';
 
 export type CalculationMethodName = 
@@ -154,6 +154,38 @@ export const calculatePrayerTimes = (
     asr: prayerTimes.asr,
     maghrib: prayerTimes.maghrib,
     isha: prayerTimes.isha,
+  };
+};
+
+/**
+ * Sunnah night times (computed with the SAME method + madhab as prayer times).
+ *  - middleOfTheNight: true Islamic midnight = midpoint(Maghrib, tomorrow's Fajr)
+ *    → the jumhur (Maliki/Shafi'i/Hanbali) limit of Isha's valid time.
+ *  - lastThirdOfTheNight: start of the virtuous Tahajjud window (NOT an Isha limit).
+ *    Aladhan's default API `Midnight` field uses a different (Sunset↔Sunrise) span,
+ *    so these must always be computed locally (see docs/research/prayer-end-times.md).
+ */
+export interface SunnahTimesResult {
+  middleOfTheNight: Date;
+  lastThirdOfTheNight: Date;
+}
+
+export const calculateSunnahTimes = (
+  latitude: number,
+  longitude: number,
+  date: Date = new Date(),
+  methodName?: CalculationMethodName
+): SunnahTimesResult => {
+  const coordinates = new Coordinates(latitude, longitude);
+  const method = methodName || getCalculationMethod();
+  const params = CALCULATION_METHODS[method]();
+  const madhab = getMadhab();
+  params.madhab = madhab === 'hanafi' ? Madhab.Hanafi : Madhab.Shafi;
+
+  const sunnah = new SunnahTimes(new PrayerTimes(coordinates, date, params));
+  return {
+    middleOfTheNight: sunnah.middleOfTheNight,
+    lastThirdOfTheNight: sunnah.lastThirdOfTheNight,
   };
 };
 

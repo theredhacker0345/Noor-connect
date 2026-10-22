@@ -19,6 +19,9 @@ import {
   PRE_PRAYER_MINUTES_OPTIONS,
   POST_PRAYER_MINUTES_OPTIONS,
 } from './notification-manager';
+import { ensureNoorNotificationChannels, NOTIFICATION_CHANNELS, NOTIFICATION_ACCENT_COLOR } from './notification-channels';
+import { getPrayerDisplayPair, PRAYER_ARABIC_NAMES, PRAYER_ORDER } from './prayer-display';
+import { formatPrayerTime, getTimeFormat } from './time-formatter';
 
 // Task 2: Use SW registration for more robust "Native" notifications
 let swRegistration: ServiceWorkerRegistration | null = null;
@@ -51,13 +54,85 @@ const PRAYER_NOTIFICATION_TYPES = ['prayer_reminder', 'pre_prayer_reminder', 'po
 // membership test in one place so the filter stays string-safe.
 const isPrayerNotificationType = (type: unknown): boolean => PRAYER_NOTIFICATION_TYPES.includes(type as string);
 
-// Localized prayer names reuse the flat locale keys that already exist for the UI.
-const PRAYER_NAME_I18N_KEYS: Record<string, string> = {
-  Fajr: 'fajr',
-  Dhuhr: 'dhuhr',
-  Asr: 'asr',
-  Maghrib: 'maghrib',
-  Isha: 'isha',
+// Localized prayer names now come from the shared prayer-display module so the
+// dashboard hero and the notification layer stay consistent.
+
+/**
+ * Rotating short reminders shown in the expanded (big-text) part of prayer
+ * notifications. Deterministic rotation by day-of-year + prayer index so each
+ * prayer of the day gets a different line and the cycle repeats ~every 3 weeks.
+ * Content rules: Quran verses or well-attested hadith ONLY (Bukhari/Muslim/
+ * Tirmidhi), each carrying its source. Translations live in the locale files
+ * (keys notifReminder1..14).
+ */
+const NOTIF_REMINDER_COUNT = 14;
+
+/** Deterministic day number (UTC) used for reminder rotation. */
+const dayNumberFor = (date: Date): number => Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000);
+
+const getRotatingReminderKey = (prayerName: string, date: Date): string => {
+  const prayerIndex = PRAYER_ORDER.indexOf(prayerName as typeof PRAYER_ORDER[number]);
+  const seed = dayNumberFor(date) + (prayerIndex >= 0 ? prayerIndex : 0);
+  return `notifReminder${(seed % NOTIF_REMINDER_COUNT) + 1}`;
+};
+
+/** Formats "HH:MM" (Aladhan) with the user's 12/24h preference for notification text. */
+const formatNotificationTime = (timeStr: string): string => {
+  try {
+    return formatPrayerTime(timeStr, getTimeFormat());
+  } catch {
+    return timeStr;
+  }
+};
+
+/**
+ * Compute the localized "Ends at HH:MM" fragment for a prayer window, or null
+ * when the next boundary is unavailable. Fajr ends at Sunrise (from the same
+ * day data); the others end at the next prayer's start; Isha ends at the next
+ * day's Fajr when that data is already cached.
+ */
+const getPrayerEndsAtText = (
+  prayerName: string,
+  timings: AladhanPrayerTime,
+  _dayData: unknown,
+  targetDate: Date
+): string | null => {
+  try {
+    let endTime: string | null = null;
+    if (prayerName === 'Fajr' && typeof timings.Sunrise === 'string') {
+      endTime = timings.Sunrise;
+    } else {
+      const idx = PRAYER_ORDER.indexOf(prayerName as typeof PRAYER_ORDER[number]);
+      const nextName = idx >= 0 && idx < PRAYER_ORDER.length - 1 ? PRAYER_ORDER[idx + 1] : null;
+      if (nextName && typeof timings[nextName] === 'string') {
+        endTime = timings[nextName];
+      } else if (prayerName === 'Isha') {
+        // Isha ends at tomorrow's Fajr — only when the data is already cached.
+        const tomorrow = new Date(targetDate);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
+        if (storedLocation) {
+          const loc = JSON.parse(storedLocation) as { latitude?: number; longitude?: number };
+          if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+            const tomorrowData = AladhanAPI.getPrayerTimesForDate(
+              tomorrow,
+              loc.latitude,
+              loc.longitude
+            );
+            if (tomorrowData && typeof tomorrowData.timings.Fajr === 'string') {
+              endTime = tomorrowData.timings.Fajr;
+            }
+          }
+        }
+      }
+    }
+    if (!endTime) return null;
+    const cleaned = endTime.replace(/\s*\(.*?\)\s*/g, '').trim();
+    if (!/^\d{1,2}:\d{2}$/.test(cleaned)) return null;
+    return i18n.t('notifPrayerEndsAt', { time: formatNotificationTime(cleaned) });
+  } catch {
+    return null;
+  }
 };
 
 if (localStorage.getItem(PRAYER_NOTIFICATIONS_ENABLED_KEY) === null) {
@@ -73,49 +148,71 @@ type ServiceWorkerPrayerTimings = Record<string, { time: string }>;
 
 const PRAYER_NAMES = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'] as const;
 
-const getPrayerNotificationMessage = (prayerName: string, prayerTime: string): { title: string; body: string } => {
+/**
+ * Rich, i18n-aware prayer notification text.
+ *
+ * Collapsed view stays short (< ~120 chars):
+ *   title: "🕌 Dhuhr — الظهر"
+ *   body:  "It's time for Dhuhr prayer (12:30). Ends at 15:45."
+ * Expanded view (Android big-text via largeBody) adds a rotating authentic
+ * reminder + the per-prayer quote from PRAYER_QUOTES.
+ */
+const getPrayerNotificationMessage = (
+  prayerName: string,
+  prayerTime: string,
+  options?: { endsAt?: string | null; referenceDate?: Date }
+): { title: string; body: string; largeBody?: string; summaryText?: string } => {
+  const localized = getLocalizedPrayerName(prayerName);
+  const arabic = PRAYER_ARABIC_NAMES[prayerName] || '';
+  const time = formatNotificationTime(prayerTime);
+
+  const title = i18n.t('notifPrayerTimeTitle', { prayer: localized, arabic });
+  const baseBody = i18n.t('notifPrayerTimeBody', { prayer: localized, time });
+  const body = options?.endsAt ? `${baseBody} ${options.endsAt}` : baseBody;
+
+  const referenceDate = options?.referenceDate || new Date();
+  const reminder = i18n.t(getRotatingReminderKey(prayerName, referenceDate));
   const quotes = PRAYER_QUOTES[prayerName] || PRAYER_QUOTES['Default'];
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-  return {
-    title: `${prayerName} Prayer Time`,
-    body: `It's time for ${prayerName} prayer (${prayerTime}).\n${randomQuote}`,
-  };
+  const daySeed = dayNumberFor(referenceDate) % quotes.length;
+  const quote = quotes[daySeed];
+
+  const largeBody = `${reminder}\n${quote}`;
+  return { title, body, largeBody, summaryText: i18n.t('notifSummaryPrayer') };
 };
 
 /**
  * Task 21-d: localized prayer name for notification text. Falls back to the
  * internal Aladhan name when the locale does not provide a translation.
  */
-const getLocalizedPrayerName = (prayerName: string): string => {
-  const key = PRAYER_NAME_I18N_KEYS[prayerName];
-  if (!key) {
-    return prayerName;
-  }
-  const translated = i18n.t(key);
-  return translated === key ? prayerName : translated;
-};
+const getLocalizedPrayerName = (prayerName: string): string => getPrayerDisplayPair(prayerName).localized;
 
 /**
  * Task 21-d: pre-prayer reminder text ("Dhuhr in 15 minutes — time to prepare").
  * Resolved via t() at SCHEDULE time so the scheduled notification uses the
  * language the user had when it was scheduled (same as the rest of the app).
+ * Expanded view adds a short rotating preparation line (wudu / mosque / stillness).
  */
-const getPrePrayerNotificationMessage = (prayerName: string, minutes: number): { title: string; body: string } => {
+const getPrePrayerNotificationMessage = (prayerName: string, minutes: number, referenceDate?: Date): { title: string; body: string; largeBody?: string } => {
   const prayer = getLocalizedPrayerName(prayerName);
+  const dayNumber = dayNumberFor(referenceDate || new Date());
+  const prepLine = i18n.t(`notifPrepLine${(dayNumber % 3) + 1}`);
   return {
     title: i18n.t('prePrayerNotifTitle', { prayer, minutes }),
     body: i18n.t('prePrayerNotifBody', { prayer, minutes }),
+    largeBody: prepLine,
   };
 };
 
 /**
  * Task 21-d: post-prayer reminder text (dhikr & sunnah nudge).
+ * Expanded view carries the authentic post-prayer tasbih (Bukhari 3113/Muslim 595).
  */
-const getPostPrayerNotificationMessage = (prayerName: string): { title: string; body: string } => {
+const getPostPrayerNotificationMessage = (prayerName: string): { title: string; body: string; largeBody?: string } => {
   const prayer = getLocalizedPrayerName(prayerName);
   return {
     title: i18n.t('postPrayerNotifTitle', { prayer }),
     body: i18n.t('postPrayerNotifBody', { prayer }),
+    largeBody: i18n.t('notifPostTasbihLine'),
   };
 };
 
@@ -220,6 +317,11 @@ export class LocalNotificationManager {
         return false;
       }
 
+      // Android 8+: create the typed, localized channels BEFORE any
+      // notification is scheduled so every category lands in its own
+      // user-controllable channel (instead of the generic "Default" one).
+      await ensureNoorNotificationChannels();
+
       // Register action types for notification buttons.
       // registerActionTypes is Android/iOS-only — on web it throws
       // "Not implemented on web", so guard it behind a native check.
@@ -231,15 +333,22 @@ export class LocalNotificationManager {
                 id: 'prayer_actions',
                 actions: [
                   {
+                    id: 'mark_prayed',
+                    title: i18n.t('notifActionMarkPrayed'),
+                    requiresAuthentication: false,
+                    foreground: false,
+                    destructive: false
+                  },
+                  {
                     id: 'stop_adhan',
-                    title: '⏹ Stop Adhan',
+                    title: i18n.t('notifActionStopAdhan'),
                     requiresAuthentication: false,
                     foreground: false,
                     destructive: false
                   },
                   {
                     id: 'open_app',
-                    title: '🕌 Open App',
+                    title: i18n.t('notifActionOpenApp'),
                     requiresAuthentication: false,
                     foreground: true,
                     destructive: false
@@ -253,7 +362,7 @@ export class LocalNotificationManager {
         }
       }
 
-      // Listen for notification actions (e.g., "Stop Adhan")
+      // Listen for notification actions (e.g., "Stop Adhan", "Mark prayed")
       LocalNotifications.addListener('localNotificationActionPerformed', (action: ActionPerformed) => {
         const actionId = action.actionId;
         const notification = action.notification;
@@ -262,6 +371,23 @@ export class LocalNotificationManager {
         if (actionId === 'stop_adhan') {
           console.log('Stop Adhan action triggered for:', prayerName);
           adhanService.stopAdhan();
+        }
+
+        if (actionId === 'mark_prayed' && typeof prayerName === 'string') {
+          // Route the action straight into the salah tracker. togglePrayer()
+          // guards against early check-ins and fires the 'salah-updated' event,
+          // so an open Dashboard re-renders its quick check-in row.
+          import('./salah-tracker').then(({ togglePrayer, getTodayPrayers }) => {
+            const validKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
+            const key = prayerName.toLowerCase();
+            if (!validKeys.includes(key as typeof validKeys[number])) return;
+            const prayerKey = key as typeof validKeys[number];
+            if (!getTodayPrayers()[prayerKey]) {
+              togglePrayer(prayerKey);
+            }
+          }).catch((error) => {
+            console.warn('Failed to record prayer check-in from notification action:', error);
+          });
         }
       });
 
@@ -398,11 +524,14 @@ export class LocalNotificationManager {
           }
 
           const notificationId = this.getNotificationId(prayerName, prayerDate);
-          const message = getPrayerNotificationMessage(prayerName, cleaned);
+          const endsAt = getPrayerEndsAtText(prayerName, dayData.timings, dayData, targetDate);
+          const message = getPrayerNotificationMessage(prayerName, cleaned, { endsAt, referenceDate: targetDate });
           const notification: LocalNotificationSchema = {
             id: notificationId,
             title: message.title,
             body: message.body,
+            largeBody: message.largeBody,
+            summaryText: message.summaryText,
             schedule: {
               at: prayerDate,
               allowWhileIdle: true,
@@ -411,7 +540,10 @@ export class LocalNotificationManager {
             sound: 'default',
             smallIcon: 'ic_notification',
             largeIcon: 'ic_launcher',
-            iconColor: '#1a4a4a',
+            iconColor: NOTIFICATION_ACCENT_COLOR,
+            channelId: NOTIFICATION_CHANNELS.prayerTimes,
+            group: 'noor-prayers',
+            actionTypeId: 'prayer_actions',
             extra: {
               prayerName,
               prayerTime: cleaned,
@@ -436,11 +568,12 @@ export class LocalNotificationManager {
             const preDate = new Date(prayerDate.getTime() - prePostSettings.preMinutes * 60000);
             if (preDate > now) {
               const preNotificationId = notificationId + PRE_PRAYER_ID_OFFSET;
-              const preMessage = getPrePrayerNotificationMessage(prayerName, prePostSettings.preMinutes);
+              const preMessage = getPrePrayerNotificationMessage(prayerName, prePostSettings.preMinutes, targetDate);
               const preNotification: LocalNotificationSchema = {
                 id: preNotificationId,
                 title: preMessage.title,
                 body: preMessage.body,
+                largeBody: preMessage.largeBody,
                 schedule: {
                   at: preDate,
                   allowWhileIdle: true,
@@ -449,7 +582,10 @@ export class LocalNotificationManager {
                 sound: 'default',
                 smallIcon: 'ic_notification',
                 largeIcon: 'ic_launcher',
-                iconColor: '#1a4a4a',
+                iconColor: NOTIFICATION_ACCENT_COLOR,
+                channelId: NOTIFICATION_CHANNELS.prayerPrep,
+                group: 'noor-prayers',
+                actionTypeId: 'prayer_actions',
                 extra: {
                   prayerName,
                   prayerTime: cleaned,
@@ -480,6 +616,7 @@ export class LocalNotificationManager {
                 id: postNotificationId,
                 title: postMessage.title,
                 body: postMessage.body,
+                largeBody: postMessage.largeBody,
                 schedule: {
                   at: postDate,
                   allowWhileIdle: true,
@@ -488,7 +625,9 @@ export class LocalNotificationManager {
                 sound: 'default',
                 smallIcon: 'ic_notification',
                 largeIcon: 'ic_launcher',
-                iconColor: '#1a4a4a',
+                iconColor: NOTIFICATION_ACCENT_COLOR,
+                channelId: NOTIFICATION_CHANNELS.prayerPrep,
+                group: 'noor-prayers',
                 extra: {
                   prayerName,
                   prayerTime: cleaned,
@@ -599,10 +738,14 @@ export class LocalNotificationManager {
         if (prayer.date > now) {
           const notificationId = this.getNotificationId(prayer.name, prayer.date);
 
+          const message = getPrayerNotificationMessage(prayer.name, prayer.time, { referenceDate: prayer.date });
+
           const notification = {
             id: notificationId,
-            title: `${prayer.name} Prayer Time`,
-            body: `It's time for ${prayer.name} prayer. ${prayer.time}`,
+            title: message.title,
+            body: message.body,
+            largeBody: message.largeBody,
+            summaryText: message.summaryText,
             schedule: {
               at: prayer.date,
               allowWhileIdle: true, // Wake up device
@@ -611,7 +754,9 @@ export class LocalNotificationManager {
             sound: 'default',
             smallIcon: 'ic_notification',
             largeIcon: 'ic_launcher',
-            iconColor: '#1a4a4a',
+            iconColor: NOTIFICATION_ACCENT_COLOR,
+            channelId: NOTIFICATION_CHANNELS.prayerTimes,
+            group: 'noor-prayers',
             actionTypeId: 'prayer_actions',
             extra: {
               prayerName: prayer.name,
@@ -705,11 +850,15 @@ export class LocalNotificationManager {
     try {
       const notificationId = this.getNotificationId(prayerName, prayerDate);
 
+      const message = getPrayerNotificationMessage(prayerName, prayerTime, { referenceDate: prayerDate });
+
       await LocalNotifications.schedule({
         notifications: [{
           id: notificationId,
-          title: `${prayerName} Prayer Time`,
-          body: `It's time for ${prayerName} prayer. ${prayerTime}`,
+          title: message.title,
+          body: message.body,
+          largeBody: message.largeBody,
+          summaryText: message.summaryText,
           schedule: {
             at: prayerDate,
             allowWhileIdle: true, // Wake up device
@@ -718,7 +867,9 @@ export class LocalNotificationManager {
           sound: 'default',
           smallIcon: 'ic_notification',
           largeIcon: 'ic_launcher',
-          iconColor: '#1a4a4a',
+          iconColor: NOTIFICATION_ACCENT_COLOR,
+          channelId: NOTIFICATION_CHANNELS.prayerTimes,
+          group: 'noor-prayers',
           actionTypeId: 'prayer_actions',
           extra: {
             prayerName,
@@ -730,8 +881,8 @@ export class LocalNotificationManager {
 
       this.scheduledNotifications.set(notificationId, {
         id: notificationId,
-        title: `${prayerName} Prayer Time`,
-        body: `It's time for ${prayerName} prayer. ${prayerTime}`,
+        title: message.title,
+        body: message.body,
         scheduleTime: prayerDate,
         prayerName
       });
@@ -868,13 +1019,16 @@ export class LocalNotificationManager {
   }
 
   /**
-   * Schedule a custom notification (for Islamic events, etc.)
+   * Schedule a custom notification (for Islamic events, tracker reminders, etc.)
+   * `options.channelId` lets feature modules route into their own Android
+   * channel (e.g. Noor Cycle reminders); defaults to the events channel.
    */
   async scheduleNotification(
     id: string,
     title: string,
     body: string,
-    scheduleTime: Date
+    scheduleTime: Date,
+    options?: { channelId?: string; largeBody?: string }
   ): Promise<void> {
     if (!this.isInitialized) {
       const initialized = await this.initialize();
@@ -889,6 +1043,7 @@ export class LocalNotificationManager {
           id: notificationId,
           title,
           body,
+          ...(options?.largeBody ? { largeBody: options.largeBody } : {}),
           schedule: {
             at: scheduleTime,
             allowWhileIdle: true,
@@ -897,7 +1052,8 @@ export class LocalNotificationManager {
           sound: 'default',
           smallIcon: 'ic_notification',
           largeIcon: 'ic_launcher',
-          iconColor: '#1a4a4a',
+          iconColor: NOTIFICATION_ACCENT_COLOR,
+          channelId: options?.channelId || NOTIFICATION_CHANNELS.events,
           extra: {
             type: 'islamic_event',
             eventId: id

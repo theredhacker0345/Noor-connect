@@ -1,4 +1,6 @@
 import { unifiedNotifications } from './unified-notifications';
+import i18n from './i18n-new';
+import { NOTIFICATION_CHANNELS } from './notification-channels';
 
 export class RamadanNotifications {
   private static instance: RamadanNotifications;
@@ -34,8 +36,8 @@ export class RamadanNotifications {
 
     if (suhoorTime > new Date()) {
       await unifiedNotifications.schedulePrayerNotification('Suhoor', suhoorTime, {
-        title: 'Suhoor Time',
-        body: `Eat your Suhoor in ${location}. Fajr is at ${fajrTime}`,
+        title: i18n.t('ramadanNotifSuhoorTitle'),
+        body: i18n.t('ramadanNotifSuhoorBody', { location, time: fajrTime }),
         icon: 'moon'
       });
 
@@ -45,9 +47,10 @@ export class RamadanNotifications {
 
       if (waterBeforeSuhoorTime > new Date()) {
         await unifiedNotifications.schedulePrayerNotification('Water-Before-Suhoor', waterBeforeSuhoorTime, {
-          title: 'Hydration Before Fasting',
-          body: 'Drink water now before Suhoor ends! Stay hydrated for your fast.',
-          icon: 'droplet'
+          title: i18n.t('ramadanNotifHydrationTitle'),
+          body: i18n.t('ramadanNotifHydrationSuhoorBody'),
+          icon: 'droplet',
+          channelId: NOTIFICATION_CHANNELS.hydration
         });
       }
     }
@@ -60,8 +63,8 @@ export class RamadanNotifications {
 
     if (iftarTime > new Date()) {
       await unifiedNotifications.schedulePrayerNotification('Iftar', iftarTime, {
-        title: 'Iftar Time',
-        body: `Break your fast in ${location}. Maghrib is at ${maghribTime}`,
+        title: i18n.t('ramadanNotifIftarTitle'),
+        body: i18n.t('ramadanNotifIftarBody', { location, time: maghribTime }),
         icon: 'sunset'
       });
 
@@ -75,14 +78,14 @@ export class RamadanNotifications {
     if (!enabled) return; // Skip if water reminders are disabled
 
     const waterReminders = [
-      { minutes: 15, message: 'First glass of water! Rehydrate gently.' },
-      { minutes: 30, message: 'Time for more water! Stay hydrated.' },
-      { minutes: 45, message: 'Keep drinking water! Your body needs it.' },
-      { minutes: 60, message: 'One hour after Iftar - great time for water!' },
-      { minutes: 90, message: "Hydration break! Don't forget to drink water." },
-      { minutes: 120, message: '2 hours post-Iftar - important hydration time!' },
-      { minutes: 150, message: 'Water reminder! Keep your energy up.' },
-      { minutes: 180, message: '3 hours after Iftar - final water reminder before Suhoor prep.' }
+      { minutes: 15, key: 'ramadanNotifWater15' },
+      { minutes: 30, key: 'ramadanNotifWater30' },
+      { minutes: 45, key: 'ramadanNotifWater45' },
+      { minutes: 60, key: 'ramadanNotifWater60' },
+      { minutes: 90, key: 'ramadanNotifWater90' },
+      { minutes: 120, key: 'ramadanNotifWater120' },
+      { minutes: 150, key: 'ramadanNotifWater150' },
+      { minutes: 180, key: 'ramadanNotifWater180' }
     ];
 
     for (const reminder of waterReminders) {
@@ -91,9 +94,10 @@ export class RamadanNotifications {
 
       if (reminderTime > new Date()) {
         await unifiedNotifications.schedulePrayerNotification(`Water-${reminder.minutes}`, reminderTime, {
-          title: `Water Reminder (${reminder.minutes}min after Iftar)`,
-          body: reminder.message,
-          icon: 'droplet'
+          title: i18n.t('ramadanNotifHydrationTitle'),
+          body: i18n.t(reminder.key),
+          icon: 'droplet',
+          channelId: NOTIFICATION_CHANNELS.hydration
         });
       }
     }
@@ -109,8 +113,8 @@ export class RamadanNotifications {
 
     if (tarawihTime > new Date()) {
       await unifiedNotifications.schedulePrayerNotification('Tarawih', tarawihTime, {
-        title: 'Tarawih Prayer',
-        body: `Time for Tarawih prayers in ${location}`,
+        title: i18n.t('ramadanNotifTarawihTitle'),
+        body: i18n.t('ramadanNotifTarawihBody', { location }),
         icon: 'star'
       });
     }
@@ -123,8 +127,8 @@ export class RamadanNotifications {
 
     if (reminderTime > new Date()) {
       await unifiedNotifications.schedulePrayerNotification('Quran', reminderTime, {
-        title: 'Quran Reading',
-        body: "Don't forget to read your portion of Quran today",
+        title: i18n.t('ramadanNotifQuranTitle'),
+        body: i18n.t('ramadanNotifQuranBody'),
         icon: 'book'
       });
     }
@@ -139,30 +143,30 @@ export class RamadanNotifications {
     nextFriday.setHours(10, 0, 0, 0); // 10 AM on Friday
 
     await unifiedNotifications.schedulePrayerNotification('Charity', nextFriday, {
-      title: 'Friday Charity',
-      body: 'Remember to give charity on this blessed day',
+      title: i18n.t('ramadanNotifCharityTitle'),
+      body: i18n.t('ramadanNotifCharityBody'),
       icon: 'heart'
     });
   }
 
   // Send motivational messages throughout Ramadan
   async sendRamadanMotivation(ramadanDay: number) {
-    const motivations = [
-      'Stay strong! Your fast is accepted insha Allah!',
-      'Every moment in Ramadan is a blessing!',
-      'The doors of paradise are open in Ramadan!',
-      'Your patience and fasting will be rewarded!',
-      'Make dua in this blessed month!',
-      'The Quran was revealed in this month - read it!',
-      'Laylatul Qadr is better than 1000 months!',
-      'Ramadan is the month of mercy and forgiveness!'
+    const motivationKeys = [
+      'ramadanMotivation1',
+      'ramadanMotivation2',
+      'ramadanMotivation3',
+      'ramadanMotivation4',
+      'ramadanMotivation5',
+      'ramadanMotivation6',
+      'ramadanMotivation7',
+      'ramadanMotivation8'
     ];
 
-    const motivation = motivations[Math.min(ramadanDay - 1, motivations.length - 1)];
+    const motivationKey = motivationKeys[Math.min(ramadanDay - 1, motivationKeys.length - 1)];
 
     await unifiedNotifications.showNotification({
-      title: 'Ramadan Motivation',
-      body: motivation,
+      title: i18n.t('ramadanNotifMotivationTitle'),
+      body: i18n.t(motivationKey),
       icon: 'sparkles'
     });
   }

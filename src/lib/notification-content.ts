@@ -89,7 +89,10 @@ export class NotificationContentGenerator {
         currentTime: data.currentTime,
         duration: data.duration,
         verses: data.verses,
-        type: data.type
+        // The caller's recitation style (e.g. "Murattal") — must NOT shadow the
+        // `type` discriminator above (was a duplicate key that silently broke
+        // audio-notifications' `data.type === 'quran-recitation'` routing).
+        recitationType: data.type
       }
     };
   }

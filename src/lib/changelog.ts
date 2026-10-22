@@ -31,6 +31,21 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
+    version: '2.5.0',
+    date: '2026-10-23',
+    title: 'Prayer End Times, Smarter Notifications & Redesigned Services',
+    changes: [
+      { type: 'feature', description: 'Prayer end times \u2014 every prayer card on the home screen now shows when the prayer\u2019s valid time ends ("Ends 06:12"). Isha\u2019s end is madhab-aware: Islamic midnight for the majority opinion (Shafi\u02bf\u012b/Maliki/Hanbali) and dawn (Fajr) for Hanafi.' },
+      { type: 'fix', description: 'Islamic midnight & Tahajjud corrected \u2014 "midnight" was computed as civil 00:00; it is now the true midpoint between Maghrib and tomorrow\u2019s Fajr, and Tahajjud begins at the last third of the night. Sleep and Tahajjud reminders inherit the corrected windows.' },
+      { type: 'feature', description: 'Notifications, rebuilt: Android notification channels (Prayer Times, Ramadan, Noor Cycle, Sleep and more) with proper importance and vibration, richer localized text (localized prayer names with Arabic and per-prayer reminders), and localized adhan, Ramadan and Islamic-event notifications \u2014 all in your language.' },
+      { type: 'fix', description: 'Fixed two notification text bugs: prayer reminders could show "undefined" instead of a reminder quote, and Quran-recitation notifications carried a broken internal type tag.' },
+      { type: 'improvement', description: 'Notification History redesigned \u2014 grouped by day with per-type icons and a clear-all action.' },
+      { type: 'improvement', description: 'Services hub redesigned \u2014 a "Discover Resources" hero and clearly grouped sections (Worship & Prayer, Qur\u2019an, Learning, Media, Calculators), with the seasonal Fitrana/Eid-checklist cards kept exactly as before.' },
+      { type: 'improvement', description: 'Home screen polish \u2014 prayer cards now show end times, the hero shows the Arabic prayer name, and spacing/typography got a consistent dark-mode pass.' },
+      { type: 'improvement', description: 'The README now documents every feature in full \u2014 35 feature sections with code-verified numbers (87,018 hadiths, 140 du\u02bf\u0101s, 25 prophet stories, 158 radio stations and more).' },
+    ],
+  },
+  {
     version: '2.4.0',
     date: '2026-10-23',
     title: 'Pregnancy Mode, Complete Prophet Stories & 140 Du\u02bf\u0101s',

@@ -5,6 +5,10 @@
 
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PRAYER_QUOTES } from './prayer-quotes';
+import i18n from './i18n-new';
+import { ensureNoorNotificationChannels, NOTIFICATION_CHANNELS, NOTIFICATION_ACCENT_COLOR } from './notification-channels';
+import { getPrayerDisplayPair } from './prayer-display';
+import { formatPrayerTime, getTimeFormat } from './time-formatter';
 
 export interface NotificationOptions {
   title: string;
@@ -13,6 +17,8 @@ export interface NotificationOptions {
   tag?: string;
   requireInteraction?: boolean;
   data?: Record<string, unknown>;
+  /** Optional explicit Android channel id (defaults chosen per category). */
+  channelId?: string;
 }
 
 class UnifiedNotificationService {
@@ -43,15 +49,18 @@ class UnifiedNotificationService {
     return Math.floor(Math.random() * 1000000000) + 1000;
   }
 
-  // Ensure high-importance notification channel exists on Android 8.0+ (API 26+)
+  // Ensure the typed Noor Connect channels exist on Android 8.0+ (API 26+).
+  // The legacy 'noor_notifications_channel' id is still created so upgraded
+  // users who muted it keep their preference; new posts use the typed ids.
   private async ensureChannelCreated(): Promise<string> {
     const channelId = 'noor_notifications_channel';
     if (this.isCapacitor) {
       try {
+        await ensureNoorNotificationChannels();
         await LocalNotifications.createChannel({
           id: channelId,
-          name: 'Noor Connect Notifications',
-          description: 'Prayer times and daily spiritual reminders',
+          name: i18n.t('notifChannelGeneral'),
+          description: i18n.t('notifChannelGeneralDesc'),
           importance: 5, // High importance (shows heads-up banner + sound)
           visibility: 1, // Visible on lock screen
           sound: 'default',
@@ -140,7 +149,9 @@ class UnifiedNotificationService {
 
     try {
       if (this.isCapacitor) {
-        const channelId = await this.ensureChannelCreated();
+        // Callers may route into a typed channel (e.g. hydration nudges);
+        // ensureChannelCreated() also guarantees the typed channels exist.
+        const channelId = options.channelId || await this.ensureChannelCreated();
         const notificationId = this.generateSafeId();
         const scheduleTime = immediate ? new Date(Date.now() + 500) : new Date();
 
@@ -154,7 +165,7 @@ class UnifiedNotificationService {
             sound: 'default',
             smallIcon: 'ic_notification',
             largeIcon: 'ic_launcher',
-            iconColor: '#1a4a4a',
+            iconColor: NOTIFICATION_ACCENT_COLOR,
             extra: options.data || {}
           }]
         });
@@ -315,11 +326,14 @@ class UnifiedNotificationService {
       return false;
     }
 
-    const randomQuote = PRAYER_QUOTES[Math.floor(Math.random() * PRAYER_QUOTES.length)];
+    const { localized, arabic } = getPrayerDisplayPair(prayerName);
+    const quotes = PRAYER_QUOTES.Default;
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
 
     const notificationOptions: NotificationOptions = {
-      title: `🕌 ${prayerName} Prayer Time`,
-      body: `It's time for ${prayerName} prayer.\n${randomQuote}`,
+      title: options?.title || i18n.t('notifPrayerTimeTitle', { prayer: localized, arabic }),
+      // Same 12/24h-aware formatting as the main scheduler in local-notifications.ts.
+      body: options?.body || i18n.t('notifPrayerTimeBody', { prayer: localized, time: formatPrayerTime(prayerTime, getTimeFormat()) }),
       tag: `prayer-${prayerName.toLowerCase()}`,
       requireInteraction: true,
       data: { prayerName, url: '/' },
@@ -328,6 +342,14 @@ class UnifiedNotificationService {
 
     if (this.isCapacitor) {
       try {
+        // Typed channel routing: Ramadan categories get their own channel so
+        // users can mute hydration nudges without silencing Suhoor/Iftar.
+        const channelId = options?.channelId
+          || (prayerName === 'Suhoor' || prayerName === 'Iftar' || prayerName === 'Tarawih'
+            ? NOTIFICATION_CHANNELS.ramadan
+            : NOTIFICATION_CHANNELS.reminders);
+        await this.ensureChannelCreated();
+
         await LocalNotifications.schedule({
           notifications: [{
             id: this.getPrayerNotificationId(prayerName),
@@ -337,9 +359,10 @@ class UnifiedNotificationService {
               at: prayerTime,
               allowWhileIdle: true
             },
-            sound: 'default',
+            channelId,
             smallIcon: 'ic_notification',
-            iconColor: '#22c55e',
+            largeIcon: 'ic_launcher',
+            iconColor: NOTIFICATION_ACCENT_COLOR,
             extra: notificationOptions.data
           }]
         });
