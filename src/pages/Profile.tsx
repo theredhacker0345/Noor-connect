@@ -24,6 +24,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { CURRENT_APP_VERSION } from '@/lib/constants';
 import { useI18n } from '@/hooks/useI18n';
+import hapticService from '@/lib/haptic-service';
 
 interface SettingsRow {
   id: string;
@@ -251,8 +252,11 @@ const Profile: React.FC = () => {
       }
 
       try {
-        const hapticStatus = localStorage.getItem('hapticEnabled');
-        results['haptic'] = hapticStatus === 'false' ? 'Off' : 'On';
+        // Read from the haptic service (Preferences-backed, single source
+        // of truth) instead of the legacy 'hapticEnabled' localStorage key,
+        // which was never written and made this pill show a wrong value.
+        const hapticSettings = await hapticService.getSettingsAsync();
+        results['haptic'] = hapticSettings.enabled ? 'On' : 'Off';
       } catch {
         results['haptic'] = null;
       }

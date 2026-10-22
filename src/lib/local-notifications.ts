@@ -13,6 +13,12 @@ import { getAdhanUrlForPrayer, type PrayerName } from './adhan-preferences';
 import { nativeAdhan, type NativeAdhanAlarm } from './native-adhan';
 import { adhanService, type AdhanConfig } from './adhan-service';
 import { PRAYER_QUOTES } from './prayer-quotes';
+import i18n from './i18n-new';
+import {
+  notificationManager,
+  PRE_PRAYER_MINUTES_OPTIONS,
+  POST_PRAYER_MINUTES_OPTIONS,
+} from './notification-manager';
 
 // Task 2: Use SW registration for more robust "Native" notifications
 let swRegistration: ServiceWorkerRegistration | null = null;
@@ -27,6 +33,32 @@ const PRAYER_NOTIFICATIONS_ENABLED_KEY = 'prayer-notifications-enabled';
 const PRAYER_ALARM_ENABLED_KEY = 'prayer-alarm-enabled';
 const LAST_SCHEDULE_SIGNATURE_KEY = 'last-prayer-notification-signature';
 const SCHEDULE_WINDOW_DAYS = 30;
+
+// Task 21-d: pre/post prayer reminders are derived from each prayer notification ID.
+// Base IDs are dateNumber * 10 + prayerIndex (prayerIndex 1-5, see getNotificationId).
+// +10000 shifts the embedded date by exactly +1000 days and +20000 by +2000 days.
+// A single schedule batch only spans SCHEDULE_WINDOW_DAYS (30) days, so a pre/post ID
+// can never collide with any base/pre/post ID scheduled in the same batch. Maximum
+// value (9999-12-31) = 999912335 + 20000 = 999932335 < 2^31 - 1, so IDs stay int32-safe.
+const PRE_PRAYER_ID_OFFSET = 10000;
+const POST_PRAYER_ID_OFFSET = 20000;
+
+// extra.type values owned by this scheduler. clearPrayerNotifications() and
+// getScheduledPrayerNotifications() cancel/list every pending notification of these types.
+const PRAYER_NOTIFICATION_TYPES = ['prayer_reminder', 'pre_prayer_reminder', 'post_prayer_reminder'];
+
+// Pending-notification extra payloads are untyped (Record<string, any>); keep the
+// membership test in one place so the filter stays string-safe.
+const isPrayerNotificationType = (type: unknown): boolean => PRAYER_NOTIFICATION_TYPES.includes(type as string);
+
+// Localized prayer names reuse the flat locale keys that already exist for the UI.
+const PRAYER_NAME_I18N_KEYS: Record<string, string> = {
+  Fajr: 'fajr',
+  Dhuhr: 'dhuhr',
+  Asr: 'asr',
+  Maghrib: 'maghrib',
+  Isha: 'isha',
+};
 
 if (localStorage.getItem(PRAYER_NOTIFICATIONS_ENABLED_KEY) === null) {
   localStorage.setItem(PRAYER_NOTIFICATIONS_ENABLED_KEY, 'true');
@@ -47,6 +79,62 @@ const getPrayerNotificationMessage = (prayerName: string, prayerTime: string): {
   return {
     title: `${prayerName} Prayer Time`,
     body: `It's time for ${prayerName} prayer (${prayerTime}).\n${randomQuote}`,
+  };
+};
+
+/**
+ * Task 21-d: localized prayer name for notification text. Falls back to the
+ * internal Aladhan name when the locale does not provide a translation.
+ */
+const getLocalizedPrayerName = (prayerName: string): string => {
+  const key = PRAYER_NAME_I18N_KEYS[prayerName];
+  if (!key) {
+    return prayerName;
+  }
+  const translated = i18n.t(key);
+  return translated === key ? prayerName : translated;
+};
+
+/**
+ * Task 21-d: pre-prayer reminder text ("Dhuhr in 15 minutes — time to prepare").
+ * Resolved via t() at SCHEDULE time so the scheduled notification uses the
+ * language the user had when it was scheduled (same as the rest of the app).
+ */
+const getPrePrayerNotificationMessage = (prayerName: string, minutes: number): { title: string; body: string } => {
+  const prayer = getLocalizedPrayerName(prayerName);
+  return {
+    title: i18n.t('prePrayerNotifTitle', { prayer, minutes }),
+    body: i18n.t('prePrayerNotifBody', { prayer, minutes }),
+  };
+};
+
+/**
+ * Task 21-d: post-prayer reminder text (dhikr & sunnah nudge).
+ */
+const getPostPrayerNotificationMessage = (prayerName: string): { title: string; body: string } => {
+  const prayer = getLocalizedPrayerName(prayerName);
+  return {
+    title: i18n.t('postPrayerNotifTitle', { prayer }),
+    body: i18n.t('postPrayerNotifBody', { prayer }),
+  };
+};
+
+/**
+ * Task 21-d: read pre/post reminder preferences with the same merge-with-defaults
+ * behavior the settings page uses, so existing installs get sensible defaults.
+ */
+const getPrePostReminderSettings = (): {
+  preEnabled: boolean;
+  preMinutes: number;
+  postEnabled: boolean;
+  postMinutes: number;
+} => {
+  const prefs = notificationManager.getPreferences();
+  return {
+    preEnabled: prefs.prePrayerReminder ?? true,
+    preMinutes: PRE_PRAYER_MINUTES_OPTIONS.includes(prefs.prePrayerMinutes) ? prefs.prePrayerMinutes : 15,
+    postEnabled: prefs.postPrayerReminder ?? false,
+    postMinutes: POST_PRAYER_MINUTES_OPTIONS.includes(prefs.postPrayerMinutes) ? prefs.postPrayerMinutes : 15,
   };
 };
 
@@ -212,6 +300,9 @@ export class LocalNotificationManager {
       }
 
       const now = new Date();
+      // Task 21-d: pre/post reminder prefs participate in the signature so any
+      // toggle/minutes change forces a full reschedule.
+      const prePostSettings = getPrePostReminderSettings();
       // Use the same effective calculation method/madhab as the rest of the app
       // (was hardcoded to Karachi method id 1 regardless of the user's choice).
       const method = getEffectiveAladhanMethodId(locationData.latitude, locationData.longitude);
@@ -229,7 +320,9 @@ export class LocalNotificationManager {
         `school-${school}`,
         adhanPreferenceSignature,
         adhanEnabledSignature,
-        adhanConfigText
+        adhanConfigText,
+        `pre-${prePostSettings.preEnabled ? prePostSettings.preMinutes : 'off'}`,
+        `post-${prePostSettings.postEnabled ? prePostSettings.postMinutes : 'off'}`
       ].join('|');
 
       const previousSignature = localStorage.getItem(LAST_SCHEDULE_SIGNATURE_KEY);
@@ -332,6 +425,85 @@ export class LocalNotificationManager {
             scheduleTime: prayerDate,
             prayerName,
           });
+
+          // Task 21-d: schedule the PRE reminder (prayerDate - prePrayerMinutes).
+          // Follows the same per-prayer toggle filtering as the at-time notification.
+          if (prePostSettings.preEnabled) {
+            const preDate = new Date(prayerDate.getTime() - prePostSettings.preMinutes * 60000);
+            if (preDate > now) {
+              const preNotificationId = notificationId + PRE_PRAYER_ID_OFFSET;
+              const preMessage = getPrePrayerNotificationMessage(prayerName, prePostSettings.preMinutes);
+              const preNotification: LocalNotificationSchema = {
+                id: preNotificationId,
+                title: preMessage.title,
+                body: preMessage.body,
+                schedule: {
+                  at: preDate,
+                  allowWhileIdle: true,
+                  repeats: false,
+                },
+                sound: 'default',
+                smallIcon: 'ic_notification',
+                largeIcon: 'ic_launcher',
+                iconColor: '#1a4a4a',
+                extra: {
+                  prayerName,
+                  prayerTime: cleaned,
+                  type: 'pre_prayer_reminder',
+                  location: locationData,
+                  scheduledDate: targetDate.toISOString(),
+                },
+              };
+
+              notifications.push(preNotification);
+              this.scheduledNotifications.set(preNotificationId, {
+                id: preNotificationId,
+                title: preMessage.title,
+                body: preMessage.body,
+                scheduleTime: preDate,
+                prayerName,
+              });
+            }
+          }
+
+          // Task 21-d: schedule the POST reminder (prayerDate + postPrayerMinutes).
+          if (prePostSettings.postEnabled) {
+            const postDate = new Date(prayerDate.getTime() + prePostSettings.postMinutes * 60000);
+            if (postDate > now) {
+              const postNotificationId = notificationId + POST_PRAYER_ID_OFFSET;
+              const postMessage = getPostPrayerNotificationMessage(prayerName);
+              const postNotification: LocalNotificationSchema = {
+                id: postNotificationId,
+                title: postMessage.title,
+                body: postMessage.body,
+                schedule: {
+                  at: postDate,
+                  allowWhileIdle: true,
+                  repeats: false,
+                },
+                sound: 'default',
+                smallIcon: 'ic_notification',
+                largeIcon: 'ic_launcher',
+                iconColor: '#1a4a4a',
+                extra: {
+                  prayerName,
+                  prayerTime: cleaned,
+                  type: 'post_prayer_reminder',
+                  location: locationData,
+                  scheduledDate: targetDate.toISOString(),
+                },
+              };
+
+              notifications.push(postNotification);
+              this.scheduledNotifications.set(postNotificationId, {
+                id: postNotificationId,
+                title: postMessage.title,
+                body: postMessage.body,
+                scheduleTime: postDate,
+                prayerName,
+              });
+            }
+          }
 
           const validPrayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'] as const;
 
@@ -597,7 +769,7 @@ export class LocalNotificationManager {
     try {
       const pending = await LocalNotifications.getPending();
       const prayerNotificationIds = pending.notifications
-        .filter(n => n.extra?.type === 'prayer_reminder')
+        .filter(n => isPrayerNotificationType(n.extra?.type))
         .map(n => n.id);
 
       if (prayerNotificationIds.length > 0) {
@@ -624,7 +796,7 @@ export class LocalNotificationManager {
     try {
       const pending = await LocalNotifications.getPending();
       const prayerNotifications = pending.notifications
-        .filter(n => n.extra?.type === 'prayer_reminder')
+        .filter(n => isPrayerNotificationType(n.extra?.type))
         .map(n => ({
           id: n.id,
           title: n.title || '',
@@ -883,4 +1055,6 @@ if (typeof window !== 'undefined' && !window.__noorConnectAdhanPrefsListenerAtta
 
   window.addEventListener('adhan-preferences-changed', handleReschedule);
   window.addEventListener('adhan-config-changed', handleReschedule);
+  // Task 21-d: pre/post prayer reminder toggles/minutes changed in Settings.
+  window.addEventListener('prayer-notification-prefs-changed', handleReschedule);
 }

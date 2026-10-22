@@ -24,6 +24,10 @@ export interface NotificationPreferences {
   fastingDaysReminders: boolean;
   quranTrackerReminders: boolean;
   bedtimeDuaReminders: boolean;
+  prePrayerReminder: boolean; // Notify a few minutes BEFORE each prayer
+  prePrayerMinutes: number; // Minutes before prayer (one of PRE_PRAYER_MINUTES_OPTIONS)
+  postPrayerReminder: boolean; // Notify a few minutes AFTER each prayer (dhikr & sunnah)
+  postPrayerMinutes: number; // Minutes after prayer (one of POST_PRAYER_MINUTES_OPTIONS)
   maxDailyNotifications: number; // Smart frequency control
 }
 
@@ -54,8 +58,17 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   fastingDaysReminders: true,
   quranTrackerReminders: true,
   bedtimeDuaReminders: true,
+  prePrayerReminder: true,
+  prePrayerMinutes: 15,
+  postPrayerReminder: false,
+  postPrayerMinutes: 15,
   maxDailyNotifications: 5, // Smart frequency limit
 };
+
+// Allowed minute values for pre/post prayer reminders (Task 21-d).
+// Exported so the Settings UI renders exactly the values the scheduler accepts.
+export const PRE_PRAYER_MINUTES_OPTIONS = [5, 10, 15, 20, 30];
+export const POST_PRAYER_MINUTES_OPTIONS = [10, 15, 20, 30];
 
 const STORAGE_KEY = 'notification-preferences';
 const SENT_NOTIFICATIONS_KEY = 'sent-notifications-today';

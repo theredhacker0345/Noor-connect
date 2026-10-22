@@ -42,7 +42,7 @@ import { AladhanAPI } from '@/lib/aladhan-api';
 import { getStorageStats, clearAllBooks, formatFileSize } from '@/lib/ebooks-storage';
 import { downloadManager } from '@/lib/download-manager';
 import { clearCache } from '@/lib/backup';
-import { notificationManager, type NotificationPreferences } from '@/lib/notification-manager';
+import { notificationManager, PRE_PRAYER_MINUTES_OPTIONS, POST_PRAYER_MINUTES_OPTIONS, type NotificationPreferences } from '@/lib/notification-manager';
 import { unifiedNotifications } from '@/lib/unified-notifications';
 import { getGenderSettings, setGender, type Gender } from '@/lib/gender-settings';
 import { usePrayerAlarm } from '@/hooks/usePrayerAlarm';
@@ -165,6 +165,10 @@ const SettingsSubPage: React.FC = () => {
     fastingDaysReminders: false,
     quranTrackerReminders: false,
     bedtimeDuaReminders: false,
+    prePrayerReminder: true,
+    prePrayerMinutes: 15,
+    postPrayerReminder: false,
+    postPrayerMinutes: 15,
     maxDailyNotifications: 5,
   });
 
@@ -225,7 +229,18 @@ const SettingsSubPage: React.FC = () => {
     const updated = { ...notificationPrefs, [key]: checked };
     setNotificationPrefs(updated);
     notificationManager.updatePreferences({ [key]: checked });
+    // Task 21-d: pre/post reminder toggles change the scheduled notification set.
+    if (key === 'prePrayerReminder' || key === 'postPrayerReminder') {
+      window.dispatchEvent(new Event('prayer-notification-prefs-changed'));
+    }
     toast({ title: t(checked ? 'notificationEnabledToast' : 'notificationDisabledToast') });
+  };
+
+  // Task 21-d: persist pre/post reminder minute values and reschedule.
+  const handleNotificationMinutes = (key: 'prePrayerMinutes' | 'postPrayerMinutes', minutes: number) => {
+    setNotificationPrefs({ ...notificationPrefs, [key]: minutes });
+    notificationManager.updatePreferences({ [key]: minutes });
+    window.dispatchEvent(new Event('prayer-notification-prefs-changed'));
   };
 
   return (
@@ -561,6 +576,70 @@ const SettingsSubPage: React.FC = () => {
                 onCheckedChange={(c) => handleNotificationToggle('bedtimeDuaReminders', c)}
               />
             </div>
+
+            {/* Task 21-d: pre-prayer reminder (Switch + minutes Select). */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <Label className="text-sm font-bold">{t('prePrayerReminder')}</Label>
+                <p className="text-xs text-slate-400">{t('prePrayerReminderDescription')}</p>
+              </div>
+              <Switch
+                checked={notificationPrefs.prePrayerReminder ?? true}
+                onCheckedChange={(c) => handleNotificationToggle('prePrayerReminder', c)}
+              />
+            </div>
+            {notificationPrefs.prePrayerReminder && (
+              <div className="pb-3">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('prePrayerMinutesLabel')}</Label>
+                <Select
+                  value={String(notificationPrefs.prePrayerMinutes ?? 15)}
+                  onValueChange={(v) => handleNotificationMinutes('prePrayerMinutes', Number(v))}
+                >
+                  <SelectTrigger className="w-full h-11 rounded-xl mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {PRE_PRAYER_MINUTES_OPTIONS.map((minutes) => (
+                      <SelectItem key={minutes} value={String(minutes)}>
+                        {String(minutes)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Task 21-d: post-prayer reminder (Switch + minutes Select). */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <Label className="text-sm font-bold">{t('postPrayerReminder')}</Label>
+                <p className="text-xs text-slate-400">{t('postPrayerReminderDescription')}</p>
+              </div>
+              <Switch
+                checked={notificationPrefs.postPrayerReminder ?? false}
+                onCheckedChange={(c) => handleNotificationToggle('postPrayerReminder', c)}
+              />
+            </div>
+            {notificationPrefs.postPrayerReminder && (
+              <div className="pb-3">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('postPrayerMinutesLabel')}</Label>
+                <Select
+                  value={String(notificationPrefs.postPrayerMinutes ?? 15)}
+                  onValueChange={(v) => handleNotificationMinutes('postPrayerMinutes', Number(v))}
+                >
+                  <SelectTrigger className="w-full h-11 rounded-xl mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {POST_PRAYER_MINUTES_OPTIONS.map((minutes) => (
+                      <SelectItem key={minutes} value={String(minutes)}>
+                        {String(minutes)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="pt-3">
               <Button

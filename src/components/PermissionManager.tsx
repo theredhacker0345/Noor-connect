@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Shield, ShieldCheck, ShieldOff, MapPin, Bell, BellOff, Smartphone, Globe, AlertTriangle, RefreshCw, Settings as SettingsIcon, Info } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { permissionManager, type PermissionType, type PermissionInfo } from '@/lib/permission-manager';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/hooks/useI18n';
-import { GeolocationService } from '@/lib/geolocation-service';
 
 interface PermissionManagerProps {
   className?: string;
@@ -54,25 +52,17 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
   const handleRequestPermission = async (type: PermissionType) => {
     setLoading(type);
     try {
+      // Popup-first: this triggers the native/system dialog (or the browser
+      // prompt on web). If the OS permanently blocks it, it resolves false and
+      // the user is pointed to the app settings fallback below the card.
       const success = await permissionManager.requestPermission(type);
-      
+
       if (success) {
         toast({
           title: t('permissionGranted'),
           description: t('permissionGrantedDesc', { type: type === 'location' ? t('location') : t('notificationsLabel') }),
         });
       } else {
-        // Additional handling for denied permissions
-        if (type === 'location') {
-          await GeolocationService.requestPermissions();
-        } else if (type === 'notifications') {
-          if (Capacitor.isNativePlatform()) {
-            await LocalNotifications.requestPermissions();
-          } else if ('Notification' in window) {
-            await Notification.requestPermission();
-          }
-        }
-
         toast({
           title: t('permissionRequired'),
           description: t('permissionRequiredDesc', { type: type === 'location' ? t('location') : t('notificationsLabel') }),
@@ -93,7 +83,23 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
   };
 
   const handleOpenSettings = async (type: PermissionType) => {
-    permissionManager.openSettings(type);
+    try {
+      const opened = await permissionManager.openSettings(type);
+      if (!opened) {
+        toast({
+          title: t('permSettingsOpenFailed'),
+          description: t('permSettingsOpenFailedDesc'),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error opening settings:', error);
+      toast({
+        title: t('permSettingsOpenFailed'),
+        description: t('permSettingsOpenFailedDesc'),
+        variant: 'destructive',
+      });
+    }
   };
 
   const getStatusIcon = (status: PermissionInfo['status']) => {
@@ -103,7 +109,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       case 'denied':
         return <ShieldOff className="w-5 h-5 text-red-500" />;
       case 'prompt':
-      case 'prompt-with-rationale':
         return <Shield className="w-5 h-5 text-amber-500" />;
       default:
         return <AlertTriangle className="w-5 h-5 text-gray-400" />;
@@ -117,7 +122,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       case 'denied':
         return <Badge variant="destructive">{t('statusDenied')}</Badge>;
       case 'prompt':
-      case 'prompt-with-rationale':
         return <Badge variant="outline" className="text-amber-600 border-amber-600">{t('statusActionNeeded')}</Badge>;
       case 'not-supported':
         return <Badge variant="secondary">{t('statusNotSupported')}</Badge>;
@@ -149,9 +153,9 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h4 className="font-medium text-sm">{locationPermission?.title}</h4>
+                <h4 className="font-medium text-sm">{t(locationPermission?.title || 'permLocationTitle')}</h4>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {locationPermission?.description}
+                  {t(locationPermission?.description || 'permLocationDesc')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -175,7 +179,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   <p className="font-medium mb-1">{t('whyLocationNeeded')}</p>
                   <ul className="list-disc list-inside space-y-1 ml-3">
                     {locationPermission?.benefits.map((benefit, index) => (
-                      <li key={index}>{benefit}</li>
+                      <li key={index}>{t(benefit)}</li>
                     ))}
                   </ul>
                 </div>
@@ -227,31 +231,55 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
               </div>
             </div>
             <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
-              <strong>{t('howToFix')}</strong> {locationPermission?.instructions?.[platform] || t('checkDeviceSettings')}
+              <strong>{t('howToFix')}</strong> {t(locationPermission?.instructions?.[platform] || 'checkDeviceSettings')}
             </div>
             <div className="flex flex-col gap-2 mt-2">
-              {platform === 'web' && (
+              {platform === 'mobile' && (
                 <>
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={() => handleRequestPermission('location')}
+                    disabled={loading === 'location'}
                     className="w-full"
                   >
-                    <MapPin className="w-4 h-4 me-2" />
-                    {t('requestLocationAgain')}
+                    {loading === 'location' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 me-2 animate-spin" />
+                        {t('requestingLabel')}
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="w-4 h-4 me-2" />
+                        {t('enableLocation')}
+                      </>
+                    )}
                   </Button>
+                  <p className="text-xs text-muted-foreground px-1">{t('permSettingsHint')}</p>
                 </>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleOpenSettings('location')}
-                className="w-full"
-              >
-                <SettingsIcon className="w-4 h-4 me-2" />
-                {platform === 'mobile' ? t('openAppSettings') : t('openBrowserSettings')}
-              </Button>
+              {platform === 'web' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleRequestPermission('location')}
+                  className="w-full"
+                >
+                  <MapPin className="w-4 h-4 me-2" />
+                  {t('requestLocationAgain')}
+                </Button>
+              )}
+              {platform === 'mobile' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenSettings('location')}
+                  className="w-full"
+                >
+                  <SettingsIcon className="w-4 h-4 me-2" />
+                  {t('openAppSettings')}
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -266,9 +294,9 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h4 className="font-medium text-sm">{notificationPermission?.title}</h4>
+                <h4 className="font-medium text-sm">{t(notificationPermission?.title || 'permNotifTitle')}</h4>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {notificationPermission?.description}
+                  {t(notificationPermission?.description || 'permNotifDesc')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -292,7 +320,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   <p className="font-medium mb-1">{t('whyNotificationsNeeded')}</p>
                   <ul className="list-disc list-inside space-y-1 ml-3">
                     {notificationPermission?.benefits.map((benefit, index) => (
-                      <li key={index}>{benefit}</li>
+                      <li key={index}>{t(benefit)}</li>
                     ))}
                   </ul>
                 </div>
@@ -350,9 +378,33 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
               </div>
             </div>
             <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
-              <strong>{t('howToFix')}</strong> {notificationPermission?.instructions?.[platform] || t('checkDeviceSettings')}
+              <strong>{t('howToFix')}</strong> {t(notificationPermission?.instructions?.[platform] || 'checkDeviceSettings')}
             </div>
             <div className="space-y-2 mt-2">
+              {platform === 'mobile' && (
+                <>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleRequestPermission('notifications')}
+                    disabled={loading === 'notifications'}
+                    className="w-full"
+                  >
+                    {loading === 'notifications' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 me-2 animate-spin" />
+                        {t('requestingLabel')}
+                      </>
+                    ) : (
+                      <>
+                        <Bell className="w-4 h-4 me-2" />
+                        {t('enableNotifications')}
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground px-1">{t('permSettingsHint')}</p>
+                </>
+              )}
               {platform === 'web' && (
                 <>
                   <Button
@@ -365,15 +417,6 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   >
                     <Bell className="w-4 h-4 mr-2" />
                     {t('requestPermission')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => permissionManager.openSettings('notifications')}
-                    className="w-full"
-                  >
-                    <SettingsIcon className="w-4 h-4 me-2" />
-                    Open Browser Settings
                   </Button>
                   <Button
                     variant="outline"
@@ -405,15 +448,17 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                   </Button>
                 </>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleOpenSettings('notifications')}
-                className="w-full"
-              >
-                <SettingsIcon className="w-4 h-4 mr-2" />
-                {platform === 'mobile' ? t('openNotificationSettings') : t('openBrowserSettings')}
-              </Button>
+              {platform === 'mobile' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenSettings('notifications')}
+                  className="w-full"
+                >
+                  <SettingsIcon className="w-4 h-4 mr-2" />
+                  {t('openNotificationSettings')}
+                </Button>
+              )}
             </div>
           </div>
         )}

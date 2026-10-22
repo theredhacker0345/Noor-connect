@@ -59,6 +59,10 @@ class PermissionManager {
   }
 
   private updateCache(type: PermissionType, status: PermissionStatus): void {
+    // Only notify on actual changes: getPermissionStatus() runs a live check on
+    // every refresh, and notifying with an unchanged value would make the
+    // subscribed UI call it again in an endless loop.
+    if (this.permissionCache.get(type) === status) return;
     this.permissionCache.set(type, status);
     this.notifySubscribers();
   }
@@ -84,36 +88,36 @@ class PermissionManager {
       location: {
         status,
         platform: this.platform,
-        title: 'Location Access',
-        description: 'Access your device location to provide accurate prayer times based on your current position.',
-        rationale: 'Noor Connect needs location access to calculate accurate prayer times for your specific location and provide Qibla direction.',
+        title: 'permLocationTitle',
+        description: 'permLocationDesc',
+        rationale: 'permLocationRationale',
         benefits: [
-          'Accurate prayer times for your location',
-          'Automatic Qibla direction',
-          'Location-based prayer reminders',
-          'Hijri calendar adjustments'
+          'permLocationBenefit1',
+          'permLocationBenefit2',
+          'permLocationBenefit3',
+          'permLocationBenefit4'
         ],
         instructions: {
-          web: 'Click the location icon in your browser address bar and allow location access.',
-          mobile: 'Go to Settings → Apps → Noor Connect → Permissions → Location and allow access.'
+          web: 'permLocationWebInstructions',
+          mobile: 'permLocationMobileInstructions'
         }
       },
       notifications: {
         status,
         platform: this.platform,
-        title: 'Notification Access',
-        description: 'Receive prayer time reminders and Islamic event notifications.',
-        rationale: 'Noor Connect needs notification access to remind you of prayer times, Ramadan alerts, and important Islamic events.',
+        title: 'permNotifTitle',
+        description: 'permNotifDesc',
+        rationale: 'permNotifRationale',
         benefits: [
-          'Prayer time reminders (Fajr to Isha)',
-          'Ramadan countdowns and alerts',
-          'Eid greetings and reminders',
-          'Friday Surah Al-Kahf alerts',
-          'Daily Hadith notifications'
+          'permNotifBenefit1',
+          'permNotifBenefit2',
+          'permNotifBenefit3',
+          'permNotifBenefit4',
+          'permNotifBenefit5'
         ],
         instructions: {
-          web: 'Click the lock icon in your browser address bar and allow notifications.',
-          mobile: 'Go to Settings → Apps → Noor Connect → Notifications and allow access.'
+          web: 'permNotifWebInstructions',
+          mobile: 'permNotifMobileInstructions'
         }
       }
     };
@@ -122,9 +126,10 @@ class PermissionManager {
   }
 
   async getPermissionStatus(type: PermissionType): Promise<PermissionStatus> {
-    const cached = this.permissionCache.get(type);
-    if (cached && cached !== 'prompt') return cached;
-
+    // Always perform the live check. The cache is only a synchronous initial
+    // value (read by getPermissionInfo) until the first check resolves, plus a
+    // change signal for subscribers. Never trust it as the source of truth:
+    // the user can grant/revoke permissions in the OS settings at any time.
     try {
       let status: PermissionStatus;
 
@@ -219,21 +224,23 @@ class PermissionManager {
     return permissions;
   }
 
-  // Open settings
-  openSettings(type: PermissionType): void {
+  // Open the OS settings page for this app. Resolves to true when the settings
+  // page was opened. On web this returns false: browsers block programmatic
+  // navigation to their internal settings pages (e.g. chrome://settings), so
+  // the UI falls back to showing step-by-step instructions instead.
+  async openSettings(type: PermissionType): Promise<boolean> {
     if (this.platform === 'mobile') {
       try {
-        App.openSettings();
+        await App.openSettings();
+        return true;
       } catch (e) {
         console.warn('Failed to open app settings:', e);
-      }
-    } else {
-      if (type === 'location') {
-        window.open('chrome://settings/content/location');
-      } else {
-        window.open('chrome://settings/content/notifications');
+        return false;
       }
     }
+    // Web: keep `type` referenced for API symmetry; nothing to open.
+    void type;
+    return false;
   }
 }
 

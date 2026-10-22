@@ -35,6 +35,74 @@ export const setShowExtraPrayers = (show: boolean): void => {
   window.dispatchEvent(new Event('storage'));
 };
 
+// ─── Evictable cache keys (storage-quota fallback allowlist) ──────────────────
+// ONLY these keys may ever be evicted when localStorage is full. Every entry is
+// a PURE CACHE that the app re-downloads / recomputes automatically — none of
+// them hold user-created data (bookmarks, progress, counts, notes are NEVER
+// evicted). Keep this list in sync with src/lib/backup-service.ts
+// (KNOWN_STORAGE_KEYS documents the full data inventory).
+//
+// Audited against localStorage.setItem call sites in src/:
+//   quran-surahs-cache        → Quran.tsx / Tafsir-New.tsx (refetched from API)
+//   mp3quran-reciters-v1      → reciter directory cache (refetched)
+//   enhanced-daily-ayah       → EnhancedDailyAyah.tsx (today's ayah, regenerated)
+//   ayah-last-update          → EnhancedDailyAyah.tsx (timestamp for the above)
+//   last-hadith               → setCachedHadith() below (today's hadith, regenerated)
+//   lastHadithData            → daily-hadith cache (regenerated daily)
+//   lastHadithDate            → daily-hadith cache timestamp
+//   cached-prayer-times       → prayer-times cache (recomputed/refetched)
+//   prayer-times-today        → usePrayerTimes.ts (recomputed)
+//   daily-remedy              → remedy-gamification.ts (today's pick, regenerated)
+export const EVICTABLE_CACHE_KEYS: readonly string[] = [
+  'quran-surahs-cache',
+  'mp3quran-reciters-v1',
+  'enhanced-daily-ayah',
+  'ayah-last-update',
+  'last-hadith',
+  'lastHadithData',
+  'lastHadithDate',
+  'cached-prayer-times',
+  'prayer-times-today',
+  'daily-remedy',
+];
+
+// Key PREFIXES that are pure caches (dynamic keys). Audited:
+//   exchange-rate-fallback-<currency> → exchange-rate-fallback.ts CACHE_KEY_PREFIX
+//   (rates are re-fetched; never matches user-data keys like 'noor-water-<date>'
+//   or 'ebook-<bookId>', which are deliberately NOT listed)
+export const EVICTABLE_CACHE_KEY_PREFIXES: readonly string[] = [
+  'exchange-rate-fallback-',
+];
+
+/**
+ * Evict allowlisted pure-cache keys to free localStorage space.
+ * NEVER removes anything that is not in EVICTABLE_CACHE_KEYS /
+ * EVICTABLE_CACHE_KEY_PREFIXES, and never removes `protectKey` itself.
+ */
+const evictCacheKeys = (protectKey?: string): number => {
+  let freed = 0;
+  try {
+    const keys = Object.keys(localStorage); // snapshot — safe to mutate during loop
+    keys.forEach(k => {
+      if (k === protectKey) return;
+      const isCache =
+        EVICTABLE_CACHE_KEYS.includes(k) ||
+        EVICTABLE_CACHE_KEY_PREFIXES.some(p => k.startsWith(p));
+      if (isCache) {
+        try {
+          localStorage.removeItem(k);
+          freed++;
+        } catch {
+          // ignore individual removal failures
+        }
+      }
+    });
+  } catch {
+    // localStorage unreadable — nothing to evict
+  }
+  return freed;
+};
+
 // Generic storage helpers
 export const storage = {
   get<T>(key: string, defaultValue: T): T {
@@ -47,47 +115,42 @@ export const storage = {
   },
 
   set<T>(key: string, value: T): void {
+    let serialized: string;
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      serialized = JSON.stringify(value);
     } catch (error) {
-      console.error('Storage error:', error);
-      // Try to clear old data and retry
-      try {
-        const allKeys = Object.keys(localStorage);
-        // Clear data older than 30 days
-        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-        allKeys.forEach(k => {
-          try {
-            const item = localStorage.getItem(k);
-            if (item) {
-              const parsed = JSON.parse(item);
-              if (parsed.timestamp && parsed.timestamp < thirtyDaysAgo) {
-                localStorage.removeItem(k);
-              }
-            }
-          } catch {
-            // If parsing fails, remove the item
-            localStorage.removeItem(k);
-          }
-        });
-        // Retry after cleanup
-        localStorage.setItem(key, JSON.stringify(value));
-      } catch (retryError) {
-        console.error('Storage error after cleanup:', retryError);
-        // Last resort: clear all non-essential data
-        try {
-          const essentialKeys = ['theme', 'madhab', 'time-format', 'prayer-settings', 'location-storage'];
-          const allKeys = Object.keys(localStorage);
-          allKeys.forEach(k => {
-            if (!essentialKeys.includes(k)) {
-              localStorage.removeItem(k);
-            }
-          });
-          localStorage.setItem(key, JSON.stringify(value));
-        } catch (finalError) {
-          console.error('Storage error after clearing non-essential data:', finalError);
-        }
-      }
+      // Value not serializable (e.g. circular ref) — a retry can never help.
+      console.error(`[storage] Failed to serialize value for "${key}":`, error);
+      return;
+    }
+
+    // 1st attempt — plain write.
+    try {
+      localStorage.setItem(key, serialized);
+      return;
+    } catch (error) {
+      console.warn(`[storage] Write failed for "${key}", will evict pure caches only:`, error);
+    }
+
+    // 2nd attempt — after evicting ONLY allowlisted pure-cache keys.
+    // User data (bookmarks, progress, settings, counts, notes, history) is
+    // never touched. Nothing older-than-30-days is scanned; nothing outside
+    // the allowlist is removed.
+    evictCacheKeys(key);
+    try {
+      localStorage.setItem(key, serialized);
+      return;
+    } catch (retryError) {
+      // Still failing — report and give up WITHOUT deleting any user data.
+      console.warn(
+        `[storage] Quota still exceeded after cache eviction; "${key}" was NOT saved. ` +
+        `No user data was deleted. Consider freeing space via the in-app backup/restore.`
+      );
+      window.dispatchEvent(
+        new CustomEvent('noor:storage-quota', {
+          detail: { key, error: String(retryError) },
+        })
+      );
     }
   },
 

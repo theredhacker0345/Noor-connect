@@ -30,7 +30,10 @@ const DEFAULT_SETTINGS: HapticSettings = {
   enabled: true,
   prayerNotifications: true,
   bookmarkActions: true,
-  uiInteractions: false, // Disabled by default to avoid overuse
+  // Must default to true so the master "Haptic feedback" toggle governs
+  // everything out of the box: when it is ON, UI taps (button.tsx) vibrate
+  // unless the user explicitly opts out via this granular toggle below.
+  uiInteractions: true,
   intensity: 'medium'
 };
 
@@ -133,6 +136,17 @@ class HapticService {
   }
 
   /**
+   * Get current haptic settings after ensuring they were loaded from
+   * Preferences (the source of truth). The synchronous getSettings() can
+   * still hold the constructor's localStorage seed until initialize()
+   * completes, so use this where accuracy matters (e.g. Profile status).
+   */
+  async getSettingsAsync(): Promise<HapticSettings> {
+    if (!this.initialized) await this.initialize();
+    return { ...this.settings };
+  }
+
+  /**
    * Update haptic settings
    */
   async updateSettings(newSettings: Partial<HapticSettings>): Promise<void> {
@@ -207,9 +221,13 @@ class HapticService {
           break;
           
         case 'prayer':
-        case 'adhan':
-          // Custom prayer vibration pattern
+          // Distinguishable prayer-time vibration pattern
           await this.prayerVibration();
+          break;
+
+        case 'adhan':
+          // Heavier, longer adhan vibration pattern
+          await this.adhanVibration();
           break;
           
         case 'bookmark':
@@ -225,18 +243,40 @@ class HapticService {
   }
 
   /**
-   * Custom prayer vibration pattern
+   * Prayer-time vibration pattern: two medium taps then a short hum.
+   * Fixed Medium style (not the intensity setting) so the pattern stays
+   * perceptible and clearly distinct from light UI taps. The final
+   * Haptics.vibrate() gives a full-amplitude buzz on Android, where
+   * impact-style waveforms alone can be too brief to notice.
    */
   private async prayerVibration(): Promise<void> {
     try {
-      // Three gentle pulses for prayer time
-      await Haptics.impact({ style: ImpactStyle.Light });
-      await this.delay(200);
-      await Haptics.impact({ style: ImpactStyle.Light });
-      await this.delay(200);
-      await Haptics.impact({ style: ImpactStyle.Light });
+      await Haptics.impact({ style: ImpactStyle.Medium });
+      await this.delay(300);
+      await Haptics.impact({ style: ImpactStyle.Medium });
+      await this.delay(300);
+      await Haptics.vibrate({ duration: 500 });
     } catch (error) {
       console.warn('Prayer vibration failed:', error);
+    }
+  }
+
+  /**
+   * Adhan vibration pattern: heavy-medium-heavy taps then a long hum.
+   * Deliberately heavier and longer than the prayer pattern so the call
+   * to prayer is unmistakable even on devices with weak haptics.
+   */
+  private async adhanVibration(): Promise<void> {
+    try {
+      await Haptics.impact({ style: ImpactStyle.Heavy });
+      await this.delay(350);
+      await Haptics.impact({ style: ImpactStyle.Medium });
+      await this.delay(350);
+      await Haptics.impact({ style: ImpactStyle.Heavy });
+      await this.delay(300);
+      await Haptics.vibrate({ duration: 800 });
+    } catch (error) {
+      console.warn('Adhan vibration failed:', error);
     }
   }
 

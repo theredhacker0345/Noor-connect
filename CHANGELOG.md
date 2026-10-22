@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Storage no longer wipes user data when local storage fills up: if a write fails due to storage pressure, the app now clears only re-downloadable caches (surah lists, reciter directory, daily ayah/hadith, cached prayer times, daily remedy, exchange rates) and retries once. Bookmarks, Quran progress, tasbeeh counts, notes, history and settings are never deleted; if space still cannot be freed the write is skipped and logged instead.
+- Added a boot-time update-safety check that records the app version, dispatches an internal event when the version changes, and logs a diagnostic report if previously present user data appears empty after an update. It is read-only and never modifies user data.
+
 ## [2.3.0] - 2026-10-07
 
 ### 🔔 Enhanced Adhan & Notification System
