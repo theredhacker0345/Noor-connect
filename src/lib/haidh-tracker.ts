@@ -36,10 +36,21 @@ export interface CycleEntry {
   notes: string;
 }
 
+export interface PregnancyInfo {
+  active: boolean;
+  startDate: string;      // YYYY-MM-DD (LMP or tracking start)
+  dueDate: string | null; // YYYY-MM-DD (computed from LMP +280d or user-entered)
+  notes: string;
+  endedDate?: string | null; // YYYY-MM-DD, set when pregnancy tracking ends
+}
+
 export interface HaidhTrackerData {
   // Current state
   isActive: boolean;
   currentCycleId: string | null;
+
+  // Pregnancy mode (optional — absent in pre-NC4c stored data, merged on load)
+  pregnancy: PregnancyInfo | null;
 
   // All cycles (history + current)
   cycles: CycleEntry[];
@@ -99,6 +110,7 @@ const MAX_CYCLES = 24;
 const DEFAULT_DATA: HaidhTrackerData = {
   isActive: false,
   currentCycleId: null,
+  pregnancy: null,
   cycles: [],
   averageCycleLength: 28,
   averagePeriodLength: 7,
@@ -130,8 +142,49 @@ const diffDays = (a: string, b: string): number => {
   return Math.round(ms / 86_400_000);
 };
 
+// ─── Pregnancy math (pure) ───────────────────────────────────
+export const PREGNANCY_DURATION_DAYS = 280; // 40 weeks from LMP (Naegele's rule)
+
+/** Return dateStr shifted by `days` (negative allowed), as YYYY-MM-DD. */
+export const addDays = (dateStr: string, days: number): string => {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  d.setDate(d.getDate() + days);
+  return toDateStr(d);
+};
+
+/** Estimated due date from the first day of the last menstrual period (+280 days). */
+export const computeDueDate = (lmpDateStr: string): string => addDays(lmpDateStr, PREGNANCY_DURATION_DAYS);
+
+const safeDayDiff = (a: string, b: string): number => {
+  const n = diffDays(a, b);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** Gestational age as completed weeks + days, given pregnancy start (LMP). */
+export const weeksDaysPregnant = (startDate: string, todayStr: string): { weeks: number; days: number } => {
+  const total = Math.max(0, safeDayDiff(startDate, todayStr));
+  return { weeks: Math.floor(total / 7), days: total % 7 };
+};
+
+/** 1st trimester: weeks 0–13, 2nd: 14–27, 3rd: 28+. */
+export const trimesterFor = (startDate: string, todayStr: string): 1 | 2 | 3 => {
+  const total = Math.max(0, safeDayDiff(startDate, todayStr));
+  if (total < 14 * 7) return 1;
+  if (total < 28 * 7) return 2;
+  return 3;
+};
+
+/** Whole days remaining until the due date (negative = overdue). null if unknown. */
+export const daysUntilDue = (dueDate: string | null, todayStr: string): number | null =>
+  dueDate && !isNaN(new Date(dueDate).getTime()) ? safeDayDiff(todayStr, dueDate) : null;
+
 // ─── Prediction Engine ───────────────────────────────────────
 const recalculatePredictions = (data: HaidhTrackerData): HaidhTrackerData => {
+  // While pregnant the cycle clock is meaningless — suppress period predictions
+  // (they resume automatically once pregnancy tracking ends).
+  if (data.pregnancy?.active) return { ...data, nextPredictedStart: null };
+
   const completed = data.cycles.filter(c => c.endDate && !isNaN(new Date(c.startDate).getTime()));
   if (completed.length < 2) return { ...data, nextPredictedStart: null };
 
@@ -196,17 +249,20 @@ export interface FiqhStatus {
   istihadhahDetected: boolean;
   ghusulRequired: boolean;
   dayOfCycle: number;
+  isPregnant: boolean; // pregnancy never exempts salah — kept for UI awareness
 }
 
 export const getFiqhStatus = (data: HaidhTrackerData): FiqhStatus => {
   const today = toDateStr(new Date());
+
+  const isPregnant = Boolean(data.pregnancy?.active);
 
   if (!data.isActive || !data.currentCycleId) {
     // Check if we just ended — Tuhr phase
     const lastCycle = data.cycles.find(c => c.id === data.cycles[0]?.id);
     return {
       phase: 'tuhr',
-      label: 'Ṭuhr (Pure)',
+      label: isPregnant ? 'Ṭuhr — Pregnant' : 'Ṭuhr (Pure)',
       salahExempt: false,
       fastingExempt: false,
       tawafPermitted: true,
@@ -215,6 +271,7 @@ export const getFiqhStatus = (data: HaidhTrackerData): FiqhStatus => {
       istihadhahDetected: false,
       ghusulRequired: false,
       dayOfCycle: 0,
+      isPregnant,
     };
   }
 
@@ -237,6 +294,7 @@ export const getFiqhStatus = (data: HaidhTrackerData): FiqhStatus => {
       istihadhahDetected: true,
       ghusulRequired: true,
       dayOfCycle,
+      isPregnant,
     };
   }
 
@@ -251,6 +309,7 @@ export const getFiqhStatus = (data: HaidhTrackerData): FiqhStatus => {
     istihadhahDetected: false,
     ghusulRequired: false,
     dayOfCycle,
+    isPregnant,
   };
 };
 
@@ -261,13 +320,33 @@ export const getCurrentCycle = (data: HaidhTrackerData): CycleEntry | null => {
 };
 
 // ─── CRUD Operations ─────────────────────────────────────────
+/** Tolerant normalizer so old/partial stored data never breaks parsing. */
+const normalizePregnancy = (p: unknown): PregnancyInfo | null => {
+  if (!p || typeof p !== 'object') return null;
+  const obj = p as Partial<PregnancyInfo>;
+  const startDate = typeof obj.startDate === 'string' ? obj.startDate : '';
+  const startValid = Boolean(startDate) && !isNaN(new Date(startDate).getTime());
+  // Heal a missing due date on active pregnancies so partial imports still
+  // get a working countdown.
+  const dueDate = typeof obj.dueDate === 'string' && obj.dueDate
+    ? obj.dueDate
+    : (obj.active && startValid ? computeDueDate(startDate) : null);
+  return {
+    active: Boolean(obj.active),
+    startDate,
+    dueDate,
+    notes: typeof obj.notes === 'string' ? obj.notes : '',
+    endedDate: typeof obj.endedDate === 'string' ? obj.endedDate : null,
+  };
+};
+
 export const getHaidhData = (): HaidhTrackerData => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return migrateFromOldData();
     const parsed: HaidhTrackerData = JSON.parse(raw);
-    // Ensure all fields present (schema evolution)
-    return { ...DEFAULT_DATA, ...parsed };
+    // Ensure all fields present (schema evolution); pregnancy merged safely.
+    return { ...DEFAULT_DATA, ...parsed, pregnancy: normalizePregnancy(parsed.pregnancy) };
   } catch {
     return DEFAULT_DATA;
   }
@@ -339,6 +418,10 @@ export const startCycle = (
   expectedDuration?: number
 ): HaidhTrackerData => {
   const data = getHaidhData();
+  // Pregnancy guard: no ḥaidh/nifās cycle can start while pregnancy mode is
+  // active. Pregnancy bleeding is treated as istiḥāḍah (prayer continues);
+  // nifās tracking begins only after birth via endPregnancy().
+  if (data.pregnancy?.active) return data;
   const id = generateId();
   const newCycle: CycleEntry = {
     id,
@@ -378,6 +461,54 @@ export const endCycle = (endDate: Date = new Date()): HaidhTrackerData => {
     isActive: false,
     currentCycleId: null,
     cycles: updatedCycles,
+  });
+};
+
+// ─── Pregnancy Mode ──────────────────────────────────────────
+export const startPregnancy = (opts: {
+  startDate: string;        // YYYY-MM-DD — LMP or tracking start
+  dueDate?: string | null;  // optional explicit due date; else computed
+  notes?: string;
+}): HaidhTrackerData => {
+  const data = getHaidhData();
+  const startDate = opts.startDate || toDateStr(new Date());
+  const pregnancy: PregnancyInfo = {
+    active: true,
+    startDate,
+    dueDate: opts.dueDate || computeDueDate(startDate),
+    notes: opts.notes ?? '',
+    endedDate: null,
+  };
+
+  // Pregnancy supersedes any running cycle — auto-close it so states never
+  // conflict (its fiqh rulings end with the pregnancy switch).
+  let cycles = data.cycles;
+  if (data.isActive && data.currentCycleId) {
+    const today = toDateStr(new Date());
+    cycles = cycles.map(c =>
+      c.id === data.currentCycleId
+        ? { ...c, endDate: today, actualDuration: Math.max(1, diffDays(c.startDate, today) + 1) }
+        : c
+    );
+  }
+
+  return saveHaidhData({
+    ...data,
+    pregnancy,
+    isActive: false,
+    currentCycleId: null,
+    cycles,
+  });
+};
+
+/** End pregnancy tracking. Pass startDate of a nifās cycle separately via startCycle(). */
+export const endPregnancy = (endDate: Date | string = new Date()): HaidhTrackerData => {
+  const data = getHaidhData();
+  if (!data.pregnancy?.active) return data;
+  const ended = typeof endDate === 'string' ? endDate : toDateStr(endDate);
+  return saveHaidhData({
+    ...data,
+    pregnancy: { ...data.pregnancy, active: false, endedDate: ended },
   });
 };
 
@@ -466,7 +597,7 @@ export const importData = (json: string): boolean => {
       return false;
     }
     // Merge over defaults to tolerate older exports missing new fields.
-    const merged: HaidhTrackerData = { ...DEFAULT_DATA, ...parsed };
+    const merged: HaidhTrackerData = { ...DEFAULT_DATA, ...parsed, pregnancy: normalizePregnancy(parsed.pregnancy) };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
     window.dispatchEvent(new CustomEvent('haidh-tracker-updated', { detail: merged }));
     window.dispatchEvent(new CustomEvent('menstrual-mode-updated', { detail: merged }));
@@ -577,6 +708,118 @@ export const PHASE_DUAS = {
       'Track your Tahajjud this week.',
     ],
     dhikr: [],
+  },
+};
+
+// ─── Pregnancy duas (Qur'anic only — clearly referenced) ─────
+export interface PregnancyDua {
+  id: string;
+  title: string;
+  arabic: string;
+  transliteration: string;
+  translation: string;
+  reference: string;
+}
+
+export const PREGNANCY_DUAS: { title: string; note: string; duas: PregnancyDua[] } = {
+  title: 'Duas of Pregnancy & Birth',
+  note: 'Words from the Qur\'an for this blessed wait — said by prophets and righteous mothers.',
+  duas: [
+    {
+      id: 'zakariyya',
+      title: 'The Dua of Zakariyyā (for righteous offspring)',
+      arabic: 'رَبِّ هَبْ لِي مِن لَّدُنكَ ذُرِّيَّةً طَيِّبَةً ۖ إِنَّكَ سَمِيعُ الدُّعَاءِ',
+      transliteration: 'Rabbi hab lī min ladunka dhurriyyatan ṭayyibah, innaka samīʿu ad-duʿāʾ',
+      translation: 'My Lord, grant me from Yourself a good offspring. Indeed, You hear all supplication.',
+      reference: "Qur'an 3:38",
+    },
+    {
+      id: 'qurrata-ayun',
+      title: 'Comfort of the eyes',
+      arabic: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا',
+      transliteration: 'Rabbanā hab lanā min azwājinā wa dhurriyyātinā qurrata aʿyunin wajʿalnā lil-muttaqīna imāmā',
+      translation: 'Our Lord, grant us from our spouses and offspring comfort to our eyes, and make us leaders of the righteous.',
+      reference: "Qur'an 25:74",
+    },
+    {
+      id: 'mother-of-maryam',
+      title: 'The Dua of the mother of Maryam',
+      arabic: 'رَبِّ إِنِّي نَذَرْتُ لَكَ مَا فِي بَطْنِي مُحَرَّرًا فَتَقَبَّلْ مِنِّي ۖ إِنَّكَ أَنتَ السَّمِيعُ الْعَلِيمُ',
+      transliteration: 'Rabbi innī nadhartu laka mā fī baṭnī muḥarraran fataqabbal minnī, innaka anta as-samīʿu al-ʿalīm',
+      translation: 'My Lord, I have vowed to You what is in my womb, consecrated, so accept it from me. Indeed, You are the Hearing, the Knowing.',
+      reference: "Qur'an 3:35",
+    },
+  ],
+};
+
+// ─── Phase-based self-care tips (wellness, not medical advice) ─
+export interface SelfCareTip {
+  key: string;
+  icon: string; // resolved to a lucide icon in the component layer
+  label: string;
+  detail: string;
+}
+
+export const SELF_CARE_BY_PHASE: Record<CyclePhase | 'pregnant', { title: string; tips: SelfCareTip[] }> = {
+  haidh: {
+    title: 'Caring for yourself during Ḥaidh',
+    tips: [
+      { key: 'warm-compress', icon: 'thermometer', label: 'Warm compress', detail: 'A warm compress on your lower belly relaxes the muscles and can soften cramps.' },
+      { key: 'hydrate', icon: 'water', label: 'Stay hydrated', detail: 'Sip water through the day — good hydration eases bloating and tiredness.' },
+      { key: 'iron-foods', icon: 'leaf', label: 'Iron-rich foods', detail: 'Dates, spinach and lentils help replenish the iron your body loses during bleeding.' },
+      { key: 'gentle-walk', icon: 'footprints', label: 'Gentle walk', detail: 'A short, unhurried walk supports circulation and can lift a heavy mood.' },
+      { key: 'rest', icon: 'moon', label: 'Rest well', detail: 'Rest is a mercy for the body — sleep without guilt; dhikr before sleep soothes the heart.' },
+      { key: 'less-caffeine', icon: 'coffee', label: 'Ease off caffeine', detail: 'Cutting back coffee and strong tea during cramps may help them feel milder.' },
+    ],
+  },
+  tuhr: {
+    title: 'Building strength in Ṭuhr',
+    tips: [
+      { key: 'sunnah-foods', icon: 'sprout', label: 'Sunnah foods', detail: 'Honey ("in it is healing for people" — Qur\'an 16:69) and black seed ("a cure for every disease" — Sahih al-Bukhari 5688) are lovely daily additions.' },
+      { key: 'nourish', icon: 'apple', label: 'Nourish & rebuild', detail: 'Iron- and vitamin-rich meals in Ṭuhr help your body rebuild before the next cycle.' },
+      { key: 'move', icon: 'footprints', label: 'Keep moving', detail: 'Walking or light stretching now keeps your energy steady for the days ahead.' },
+      { key: 'sleep', icon: 'moon', label: 'Protect your sleep', detail: 'A consistent bedtime supports hormones, mood and worship energy.' },
+      { key: 'quran-time', icon: 'book', label: 'Quran & gratitude time', detail: 'Ṭuhr is your window for full recitation — a few pages a day feeds the soul too.' },
+    ],
+  },
+  premenstrual: {
+    title: 'Gentle days before your cycle',
+    tips: [
+      { key: 'compassion', icon: 'heart', label: 'Self-compassion', detail: 'Hormonal shifts can stir real emotions — speak gently to yourself; you are held in Allah\'s care.' },
+      { key: 'warm-drink', icon: 'coffee', label: 'Warm, calm drinks', detail: 'Warm caffeine-free drinks can be soothing when you feel tense or tender.' },
+      { key: 'light-move', icon: 'footprints', label: 'Light movement', detail: 'Easy stretching or a slow walk can ease premenstrual tension and heaviness.' },
+      { key: 'early-night', icon: 'moon', label: 'Early night', detail: 'Sleep tends to be harder right before a period — an early bedtime softens the edge.' },
+      { key: 'nourish-pms', icon: 'apple', label: 'Balanced bites', detail: 'Regular, balanced meals (nuts, seeds, fruit) help steady your energy and mood.' },
+    ],
+  },
+  fertile: {
+    title: 'Caring for yourself this week',
+    tips: [
+      { key: 'hydrate-fertile', icon: 'water', label: 'Keep hydrating', detail: 'Steady water intake supports your energy and overall comfort this week.' },
+      { key: 'balanced', icon: 'apple', label: 'Balanced meals', detail: 'Colourful, varied meals give your body what it needs for the cycle ahead.' },
+      { key: 'walk', icon: 'footprints', label: 'Gentle walk', detail: 'Movement you enjoy — a walk, fresh air — is enough; consistency beats intensity.' },
+      { key: 'sleep-fertile', icon: 'moon', label: 'Rest & sleep', detail: 'Good sleep keeps hormones — and mood — on an even keel.' },
+      { key: 'notice', icon: 'note', label: 'Notice your body', detail: 'A quick note on how you feel each day makes your own patterns easier to see.' },
+    ],
+  },
+  pregnant: {
+    title: 'Gentle care while expecting',
+    tips: [
+      { key: 'hydrate-preg', icon: 'water', label: 'Hydrate often', detail: 'Small sips through the day support you and your baby — keep a bottle nearby.' },
+      { key: 'iron-folate', icon: 'leaf', label: 'Iron & folate foods', detail: 'Dates, spinach, lentils and eggs are gentle, nourishing staples in pregnancy.' },
+      { key: 'walk-preg', icon: 'footprints', label: 'Gentle walk', detail: 'A calm daily walk helps with energy, sleep and mood — go at your own pace.' },
+      { key: 'rest-preg', icon: 'moon', label: 'Rest your body', detail: 'Tiredness is normal — lie down when you can and accept help when it is offered.' },
+      { key: 'small-meals', icon: 'apple', label: 'Small, frequent meals', detail: 'Little portions through the day can ease nausea better than three big meals.' },
+    ],
+  },
+  unknown: {
+    title: 'Daily self-care',
+    tips: [
+      { key: 'hydrate-unknown', icon: 'water', label: 'Stay hydrated', detail: 'Sip water through the day — the simplest habit with the biggest effect.' },
+      { key: 'sleep-unknown', icon: 'moon', label: 'Protect your sleep', detail: 'A steady bedtime supports hormones, mood and worship energy.' },
+      { key: 'walk-unknown', icon: 'footprints', label: 'Gentle movement', detail: 'A short walk most days keeps body and mood steady.' },
+      { key: 'nourish-unknown', icon: 'apple', label: 'Nourishing meals', detail: 'Balanced meals with iron-rich foods (dates, spinach, lentils) support your cycle.' },
+    ],
   },
 };
 

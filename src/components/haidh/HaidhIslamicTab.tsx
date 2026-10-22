@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Heart, BookOpen, AlertTriangle, CheckCircle, Moon, Wind, BookHeart, Droplets, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
+import { Heart, BookOpen, AlertTriangle, CheckCircle, Moon, Wind, BookHeart, Droplets, ChevronDown, RotateCcw, Baby } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -24,6 +25,41 @@ const MADHAB_LABEL: Record<string, string> = {
   hanafi: "Hanafi", maliki: "Maliki", shafii: "Shafiʿi", hanbali: "Hanbali",
 };
 
+// ─── Interactive dhikr counter (persisted per day, separate key) ──
+const DHIKR_COUNTS_KEY = "haidh-dhikr-counts-v1";
+
+type DhikrCounts = Record<string, Record<string, number>>; // YYYY-MM-DD → dhikr text → count
+
+const toDayKey = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const loadDhikrCounts = (): DhikrCounts => {
+  try {
+    const raw = localStorage.getItem(DHIKR_COUNTS_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as DhikrCounts) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveDhikrCounts = (counts: DhikrCounts): void => {
+  // Keep only the last 30 days of tallies so the key stays small.
+  const dates = Object.keys(counts).sort();
+  const trimmed: DhikrCounts = {};
+  for (const d of dates.slice(-30)) trimmed[d] = counts[d];
+  try {
+    localStorage.setItem(DHIKR_COUNTS_KEY, JSON.stringify(trimmed));
+  } catch {
+    // Storage full — dhikr tallies are non-critical, fail silently.
+  }
+};
+
 // Pick the right phase content for Duas & wellness.
 function phaseContent(data: HaidhTrackerData, fiqh: FiqhStatus) {
   if (fiqh.istihadhahDetected) return PHASE_DUAS.haidh; // istiḥāḍah → resume normal ʿibādah
@@ -37,6 +73,37 @@ export function HaidhIslamicTab({ data, fiqh }: Props) {
   const cycle = getCurrentCycle(data);
   const isNifas = cycle?.bleedingType === "nifas";
   const content = phaseContent(data, fiqh);
+
+  // ── Dhikr counter state (counts reset daily by date key) ──
+  const todayKey = toDayKey(new Date());
+  const [countsToday, setCountsToday] = useState<Record<string, number>>(() => {
+    const all = loadDhikrCounts();
+    return { ...(all[todayKey] ?? {}) };
+  });
+
+  const handleCount = (text: string) => {
+    const next = { ...countsToday, [text]: (countsToday[text] ?? 0) + 1 };
+    setCountsToday(next);
+    const all = loadDhikrCounts();
+    all[todayKey] = next;
+    saveDhikrCounts(all);
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      try { navigator.vibrate(10); } catch { /* haptics unavailable */ }
+    }
+  };
+
+  const handleResetDhikr = () => {
+    setCountsToday({});
+    const all = loadDhikrCounts();
+    delete all[todayKey];
+    saveDhikrCounts(all);
+    toast.success("Today's dhikr counts cleared");
+  };
+
+  // Fall back to the daily tasbīḥ set when the phase has no curated dhikr.
+  const dhikrItems = content.dhikr.length > 0 ? content.dhikr : PHASE_DUAS.haidh.dhikr;
+  const dhikrTitle = content.dhikr.length > 0 ? "Recommended Dhikr — tap to count" : "Daily Dhikr — tap to count";
+  const dhikrTotal = Object.values(countsToday).reduce<number>((sum, n) => sum + (typeof n === "number" ? n : 0), 0);
 
   const owed = Math.max(0, data.missedRamadanFasts - data.madeUpRamadanFasts);
   const rules = MADHAB_RULES[data.madhab];
@@ -80,6 +147,26 @@ export function HaidhIslamicTab({ data, fiqh }: Props) {
                   <li className="flex gap-2 items-start"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" /> Resume fasting if in Ramadan.</li>
                 </ul>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pregnancy mode note — praying continues as normal */}
+      {fiqh.isPregnant && (
+        <div className="bg-sky-500/10 border border-sky-500/30 rounded-3xl p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-sky-500/20 flex items-center justify-center shrink-0">
+              <Baby className="w-5 h-5 text-sky-500" />
+            </div>
+            <div>
+              <h3 className="font-black text-sky-600 dark:text-sky-400">Pregnancy — Praying Normally</h3>
+              <p className="text-sm text-foreground/80 mt-1 leading-relaxed">
+                You are in Pregnancy Mode. Prayer alerts stay on — pregnant women pray as normal.
+                Any bleeding during pregnancy is treated as Istiḥāḍah: perform wuḍū for each prayer
+                time ({MADHAB_LABEL[data.madhab]} practice) and pray. When the baby arrives, Nifās
+                tracking begins — tap "Baby arrived" on the Today tab.
+              </p>
             </div>
           </div>
         </div>
@@ -230,20 +317,75 @@ export function HaidhIslamicTab({ data, fiqh }: Props) {
           </p>
         </div>
 
-        {content.dhikr.length > 0 && (
-          <div>
-            <h4 className="font-bold text-foreground mb-3 text-sm">Recommended Dhikr</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {content.dhikr.map(d => (
-                <div key={d.text} className="bg-background border border-border rounded-2xl p-4 text-center">
-                  <p className="font-arabic text-primary text-lg leading-snug" dir="rtl">{d.arabic}</p>
-                  <p className="font-bold text-foreground text-sm mt-2">{d.text}</p>
-                  <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest">×{d.count}</p>
-                </div>
-              ))}
+        {/* Interactive dhikr counter — tap to count, resets daily */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="font-bold text-foreground text-sm">{dhikrTitle}</h4>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium" aria-live="polite">
+                Today: <span className="font-black text-primary tabular-nums">{dhikrTotal}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleResetDhikr}
+                aria-label="Reset today's dhikr counts"
+                title="Reset today's counts"
+                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        )}
+          <p className="text-[10px] text-muted-foreground/60 mb-3">
+            Tap a card each time you say it — counts reset each day.
+          </p>
+          <div className="space-y-2">
+            {dhikrItems.map(d => {
+              const count = countsToday[d.text] ?? 0;
+              const goal = d.count ?? 0;
+              const done = goal > 0 && count >= goal;
+              const pct = goal > 0 ? Math.min(100, (count / goal) * 100) : 0;
+              return (
+                <motion.button
+                  key={d.text}
+                  type="button"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleCount(d.text)}
+                  aria-label={`Count ${d.text} — currently ${count}${goal > 0 ? ` of ${goal}` : ""}`}
+                  className={cn(
+                    "w-full rounded-2xl border p-4 text-center transition-colors select-none",
+                    done
+                      ? "bg-emerald-500/10 border-emerald-500/30"
+                      : "bg-background border-border hover:bg-muted/40 active:bg-muted/60"
+                  )}
+                >
+                  <span className="flex items-center justify-between gap-3 w-full">
+                    <span className="min-w-0 text-left">
+                      <span className="block font-arabic text-primary text-lg leading-snug" dir="rtl">{d.arabic}</span>
+                      <span className="block font-bold text-foreground text-sm mt-1">{d.text}</span>
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 flex items-center justify-center min-w-[44px] h-9 px-2 rounded-xl text-sm font-black tabular-nums",
+                        done ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-primary/10 text-primary"
+                      )}
+                    >
+                      {goal > 0 ? `${count}/${goal}` : `×${count}`}
+                    </span>
+                  </span>
+                  {goal > 0 && (
+                    <span className="block mt-2.5 h-1 rounded-full bg-muted overflow-hidden">
+                      <span
+                        className={cn("block h-full rounded-full transition-all", done ? "bg-emerald-500" : "bg-primary")}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Wellness tips */}

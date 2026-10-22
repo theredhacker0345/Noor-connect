@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Calendar as CalIcon, Droplets, BookOpen,
-  Settings as SettingsIcon, HeartPulse, TrendingUp, ChevronLeft,
+  Settings as SettingsIcon, HeartPulse, TrendingUp, ChevronLeft, Baby,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,8 @@ import {
   getFiqhStatus,
   startCycle,
   endCycle,
+  endPregnancy,
+  weeksDaysPregnant,
   logDay,
   updateSettings,
   type HaidhTrackerData,
@@ -58,7 +60,15 @@ export default function HaidhTracker() {
     return () => window.removeEventListener("haidh-tracker-updated", handleUpdate);
   }, []);
 
-  useEffect(() => { void syncHaidhNotifications(data); }, [data]);
+  useEffect(() => {
+    // Pregnancy mode: period-prediction / daily-log reminders make no sense
+    // while expecting, so suppress them for the sync call (prayer notifications
+    // are NOT paused — pregnant women pray normally).
+    const effective = data.pregnancy?.active
+      ? { ...data, periodPredictionReminderEnabled: false, dailyLogReminderEnabled: false }
+      : data;
+    void syncHaidhNotifications(effective);
+  }, [data]);
 
   const handleStart = async (type: "haidh" | "nifas") => {
     const updated = startCycle(new Date(), type);
@@ -89,6 +99,13 @@ export default function HaidhTracker() {
   const handleLog = (log: Partial<DailyLog>) => logDay(new Date(), log);
   const handleSettingsUpdate = (patch: Partial<HaidhTrackerData>) => updateSettings(patch);
   const goBack = () => goBackOrFallback(navigate, "/");
+
+  // Ends pregnancy, then opens a Nifās cycle (pausing prayer alerts as with
+  // any ḥaidh/nifās cycle) — pregnancy itself never pauses them.
+  const handleBabyArrived = async () => {
+    endPregnancy();
+    await handleStart("nifas");
+  };
 
   // ── PIN lock screen ────────────────────────────────────────────────────────
   const tryPin = (pin: string) => {
@@ -207,6 +224,19 @@ export default function HaidhTracker() {
                 Active
               </span>
             )}
+            {!data.isActive && data.pregnancy?.active && (
+              <span
+                className="ml-auto flex items-center gap-1.5 text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-full"
+                aria-label="Pregnancy mode active"
+              >
+                <Baby className="w-3 h-3" />
+                {(() => {
+                  const d = new Date();
+                  const localToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                  return weeksDaysPregnant(data.pregnancy.startDate, localToday).weeks;
+                })()}w Pregnant
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -222,12 +252,12 @@ export default function HaidhTracker() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
-              {activeTab === "today"     && <TodayTab data={data} fiqh={fiqh} onStart={handleStart} onEnd={handleEnd} onTabChange={(t) => setActiveTab(t as TabId)} />}
+              {activeTab === "today"     && <TodayTab data={data} fiqh={fiqh} onStart={handleStart} onEnd={handleEnd} onBabyArrived={handleBabyArrived} onTabChange={(t) => setActiveTab(t as TabId)} />}
               {activeTab === "calendar"  && <CalendarTab data={data} />}
               {activeTab === "log"       && <LogTab data={data} onLog={handleLog} />}
               {activeTab === "analytics" && <AnalyticsTab data={data} />}
               {activeTab === "islamic"   && <IslamicTab data={data} fiqh={fiqh} />}
-              {activeTab === "settings"  && <SettingsTab data={data} onUpdate={handleSettingsUpdate} />}
+              {activeTab === "settings"  && <SettingsTab data={data} onUpdate={handleSettingsUpdate} onBabyArrived={handleBabyArrived} />}
             </motion.div>
           </AnimatePresence>
         </div>

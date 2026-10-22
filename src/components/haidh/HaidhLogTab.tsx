@@ -100,10 +100,15 @@ export function HaidhLogTab({ data, onLog }: Props) {
 
   const handleFlow = (f: FlowIntensity) => {
     setFlow(f);
-    // Logging bleeding while not in an active cycle = a new period has begun.
+    // Logging bleeding while not in an active cycle = a new period has begun
+    // (unless pregnancy mode is on — cycle tracking is paused then).
     if (f !== "none" && !cycle) {
-      startCycle(new Date(), "haidh");
-      toast.success("Cycle started");
+      if (data.pregnancy?.active) {
+        toast.info("Pregnancy mode is on — bleeding is treated as Istiḥāḍah; cycle tracking is paused");
+      } else {
+        startCycle(new Date(), "haidh");
+        toast.success("Cycle started");
+      }
     }
     save({ flow: f });
   };
@@ -157,6 +162,10 @@ export function HaidhLogTab({ data, onLog }: Props) {
     if (!cycle) {
       if (flow === "none") {
         toast.error("Start a period first — tap a flow option to begin your cycle");
+        return;
+      }
+      if (data.pregnancy?.active) {
+        toast.info("Pregnancy mode is on — cycle tracking is paused");
         return;
       }
       startCycle(new Date(), "haidh");

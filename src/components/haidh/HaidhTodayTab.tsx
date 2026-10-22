@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Droplets, CheckCircle, Moon, AlertTriangle, Sparkles, Wind, BookOpen, Star, CalendarClock, GlassWater, Thermometer } from "lucide-react";
+import { Baby, ChevronDown, Droplets, CheckCircle, Moon, AlertTriangle, Sparkles, Wind, BookOpen, Star, CalendarClock, GlassWater, Thermometer, Heart } from "lucide-react";
+import { PRAYER_ALARM_TOGGLE_EVENT } from "@/lib/prayer-alarm-events";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HaidhGhuslChecklist as GhuslChecklist } from "@/components/haidh/HaidhGhuslChecklist";
+import { HaidhSelfCareCard } from "@/components/haidh/HaidhSelfCareCard";
 import {
   getCurrentCycle,
   getPredictionConfidence,
@@ -11,8 +13,15 @@ import {
   getRegularityInfo,
   logDay,
   getLogForDate,
+  startPregnancy,
+  weeksDaysPregnant,
+  trimesterFor,
+  daysUntilDue,
+  PREGNANCY_DUAS,
+  PREGNANCY_DURATION_DAYS,
   type HaidhTrackerData,
   type FiqhStatus,
+  type CyclePhase,
 } from "@/lib/haidh-tracker";
 
 interface Props {
@@ -20,6 +29,7 @@ interface Props {
   fiqh: FiqhStatus;
   onStart: (type: 'haidh' | 'nifas') => void;
   onEnd: () => void;
+  onBabyArrived: () => void;
   onTabChange: (t: string) => void;
 }
 
@@ -30,14 +40,21 @@ const toDateStr = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
-export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onTabChange }: Props) {
+export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTabChange }: Props) {
   const cycle = getCurrentCycle(data);
   const today = toDateStr(new Date());
+  const pregnancy = data.pregnancy?.active ? data.pregnancy : null;
   const [waterGlasses, setWaterGlasses] = useState(() => {
     const stored = localStorage.getItem(`noor-water-${today}`);
     return stored ? parseInt(stored, 10) : 0;
   });
   const [painLevel, setPainLevel] = useState(() => getLogForDate(data, today)?.painLevel ?? 0);
+
+  // Subtle pregnancy entry (idle state only)
+  const [pregEntryOpen, setPregEntryOpen] = useState(false);
+  const [pregLmp, setPregLmp] = useState(today);
+  const [pregDue, setPregDue] = useState("");
+  const [duasOpen, setDuasOpen] = useState(false);
 
   const activeDays = useMemo(() => {
     if (!cycle) return 0;
@@ -66,10 +83,17 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onTabChange }: Props
   // Predict phase relative to the current cycle (only meaningful while pure).
   // Ovulation ~14 days before next period; fertile window is ~5 days before ovulation.
   let currentPhase: "tuhr" | "premenstrual" | "fertile" = "tuhr";
-  if (!data.isActive && daysToNext !== null) {
+  if (!data.isActive && !pregnancy && daysToNext !== null) {
     if (daysToNext <= 7 && daysToNext > 0) currentPhase = "premenstrual";
     else if (daysToNext >= 14 && daysToNext <= 19) currentPhase = "fertile";
   }
+
+  // Self-care phase: pregnancy first, then active bleeding, then cycle phase.
+  const selfCarePhase: CyclePhase | "pregnant" = pregnancy
+    ? "pregnant"
+    : data.isActive
+      ? "haidh"
+      : currentPhase;
 
   // Has the most recent cycle just ended (and ghusl not yet logged today)?
   const lastCycle = data.cycles[0];
@@ -82,6 +106,33 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onTabChange }: Props
     ? Math.round((new Date(ovulationDay).getTime() - new Date(today).getTime()) / 86400000)
     : null;
 
+  // ── Pregnancy-derived values ────────────────────────────────
+  const pregWeeks = pregnancy ? weeksDaysPregnant(pregnancy.startDate, today) : null;
+  const pregTrimester = pregnancy ? trimesterFor(pregnancy.startDate, today) : null;
+  const pregDaysTotal = pregnancy
+    ? Math.max(0, Math.round((new Date(today).getTime() - new Date(pregnancy.startDate).getTime()) / 86400000))
+    : 0;
+  const pregProgress = pregnancy ? Math.min((pregDaysTotal / PREGNANCY_DURATION_DAYS) * 100, 100) : 0;
+  const pregDashOffset = 283 - (283 * pregProgress) / 100;
+  const pregDueDate = pregnancy?.dueDate ? new Date(pregnancy.dueDate) : null;
+  const pregDueStr = pregDueDate
+    ? pregDueDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+    : null;
+  const pregDaysLeft = pregnancy ? daysUntilDue(pregnancy.dueDate, today) : null;
+  const madhabLabel = data.madhab.charAt(0).toUpperCase() + data.madhab.slice(1);
+
+  const handleStartPregnancy = () => {
+    if (!pregLmp) return;
+    // If pregnancy supersedes an active ḥaidh/nifās cycle, restore prayer
+    // alarms — they are only ever paused for ḥaidh/nifās, never pregnancy.
+    if (data.isActive) {
+      localStorage.setItem("prayer-alarm-enabled", "true");
+      window.dispatchEvent(new CustomEvent(PRAYER_ALARM_TOGGLE_EVENT, { detail: { enabled: true } }));
+    }
+    startPregnancy({ startDate: pregLmp, dueDate: pregDue || null });
+    setPregEntryOpen(false);
+  };
+
   return (
     <div className="space-y-6 pb-24">
       {/* Hero Card */}
@@ -93,6 +144,8 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onTabChange }: Props
         {/* Glow effects — phase-tinted, theme-safe */}
         {data.isActive ? (
           <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/10 dark:bg-rose-700/20 rounded-full blur-[20px] pointer-events-none" />
+        ) : pregnancy ? (
+          <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/10 dark:bg-sky-700/20 rounded-full blur-[20px] pointer-events-none" />
         ) : (
           <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[20px] pointer-events-none" />
         )}
@@ -167,6 +220,118 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onTabChange }: Props
               >
                 <CheckCircle className="w-4 h-4 mr-2 shrink-0" /> End Period
               </Button>
+            </div>
+          </div>
+        ) : pregnancy ? (
+          <div className="relative z-10 flex flex-col items-center text-center">
+            {/* Trimester strip */}
+            <div className="flex items-center gap-2 mb-6 w-full justify-center" aria-hidden="true">
+              <div className={cn("h-1.5 w-1/3 rounded-full", (pregTrimester ?? 1) >= 1 ? "bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-border")} />
+              <div className={cn("h-1.5 w-1/3 rounded-full", (pregTrimester ?? 1) >= 2 ? "bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-border")} />
+              <div className={cn("h-1.5 w-1/3 rounded-full", (pregTrimester ?? 1) >= 3 ? "bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.5)]" : "bg-border")} />
+            </div>
+
+            {/* Circular progress ring */}
+            <div className="relative w-48 h-48 flex items-center justify-center mb-6">
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-muted" />
+                <motion.circle
+                  cx="50" cy="50" r="45"
+                  fill="none"
+                  stroke="url(#gradient-sky)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray="283"
+                  initial={{ strokeDashoffset: 283 }}
+                  animate={{ strokeDashoffset: pregDashOffset }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                />
+                <defs>
+                  <linearGradient id="gradient-sky" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#0369a1" />
+                    <stop offset="100%" stopColor="#38bdf8" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <Baby className="w-5 h-5 text-sky-500 mb-1" />
+                <span className="text-4xl font-bold text-foreground font-serif italic tracking-tight leading-none">
+                  {pregWeeks?.weeks ?? 0}<span className="text-xl">w</span>{" "}
+                  {pregWeeks?.days ?? 0}<span className="text-xl">d</span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-500 mt-2">
+                  Trimester {pregTrimester ?? 1}
+                </span>
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold font-serif italic text-foreground tracking-tight mb-1">Pregnancy</h2>
+            <p className="text-sm text-muted-foreground font-medium mb-6">
+              {pregDueStr ? (
+                <>Baby due {pregDueStr}
+                  {pregDaysLeft !== null && (
+                    <> · <span className="font-bold text-sky-600 dark:text-sky-400">
+                      {pregDaysLeft > 0
+                        ? `in ${pregDaysLeft} day${pregDaysLeft === 1 ? "" : "s"}`
+                        : pregDaysLeft === 0
+                          ? "due today"
+                          : `${Math.abs(pregDaysLeft)} day${Math.abs(pregDaysLeft) === 1 ? "" : "s"} past`}
+                    </span></>
+                  )}
+                </>
+              ) : (
+                "May Allah make it easy for you"
+              )}
+            </p>
+
+            {/* Gentle fiqh note — pregnancy bleeding is istiḥāḍah */}
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-600 dark:text-amber-400 w-full text-left mb-4">
+              <BookOpen className="w-5 h-5 shrink-0 mt-0.5" />
+              <p>
+                Pregnancy bleeding is treated as Istiḥāḍah: pray as normal, with fresh wuḍū for each prayer time ({madhabLabel} practice). After birth, Nifās tracking begins.
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+              Prayer alerts stay on — pregnant women pray as normal.
+            </p>
+
+            <Button
+              onClick={onBabyArrived}
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-rose-700 to-rose-500 hover:from-rose-600 hover:to-rose-400 font-bold text-base shadow-xl"
+              aria-label="Baby has arrived — end pregnancy and start Nifas tracking"
+            >
+              <Baby className="w-5 h-5 mr-2" /> Baby arrived — start Nifās
+            </Button>
+
+            {/* Duas of pregnancy & birth (Qur'anic only) */}
+            <div className="w-full mt-6 rounded-2xl border border-border bg-background/50 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setDuasOpen(o => !o)}
+                aria-expanded={duasOpen}
+                aria-label="Show duas of pregnancy and birth"
+                className="w-full min-h-[48px] flex items-center justify-between px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+              >
+                <span className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Star className="w-4 h-4 text-primary" /> {PREGNANCY_DUAS.title}
+                </span>
+                <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", duasOpen && "rotate-180")} />
+              </button>
+              {duasOpen && (
+                <div className="px-4 pb-4 space-y-4">
+                  <p className="text-xs text-muted-foreground text-left">{PREGNANCY_DUAS.note}</p>
+                  {PREGNANCY_DUAS.duas.map(dua => (
+                    <div key={dua.id} className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+                      <p className="text-xs font-bold text-primary text-left mb-2">{dua.title}</p>
+                      <p className="font-arabic text-primary text-xl leading-loose text-center" dir="rtl">{dua.arabic}</p>
+                      <p className="text-center text-xs font-medium text-foreground/80 italic mt-2">"{dua.transliteration}"</p>
+                      <p className="text-center text-xs text-muted-foreground mt-1">{dua.translation}</p>
+                      <p className="text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mt-2">{dua.reference}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -268,6 +433,66 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onTabChange }: Props
           </div>
         </div>
       </div>
+
+      {/* Subtle pregnancy entry — only when idle (no cycle, not pregnant) */}
+      {!data.isActive && !pregnancy && (
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setPregEntryOpen(o => !o)}
+            aria-expanded={pregEntryOpen}
+            aria-label="Expecting? Track your pregnancy"
+            className="w-full min-h-[48px] flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+          >
+            <span className="w-8 h-8 rounded-xl bg-sky-500/15 flex items-center justify-center shrink-0">
+              <Baby className="w-4 h-4 text-sky-500" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-bold text-foreground">Expecting?</span>
+              <span className="block text-xs text-muted-foreground">Track your pregnancy — prayers continue as normal</span>
+            </span>
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", pregEntryOpen && "rotate-180")} />
+          </button>
+          {pregEntryOpen && (
+            <div className="px-4 pb-4 space-y-3">
+              <div>
+                <label htmlFor="preg-lmp" className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">First day of last period</label>
+                <input
+                  id="preg-lmp"
+                  type="date"
+                  value={pregLmp}
+                  onChange={e => setPregLmp(e.target.value)}
+                  className="w-full h-11 rounded-xl bg-background border border-border px-3 text-sm text-foreground"
+                />
+              </div>
+              <div>
+                <label htmlFor="preg-due" className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">Due date (optional)</label>
+                <input
+                  id="preg-due"
+                  type="date"
+                  value={pregDue}
+                  onChange={e => setPregDue(e.target.value)}
+                  className="w-full h-11 rounded-xl bg-background border border-border px-3 text-sm text-foreground"
+                />
+              </div>
+              <Button
+                onClick={handleStartPregnancy}
+                disabled={!pregLmp}
+                className="w-full h-12 rounded-2xl bg-gradient-to-r from-sky-600 to-sky-400 hover:from-sky-500 hover:to-sky-300 font-bold text-white shadow-lg"
+                aria-label="Start pregnancy mode"
+              >
+                <Baby className="w-4 h-4 mr-2" /> Start Pregnancy Mode
+              </Button>
+              <p className="text-[10px] text-muted-foreground/70 text-center">
+                Due date is estimated from LMP (+280 days) unless you enter one.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Phase-based self-care card */}
+      <HaidhSelfCareCard phase={selfCarePhase} />
 
       {/* Fertile window info */}
       {currentPhase === "fertile" && (
