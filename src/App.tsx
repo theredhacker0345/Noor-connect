@@ -344,9 +344,13 @@ function AppShell() {
     preloadCriticalResources();
 
     // ── Preload likely next routes after idle (improves navigation speed)
+    // NOTE: '/quran' renders SurahList (src/pages/SurahList.tsx). The old list
+    // preloaded @/pages/Quran — a DEAD page (no route uses it) — so the real
+    // Quran chunk was never warmed and every first /quran open paid the full
+    // download+parse behind the Suspense spinner.
     const preloadRoutes = () => {
       const routes = [
-        import('@/pages/Quran'),
+        import('@/pages/SurahList'),
         import('@/pages/QuranReader'),
         import('@/pages/Hadith'),
         import('@/pages/Tasbeeh'),

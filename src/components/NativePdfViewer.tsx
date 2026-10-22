@@ -32,6 +32,37 @@ interface NativePdfViewerProps {
 
 type ViewerMode = 'loading' | 'pdfjs' | 'iframe' | 'error';
 
+// Module scope (pure function, no props/state).
+// MUST live here: it was previously a `const` defined AFTER the loading/error
+// early-returns inside the component, so calling it from loadPdf() (which the
+// useEffect fires while viewerMode is still 'loading') hit the temporal dead
+// zone -> "ReferenceError: Cannot access '$' before initialization" and EVERY
+// archive.org PDF failed to open. See user report from the ebook section.
+const getBetterViewerUrl = (pdfUrl: string): string => {
+  if (pdfUrl.includes('archive.org')) {
+    // Try to get the direct PDF download URL from archive.org
+    const downloadMatch = pdfUrl.match(/archive\.org\/download\/([^/]+)\/.*\.pdf/);
+    if (downloadMatch?.[1]) {
+      // Keep the direct download URL for the PDF
+      return pdfUrl;
+    }
+
+    // If it's a details page, try to construct the download URL
+    const detailsMatch = pdfUrl.match(/archive\.org\/details\/([^/]+)/);
+    if (detailsMatch?.[1]) {
+      // Try to get the first PDF file from the archive
+      // This assumes there's a PDF with the same name as the identifier
+      return `https://archive.org/download/${detailsMatch[1]}/${detailsMatch[1]}.pdf`;
+    }
+
+    // If it's already a download URL, keep it as is
+    if (pdfUrl.includes('archive.org/download/')) {
+      return pdfUrl;
+    }
+  }
+  return pdfUrl;
+};
+
 // Sub-component for rendering individual pages in vertical mode
 function PdfPage({ pdf, pageNumber, scale }: { pdf: any; pageNumber: number; scale: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -226,7 +257,7 @@ export default function NativePdfViewer({ url, title, localKey, progressKey, onC
       // Configure PDF.js with proper settings
       const loadingTask = lib.getDocument({
         url: pdfUrl,
-        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/cmaps/',
         cMapPacked: true,
         enableXfa: true,
         // Add withCredentials: false to avoid credential issues
@@ -405,32 +436,6 @@ export default function NativePdfViewer({ url, title, localKey, progressKey, onC
       </div>
     );
   }
-
-  // Helper to handle archive.org URLs and other external links
-  const getBetterViewerUrl = (pdfUrl: string): string => {
-    if (pdfUrl.includes('archive.org')) {
-      // Try to get the direct PDF download URL from archive.org
-      const downloadMatch = pdfUrl.match(/archive\.org\/download\/([^/]+)\/.*\.pdf/);
-      if (downloadMatch?.[1]) {
-        // Keep the direct download URL for the PDF
-        return pdfUrl;
-      }
-      
-      // If it's a details page, try to construct the download URL
-      const detailsMatch = pdfUrl.match(/archive\.org\/details\/([^/]+)/);
-      if (detailsMatch?.[1]) {
-        // Try to get the first PDF file from the archive
-        // This assumes there's a PDF with the same name as the identifier
-        return `https://archive.org/download/${detailsMatch[1]}/${detailsMatch[1]}.pdf`;
-      }
-      
-      // If it's already a download URL, keep it as is
-      if (pdfUrl.includes('archive.org/download/')) {
-        return pdfUrl;
-      }
-    }
-    return pdfUrl;
-  };
 
   // External viewer mode (fallback for CORS-restricted PDFs)
   if (viewerMode === 'iframe') {

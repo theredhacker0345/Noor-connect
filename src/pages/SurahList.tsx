@@ -1,13 +1,62 @@
-﻿import { useState, useMemo, useEffect, memo, useRef, startTransition, type CSSProperties } from "react";
+﻿import { useState, useMemo, useEffect, memo, useRef, startTransition, Children, cloneElement, isValidElement, type CSSProperties, type ReactNode, type ReactElement, type MouseEvent as ReactMouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, ChevronLeft, Sparkles, BookOpen, History, Filter, MapPin, Moon } from "lucide-react";
 import { quranService, type SurahInfo } from "@/lib/quran-service";
-import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
 import { getDailyAyah } from "@/lib/daily-content";
 import { Badge } from "@/components/ui/badge";
 import { goBackOrFallback } from "@/lib/navigation";
-import { CSSOnlyTransition } from '@/components/AdaptiveMotion';
+
+// Local, dependency-free equivalent of AdaptiveMotion's CSSOnlyTransition
+// (hover/tap scale driven by JS mouse handlers). Inlined on purpose: importing
+// AdaptiveMotion.tsx here kept this route chunk transitively importing
+// framer-motion (its forwardRef component bodies are not tree-shakeable),
+// which failed the "SurahList chunk must not pull framer-motion" requirement —
+// verified by grepping the built chunk's static imports.
+interface TapScaleProps {
+  className?: string;
+  hoverScale?: number;
+  tapScale?: number;
+  duration?: number;
+  children: ReactNode;
+}
+
+function TapScale({ className = '', hoverScale = 1.02, tapScale = 0.98, duration = 100, children }: TapScaleProps) {
+  return (
+    <div
+      className={className}
+      style={{
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+        perspective: 1000,
+        transition: `transform ${duration}ms ease-out`,
+      }}
+    >
+      {Children.map(children, child => {
+        if (!isValidElement(child)) return child;
+        return cloneElement(child as ReactElement, {
+          className: `${(child.props as any).className || ''} transition-transform ease-out`,
+          style: {
+            ...((child.props as any).style || {}),
+            transitionDuration: `${duration}ms`,
+          },
+          onMouseEnter: (e: ReactMouseEvent<HTMLElement>) => {
+            (e.currentTarget as HTMLElement).style.transform = `scale(${hoverScale})`;
+          },
+          onMouseLeave: (e: ReactMouseEvent<HTMLElement>) => {
+            (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+          },
+          onMouseDown: (e: ReactMouseEvent<HTMLElement>) => {
+            (e.currentTarget as HTMLElement).style.transform = `scale(${tapScale})`;
+          },
+          onMouseUp: (e: ReactMouseEvent<HTMLElement>) => {
+            (e.currentTarget as HTMLElement).style.transform = `scale(${hoverScale})`;
+          },
+        });
+      })}
+    </div>
+  );
+}
 
 interface SurahCardProps {
   surah: SurahInfo;
@@ -118,8 +167,11 @@ export default function SurahList() {
     });
   };
 
+  // Plain wrapper (no framer-motion): the old PageTransition was a 0.05s
+  // opacity fade — imperceptible, but it made this route chunk statically
+  // depend on the framer-motion runtime. Keeping the same w-full h-full box.
   return (
-    <PageTransition>
+    <div className="w-full h-full">
       <div className={`min-h-screen relative overflow-hidden ${isDark ? 'bg-[#0D0D0D]' : 'bg-[#F5F5F5]'}`}>
         {/* Subtle Islamic geometric pattern on header */}
         <div className="absolute top-0 left-0 right-0 h-48 opacity-[0.03] bg-[radial-gradient(circle_at_2px_2px,_#C9A84C_1px,_transparent_0)] bg-[length:32px_32px] pointer-events-none" />
@@ -129,7 +181,6 @@ export default function SurahList() {
           <div className="absolute inset-0 bg-gradient-to-br from-[#1a4a4a] via-[#245a5a] to-[#2c6e6e]" />
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-[20px] translate-y-1/2 -translate-x-1/2" />
-          <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-[1px]" />
 
           <div className="relative z-10 p-8 flex flex-col items-center text-center">
             <div className="flex items-center gap-4 mb-6 w-full">
@@ -153,7 +204,7 @@ export default function SurahList() {
                 { label: 'Ayahs', value: '6,236' },
                 { label: 'Juz', value: '30' }
               ].map((stat, idx) => (
-                <div key={idx} className="bg-black/20 backdrop-blur-md rounded-2xl p-4 border border-white/5">
+                <div key={idx} className="bg-black/30 rounded-2xl p-4 border border-white/5">
                   <p className="text-primary text-lg font-black tracking-tighter">{stat.value}</p>
                   <p className="text-white/40 text-xs uppercase font-black tracking-widest mt-1">{stat.label}</p>
                 </div>
@@ -218,7 +269,7 @@ export default function SurahList() {
         {/* Last Read Card */}
         {lastRead && (
           <div className="max-w-2xl mx-auto px-4 mb-6">
-            <CSSOnlyTransition hoverScale={1.02} tapScale={0.98} duration={150}>
+            <TapScale hoverScale={1.02} tapScale={0.98} duration={150}>
               <button
                 onClick={() => {
                   if ('vibrate' in navigator) navigator.vibrate(15);
@@ -237,13 +288,13 @@ export default function SurahList() {
                   <p className="text-xs text-primary/60">{lastRead.englishName}</p>
                 </div>
               </button>
-            </CSSOnlyTransition>
+            </TapScale>
           </div>
         )}
 
         {/* Daily Ayah Card */}
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <CSSOnlyTransition hoverScale={0.98} tapScale={0.96} duration={150}>
+          <TapScale hoverScale={0.98} tapScale={0.96} duration={150}>
             <div
               className="relative overflow-hidden rounded-[32px] shadow-2xl shadow-emerald-900/20 cursor-pointer active:scale-[0.98] transition-transform"
               onClick={() => {
@@ -256,7 +307,6 @@ export default function SurahList() {
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-800" />
               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-[20px] translate-y-1/2 -translate-x-1/2" />
-              <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-[1px]" />
 
               <div className="relative z-10 p-8">
                 <div className="flex items-center gap-2 mb-4">
@@ -266,7 +316,7 @@ export default function SurahList() {
                   </span>
                 </div>
 
-                <div className="bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/5 mb-4">
+                <div className="bg-black/30 rounded-2xl p-6 border border-white/5 mb-4">
                   <p className="text-white/90 text-base font-medium leading-relaxed mb-4">
                     {dailyAyah?.content || 'Loading...'}
                   </p>
@@ -283,7 +333,7 @@ export default function SurahList() {
                 </p>
               </div>
             </div>
-          </CSSOnlyTransition>
+          </TapScale>
         </div>
 
         {/* Surah List */}
@@ -311,6 +361,6 @@ export default function SurahList() {
           )}
         </div>
       </div>
-    </PageTransition>
+    </div>
   );
 }

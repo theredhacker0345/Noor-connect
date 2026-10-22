@@ -10,8 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Ebook PDFs from archive.org no longer fail with "Cannot access '$' before initialization": the internal archive.org URL helper was defined after the viewer's loading/error early-returns, so opening any archive.org book crashed pdf.js loading and showed an error screen. The helper now lives at module scope, and the CMap CDN URL was updated to match the bundled pdf.js version (4.10.38).
+- The Quran page now opens much faster: the app's idle preloader was warming a dead, unrouted page instead of the real surah list, so every first visit paid the full chunk download behind the loading spinner. The real list chunk is now preloaded on idle and on Quran-tab pointerdown, the list no longer pulls the animation runtime into its chunk, and several stacked GPU blur layers above the fold were simplified.
 - Storage no longer wipes user data when local storage fills up: if a write fails due to storage pressure, the app now clears only re-downloadable caches (surah lists, reciter directory, daily ayah/hadith, cached prayer times, daily remedy, exchange rates) and retries once. Bookmarks, Quran progress, tasbeeh counts, notes, history and settings are never deleted; if space still cannot be freed the write is skipped and logged instead.
 - Added a boot-time update-safety check that records the app version, dispatches an internal event when the version changes, and logs a diagnostic report if previously present user data appears empty after an update. It is read-only and never modifies user data.
+
+### Added
+
+- Haptic settings now detect devices without a vibration motor (desktop browsers, tablets, TV boxes, emulators) and show a clear popup explaining that vibration won't work, plus a persistent banner and a disabled "Test now" button. Settings are kept in case the user switches devices. Detection uses the W3C Vibration API contract (a 0 ms cancel probe returning false on motor-less devices) rather than API presence, which desktop browsers falsely report.
+- Haptics page redesigned with consistent cards, unified icon chips and typography rhythm.
 
 ## [2.3.0] - 2026-10-07
 

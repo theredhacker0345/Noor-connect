@@ -181,6 +181,31 @@ class HapticService {
   }
 
   /**
+   * Check whether the current device can actually vibrate.
+   *
+   * Presence alone is NOT enough: desktop Chrome/Chromium (and several
+   * Android WebViews on motor-less devices like tablets/TV boxes/emulators)
+   * still EXPOSE `navigator.vibrate` — verified live: `'vibrate' in navigator`
+   * is true in desktop Chromium where vibration silently no-ops.
+   *
+   * The honest runtime probe is the W3C Vibration API contract: vibrate()
+   * returns false when no vibrator hardware is available. We call
+   * `navigator.vibrate(0)` — per spec a 0ms pattern is a vibration CANCEL
+   * (harmless, side-effect-free, no user-gesture requirement) — and require
+   * it to return true. Devices WITH a motor return true; motor-less devices
+   * and desktops return false.
+   */
+  hasVibrationSupport(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    if (typeof navigator.vibrate !== 'function') return false;
+    try {
+      return navigator.vibrate(0) === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Trigger haptic feedback
    */
   async trigger(pattern: HapticPattern): Promise<void> {

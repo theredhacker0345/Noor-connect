@@ -3,6 +3,7 @@ import { BookOpen, Settings as SettingsIcon, Compass, LayoutGrid, Home } from "l
 import { useLanguage } from "@/contexts/LanguageContext-new";
 import { memo, useEffect, useState } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
+import { preloadQuranList } from "@/lib/preload";
 
 const AMBER = '#C9860A';
 const AMBER_DARK = '#E8A020';
@@ -72,6 +73,10 @@ const BottomNav = memo(function BottomNav() {
             end={item.exact}
             className="flex-1 flex flex-col items-center justify-center h-full relative min-w-0"
             style={{ touchAction: 'manipulation' }}
+            // Warm the lazy /quran chunk the moment the finger lands (pointerdown
+            // fires ~100ms before click) or the tab is focused — fire-and-forget.
+            onPointerDown={item.path === '/quran' ? preloadQuranList : undefined}
+            onFocus={item.path === '/quran' ? preloadQuranList : undefined}
           >
             {({ isActive }) => (
               <div
