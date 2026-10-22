@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "রিমাইন্ডার: আগামীকাল {{name}}",
   "notifEventReminderBody": "{{name}}-এর জন্য প্রস্তুত হোন। {{message}}",
   "endsAt": "শেষ {{time}}",
-  "islamicMidnight": "ইসলামিক মধ্যরাত"
+  "islamicMidnight": "ইসলামিক মধ্যরাত",
+  "endsFormula": "প্রতিটি নামাজের সময় পরের নামাজ শুরু হলেই শেষ হয় — এশার সময় শেষ হয় ইসলামিক মধ্যরাতে (হানাফি: ফজর)।"
 }

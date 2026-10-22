@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "Напоминание: завтра — {{name}}",
   "notifEventReminderBody": "Подготовьтесь к {{name}}. {{message}}",
   "endsAt": "до {{time}}",
-  "islamicMidnight": "исламская полночь"
+  "islamicMidnight": "исламская полночь",
+  "endsFormula": "Время каждой молитвы истекает с началом следующей — Иша заканчивается в исламскую полночь (у ханафитов: рассвет)."
 }

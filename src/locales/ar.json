@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "تذكير: {{name}} غدًا",
   "notifEventReminderBody": "استعد لـ {{name}}. {{message}}",
   "endsAt": "ينتهي {{time}}",
-  "islamicMidnight": "منتصف الليل الشرعي"
+  "islamicMidnight": "منتصف الليل الشرعي",
+  "endsFormula": "ينتهي وقت كل صلاة ببدء الصلاة التالية — وينتهي وقت العشاء بمنتصف الليل الشرعي (عند الحنفية: الفجر)."
 }

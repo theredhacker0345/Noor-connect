@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [2.5.0] - 2026-10-23
+## [2.4.0] - 2026-10-23
 
 ### Added
 
@@ -18,14 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Richer notification text**: prayer notifications carry the localized prayer name with its Arabic name and a per-prayer authentic reminder; adhan, Ramadan countdown and Islamic-event notifications are fully localized (previously hard-coded English) across all 7 languages.
 - A prayer end-times research document (`docs/research/prayer-end-times.md`) covering the fiqh rules per madhab, the Aladhan API / adhan library comparison, and the integration plan.
 
-### Fixed
-
-- **Islamic midnight was civil midnight**: the fallback computed 00:00 of the next civil day instead of the fiqh midnight. It is now the true Maghrib → tomorrow-Fajr midpoint (equivalent to adhan's `SunnahTimes.middleOfTheNight`), with a polar-day guard.
-- **Tahajjud window corrected**: the old fallback midpointed civil midnight → Fajr; the window now starts at the last third of the night (`SunnahTimes.lastThirdOfTheNight`). Sleep/Tahajjud reminders inherit the corrected windows.
-- **Aladhan offline fallback poisoned night fields**: the offline path hard-coded `Midnight`/`Firstthird`/`Lastthird` to `00:00`, which parsed downstream as a real (already-past) time. The fields are now simply absent when unknown, and fiqh night semantics are always computed locally (Aladhan's default `Midnight` spans Sunset↔Sunrise, not the fiqh span).
-- **"undefined" in prayer notification bodies**: `PRAYER_QUOTES` was indexed as an array instead of a record, so bodies read "…prayer.\nundefined". Quotes are now indexed per prayer with a safe default pool.
-- **Quran-recitation notification type tag shadowed**: a duplicate `type` key in the media-style notification data silently broke the recitation-action routing; renamed to `recitationType`.
-- Isha's valid-time window no longer overstates to tomorrow's Fajr for non-Hanafi users, and current/prayer-window boundary comparisons are now end-exclusive.
+- Noor Cycle gains pregnancy mode: weeks/days + trimester + due-date countdown with a 40-week progress ring, an honest fiqh note (pregnancy bleeding is istiḥāḍah — prayers continue), a "Baby arrived — start Nifās" handoff, duʿās of pregnancy and birth, and suppression of period predictions while expecting. Old tracker data migrates safely.
+- Pregnancy Mode is now easy to find: a dedicated **Pregnancy** button in the Noor Cycle header (visible whenever tracking is idle) and a prominent sky-tinted "Pregnancy Mode" card directly under the Today-tab hero — no more hunting for the old collapsed "Expecting?" row.
+- Noor Cycle Fiqh tab: the recommended-dhikr list is now a tap-to-count counter (per-dhikr goals like 33/34/100, daily totals, counts reset each day and persist in a dedicated storage key).
+- Noor Cycle Today tab: a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.
+- The Qisas library is complete: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the 24 existing stories — 25 prophets, from Adam to the Final Messenger.
+- 60 new authentic duʿās across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — 140 duʿās total, every entry sourced from the Qur'an or the six hadith collections.
 
 ### Changed
 
@@ -35,18 +33,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **README fully documented**: 226 → 485 lines with a feature index and 35 per-feature sections; corrected stale claims along the way (87,018 hadiths across 16 collections, 158 radio stations, spa5k tafsir API with 27 editions, accurate nasheed feature list).
 - i18n catalogue extended to 1,208 keys with full parity across all 7 locales (English, Arabic, Urdu, Bengali, Russian, French, Korean); new keys are RTL-aware for Arabic/Urdu.
 
-## [2.4.0] - 2026-10-23
-
-### Added
-
-- Noor Cycle gains pregnancy mode: weeks/days + trimester + due-date countdown with a 40-week progress ring, an honest fiqh note (pregnancy bleeding is istiḥāḍah — prayers continue), a "Baby arrived — start Nifās" handoff, duʿās of pregnancy and birth, and suppression of period predictions while expecting. Old tracker data migrates safely.
-- Pregnancy Mode is now easy to find: a dedicated **Pregnancy** button in the Noor Cycle header (visible whenever tracking is idle) and a prominent sky-tinted "Pregnancy Mode" card directly under the Today-tab hero — no more hunting for the old collapsed "Expecting?" row.
-- Noor Cycle Fiqh tab: the recommended-dhikr list is now a tap-to-count counter (per-dhikr goals like 33/34/100, daily totals, counts reset each day and persist in a dedicated storage key).
-- Noor Cycle Today tab: a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.
-- The Qisas library is complete: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the 24 existing stories — 25 prophets, from Adam to the Final Messenger.
-- 60 new authentic duʿās across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — 140 duʿās total, every entry sourced from the Qur'an or the six hadith collections.
-
 ### Fixed
+
+- **Islamic midnight was civil midnight**: the fallback computed 00:00 of the next civil day instead of the fiqh midnight. It is now the true Maghrib → tomorrow-Fajr midpoint (equivalent to adhan's `SunnahTimes.middleOfTheNight`), with a polar-day guard.
+- **Tahajjud window corrected**: the old fallback midpointed civil midnight → Fajr; the window now starts at the last third of the night (`SunnahTimes.lastThirdOfTheNight`). Sleep/Tahajjud reminders inherit the corrected windows.
+- **Aladhan offline fallback poisoned night fields**: the offline path hard-coded `Midnight`/`Firstthird`/`Lastthird` to `00:00`, which parsed downstream as a real (already-past) time. The fields are now simply absent when unknown, and fiqh night semantics are always computed locally (Aladhan's default `Midnight` spans Sunset↔Sunrise, not the fiqh span).
+- **"undefined" in prayer notification bodies**: `PRAYER_QUOTES` was indexed as an array instead of a record, so bodies read "…prayer.\nundefined". Quotes are now indexed per prayer with a safe default pool.
+- **Quran-recitation notification type tag shadowed**: a duplicate `type` key in the media-style notification data silently broke the recitation-action routing; renamed to `recitationType`.
+- Isha's valid-time window no longer overstates to tomorrow's Fajr for non-Hanafi users, and current/prayer-window boundary comparisons are now end-exclusive.
 
 - The category bar on the Duas page was impossible to scroll: it was built on a vertical-only scroll container that clipped the 35 category chips, so categories beyond the first few were unreachable on any screen size. It is now a native horizontally-scrollable chip row (touch-friendly, consistent with the rest of the app).
 - The console spam after app updates is gone at the root: the service worker served a stale cached index.html that referenced deleted chunks, so chunk requests were answered with HTML ("Expected a JavaScript-or-Wasm module script…" / "Failed to fetch dynamically imported module" / ErrorBoundary crash). Navigations are now network-first with a 3 s timeout and only fall back to the precached HTML offline; asset caching rejects text/html responses so a missing chunk can never poison the cache; cache names bumped to v2 for a clean rebuild; index.html and sw.js are served must-revalidate; and the nasheed cache is no longer wiped on every service-worker activation.
@@ -111,7 +105,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ---
 
 ## [2.2.1] - 2026-08-22
-
 
 ### 📱 Android Widgets — Stability, Deep-Links & Accent Colors
 

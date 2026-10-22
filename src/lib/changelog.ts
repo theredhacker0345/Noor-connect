@@ -31,9 +31,9 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
-    version: '2.5.0',
+    version: '2.4.0',
     date: '2026-10-23',
-    title: 'Prayer End Times, Smarter Notifications & Redesigned Services',
+    title: 'Prayer End Times, Pregnancy Mode & Complete Prophet Stories',
     changes: [
       { type: 'feature', description: 'Prayer end times \u2014 every prayer card on the home screen now shows when the prayer\u2019s valid time ends ("Ends 06:12"). Isha\u2019s end is madhab-aware: Islamic midnight for the majority opinion (Shafi\u02bf\u012b/Maliki/Hanbali) and dawn (Fajr) for Hanafi.' },
       { type: 'fix', description: 'Islamic midnight & Tahajjud corrected \u2014 "midnight" was computed as civil 00:00; it is now the true midpoint between Maghrib and tomorrow\u2019s Fajr, and Tahajjud begins at the last third of the night. Sleep and Tahajjud reminders inherit the corrected windows.' },
@@ -43,13 +43,6 @@ export const CHANGELOG_DATA: VersionChangelog[] = [
       { type: 'improvement', description: 'Services hub redesigned \u2014 a "Discover Resources" hero and clearly grouped sections (Worship & Prayer, Qur\u2019an, Learning, Media, Calculators), with the seasonal Fitrana/Eid-checklist cards kept exactly as before.' },
       { type: 'improvement', description: 'Home screen polish \u2014 prayer cards now show end times, the hero shows the Arabic prayer name, and spacing/typography got a consistent dark-mode pass.' },
       { type: 'improvement', description: 'The README now documents every feature in full \u2014 35 feature sections with code-verified numbers (87,018 hadiths, 140 du\u02bf\u0101s, 25 prophet stories, 158 radio stations and more).' },
-    ],
-  },
-  {
-    version: '2.4.0',
-    date: '2026-10-23',
-    title: 'Pregnancy Mode, Complete Prophet Stories & 140 Du\u02bf\u0101s',
-    changes: [
       { type: 'feature', description: 'Noor Cycle \u2014 Pregnancy Mode: a 40-week progress ring with weeks/days count, trimester badge and due-date countdown; an honest fiqh note (pregnancy bleeding is isti\u1e25\u0101\u1e0dah \u2014 prayers continue); du\u02bf\u0101s of pregnancy and birth; and a "Baby arrived \u2014 start Nif\u0101s" handoff. Period predictions pause while expecting, prayer alerts never do, and old tracker data migrates safely. Pregnancy Mode is now front and centre: a dedicated Pregnancy button in the Noor Cycle header and a prominent "Pregnancy Mode" card on the Today tab.' },
       { type: 'feature', description: 'Noor Cycle Fiqh tab \u2014 the recommended-dhikr list is now a tap-to-count counter with per-dhikr goals (33/33/34/100), haptic ticks, daily totals and a reset-today button; counts persist and reset each day.' },
       { type: 'feature', description: 'Noor Cycle Today tab \u2014 a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.' },

@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "알림: 내일 {{name}}",
   "notifEventReminderBody": "{{name}}을(를) 준비하세요. {{message}}",
   "endsAt": "{{time}} 종료",
-  "islamicMidnight": "이슬람 한밤중"
+  "islamicMidnight": "이슬람 한밤중",
+  "endsFormula": "각 예배 시간은 다음 예배가 시작되면 끝나며, 이샤는 이슬람 한밤중에 끝납니다 (하낔피 학파는 새벽)."
 }

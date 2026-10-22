@@ -1,14 +1,16 @@
 import { useNavigate } from "react-router-dom";
+import type { ReactNode } from "react";
 import { AppBar } from "@/components/AppBar";
 import { PageTransition } from "@/components/PageTransition";
 import { useI18n } from "@/hooks/useI18n";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { shouldShowMenstrualFeatures } from "@/lib/gender-settings";
+import { CURRENT_APP_VERSION } from "@/lib/constants";
 import {
     Radio, Target, Heart, Calculator,
     Star, Trophy, Coins, Calendar, Library, Tv, Sparkles, HeartHandshake, BookOpen, BookText, Moon, Headphones,
-    CheckCircle, AlertTriangle, Users, HeartPulse, Music, type LucideIcon
+    CheckCircle, AlertTriangle, Users, HeartPulse, Music, ChevronRight, type LucideIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -25,6 +27,62 @@ interface ServiceSection {
     headingKey: string;
     items: ServiceItem[];
 }
+
+type MotionPropsFn = (props: Record<string, unknown>) => Record<string, unknown>;
+
+/** Decorative eight-pointed star (khatam) — mirrors the home hero card. */
+const HeroStarOrnament = ({ className = '', opacity = 0.14 }: { className?: string; opacity?: number }) => (
+    <svg aria-hidden="true" viewBox="0 0 100 100" className={`pointer-events-none ${className}`} style={{ opacity }}>
+        <g stroke="#C9860A" strokeWidth="1" fill="none">
+            <rect x="28" y="28" width="44" height="44" rx="2" />
+            <rect x="28" y="28" width="44" height="44" rx="2" transform="rotate(45 50 50)" />
+            <circle cx="50" cy="50" r="13" />
+            <circle cx="50" cy="50" r="5" />
+        </g>
+    </svg>
+);
+
+/** Section header with an amber accent nib and a hairline rule. */
+const SectionHeading = ({ id, children }: { id: string; children: ReactNode }) => (
+    <div className="flex items-center gap-2.5 mb-3">
+        <span aria-hidden="true" className="w-1 h-3.5 rounded-full shrink-0" style={{ background: 'linear-gradient(180deg, #C9860A, #E8A020)' }} />
+        <h2 id={id} className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground whitespace-nowrap">
+            {children}
+        </h2>
+        <div aria-hidden="true" className="flex-1 h-px bg-border/70" />
+    </div>
+);
+
+/** Shared service card so seasonal and grouped cards stay identical. */
+const ServiceCard = ({ item, idx, navigate, motionProps }: { item: ServiceItem; idx: number; navigate: (path: string) => void; motionProps: MotionPropsFn }) => (
+    <motion.button
+        {...motionProps({
+            initial: { opacity: 0, y: 20 },
+            animate: { opacity: 1, y: 0 },
+            transition: { delay: idx * 0.05, duration: 0.4 },
+            whileTap: { scale: 0.95 }
+        })}
+        onClick={() => navigate(item.path)}
+        aria-label={item.title}
+        className="group relative flex flex-col items-start p-5 bg-card border border-border rounded-[20px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+        {/* Top gradient edge — each card carries its section colour. */}
+        <div aria-hidden="true" className={`absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r ${item.gradient} opacity-80`} />
+
+        <div className={`flex items-center justify-center w-12 h-12 rounded-[14px] bg-gradient-to-br ${item.gradient} shadow-md mb-3 opacity-90 group-hover:opacity-100 transition-opacity`}>
+            <item.icon className="w-5 h-5 text-white" strokeWidth={2} />
+        </div>
+        <h3 className="font-semibold text-sm text-foreground leading-tight pe-5">
+            {item.title}
+        </h3>
+
+        {/* Launch affordance */}
+        <ChevronRight aria-hidden="true" className="absolute top-4 end-4 w-4 h-4 text-muted-foreground/50 transition-transform duration-300 group-hover:translate-x-0.5 chevron-right rtl-icon" />
+
+        {/* Dynamic Glow Effect */}
+        <div className={`absolute -inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br ${item.gradient} transition-opacity duration-500 pointer-events-none`} />
+    </motion.button>
+);
 
 export default function Services() {
     const { t } = useI18n();
@@ -168,6 +226,8 @@ export default function Services() {
                         <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[20px] pointer-events-none" style={{ background: 'rgba(201,134,10,0.15)' }} />
                         <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-[20px] pointer-events-none" style={{ background: 'rgba(59,130,246,0.15)' }} />
 
+                        {/* Eight-pointed star ornament — ties this hero to the home hero. */}
+                        <HeroStarOrnament className="absolute -top-8 -right-8 w-48 h-48" opacity={0.14} />
                         <div className="relative z-10">
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 mb-4">
                                 <Sparkles className="w-4 h-4" style={{ color: '#C9860A' }} />
@@ -198,35 +258,11 @@ export default function Services() {
 
                     {seasonalItems.length > 0 && (
                         <section className="mb-8" aria-labelledby="services-seasonal-heading">
-                            <h2
-                                id="services-seasonal-heading"
-                                className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-3"
-                            >
-                                {t('servicesSectionSeasonal')}
-                            </h2>
+                            <SectionHeading id="services-seasonal-heading">{t('servicesSectionSeasonal')}</SectionHeading>
                             <div className="grid grid-cols-2 gap-4">
                                 <AnimatePresence>
                                     {seasonalItems.map((item, idx) => (
-                                        <motion.button
-                                            key={item.path}
-                                            {...motionProps({
-                                                initial: { opacity: 0, y: 20 },
-                                                animate: { opacity: 1, y: 0 },
-                                                transition: { delay: idx * 0.05, duration: 0.4 },
-                                                whileTap: { scale: 0.95 }
-                                            })}
-                                            onClick={() => navigate(item.path)}
-                                            aria-label={item.title}
-                                            className="group relative flex flex-col items-start p-5 bg-card border border-border rounded-[20px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                                        >
-                                            <div className={`flex items-center justify-center w-12 h-12 rounded-[14px] bg-gradient-to-br ${item.gradient} shadow-sm mb-3 opacity-90 group-hover:opacity-100 transition-opacity`}>
-                                                <item.icon className="w-5 h-5 text-white" strokeWidth={2} />
-                                            </div>
-                                            <h3 className="font-semibold text-sm text-foreground leading-tight">
-                                                {item.title}
-                                            </h3>
-                                            <div className={`absolute -inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br ${item.gradient} transition-opacity duration-500 pointer-events-none`} />
-                                        </motion.button>
+                                        <ServiceCard key={item.path} item={item} idx={idx} navigate={navigate} motionProps={motionProps} />
                                     ))}
                                 </AnimatePresence>
                             </div>
@@ -240,40 +276,11 @@ export default function Services() {
                             className={sectionIdx < sections.length - 1 ? "mb-8" : ""}
                             aria-labelledby={`services-${section.headingKey}-heading`}
                         >
-                            <h2
-                                id={`services-${section.headingKey}-heading`}
-                                className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-3"
-                            >
-                                {t(section.headingKey)}
-                            </h2>
+                            <SectionHeading id={`services-${section.headingKey}-heading`}>{t(section.headingKey)}</SectionHeading>
                             <div className="grid grid-cols-2 gap-4">
                                 <AnimatePresence>
                                     {section.items.map((item, idx) => (
-                                        <motion.button
-                                            key={item.path}
-                                            {...motionProps({
-                                                initial: { opacity: 0, y: 20 },
-                                                animate: { opacity: 1, y: 0 },
-                                                transition: { delay: idx * 0.05, duration: 0.4 },
-                                                whileTap: { scale: 0.95 }
-                                            })}
-                                            onClick={() => navigate(item.path)}
-                                            aria-label={item.title}
-                                            className="group relative flex flex-col items-start p-5 bg-card border border-border rounded-[20px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                                        >
-                                            {/* Icon Box with Vibrant Gradient */}
-                                            <div className={`flex items-center justify-center w-12 h-12 rounded-[14px] bg-gradient-to-br ${item.gradient} shadow-sm mb-3 opacity-90 group-hover:opacity-100 transition-opacity`}>
-                                                <item.icon className="w-5 h-5 text-white" strokeWidth={2} />
-                                            </div>
-
-                                            {/* Title */}
-                                            <h3 className="font-semibold text-sm text-foreground leading-tight">
-                                                {item.title}
-                                            </h3>
-
-                                            {/* Dynamic Glow Effect */}
-                                            <div className={`absolute -inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br ${item.gradient} transition-opacity duration-500 pointer-events-none`} />
-                                        </motion.button>
+                                        <ServiceCard key={item.path} item={item} idx={idx} navigate={navigate} motionProps={motionProps} />
                                     ))}
                                 </AnimatePresence>
                             </div>
@@ -282,8 +289,9 @@ export default function Services() {
                 </div>
 
                 <div className="px-8 mt-12 text-center opacity-40 pb-8">
+                    <Moon aria-hidden="true" className="w-4 h-4 mx-auto mb-2" />
                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground">
-                        Noor Connect
+                        Noor Connect · v{CURRENT_APP_VERSION}
                     </p>
                 </div>
             </div>

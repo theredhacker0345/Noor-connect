@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.5.0 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.4.0 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -20,11 +20,12 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ---
 
-## 🆕 What's New in v2.5.0
+## 🆕 What's New in v2.4.0
 
 ### ⏱️ Prayer End Times
 - **Every prayer card on the home screen now shows when the prayer's valid time ends** ("Ends 06:12") — Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha
 - **Madhab-aware Isha end**: Islamic midnight (Maghrib → Fajr midpoint) for the majority opinion (Shafi'i/Maliki/Hanbali), dawn (Fajr) for Hanafi — with a tooltip explaining the basis
+- **How end times are calculated**: each prayer's window simply ends where the next one begins (Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha), except Isha, whose end is madhab-aware — Islamic midnight (the exact midpoint of Maghrib and the next dawn) for the majority opinion, or the next dawn itself for Hanafi — all computed fully offline from the bundled `adhan` library
 - **Islamic midnight fixed**: previously computed as civil 00:00; now the true Maghrib → tomorrow-Fajr midpoint (the same value as the adhan library's `SunnahTimes.middleOfTheNight`)
 - **Tahajjud window corrected**: now starts at the last third of the night, so sleep and Tahajjud reminders fire at the right time
 
@@ -38,8 +39,6 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - **Services redesigned**: a "Discover Resources" hero with clearly grouped sections (Worship & Prayer, Qur'an & Recitation, Learning, Media, Calculators) — seasonal Fitrana and Eid-checklist cards unchanged
 - **Home polish**: Arabic prayer name on the hero, end times on every card, tighter spacing and a dark-mode consistency pass
 - **README now documents every feature in full**: 35 feature sections with code-verified counts (87,018 hadiths, 140 duʿās, 25 prophet stories, 158 radio stations and more)
-
-## 🆕 What's New in v2.4.0
 
 ### 🤰 Noor Cycle — Pregnancy Mode
 - **Full pregnancy tracking**: 40-week progress ring, weeks + days count, trimester badge, and a live due-date countdown

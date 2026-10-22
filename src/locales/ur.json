@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "یاد دہانی: {{name}} کل",
   "notifEventReminderBody": "{{name}} کی تیاری کریں۔ {{message}}",
   "endsAt": "{{time}} پر ختم",
-  "islamicMidnight": "شرعی نصف شب"
+  "islamicMidnight": "شرعی نصف شب",
+  "endsFormula": "ہر نماز کا وقت اگلی نماز کے آغاز پر ختم ہو جاتا ہے — عشاء کا وقت شرعی نصف شب پر ختم ہوتا ہے (حنفی: فجر)۔"
 }

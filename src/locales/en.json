@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "Reminder: {{name}} tomorrow",
   "notifEventReminderBody": "Prepare for {{name}}. {{message}}",
   "endsAt": "Ends {{time}}",
-  "islamicMidnight": "Islamic midnight"
+  "islamicMidnight": "Islamic midnight",
+  "endsFormula": "Each prayer's time ends when the next one begins — Isha ends at Islamic midnight (Hanafi: dawn)."
 }

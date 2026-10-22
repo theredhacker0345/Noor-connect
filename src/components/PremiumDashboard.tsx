@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, memo, lazy, Suspense, useState } from "react";
 import { m } from "framer-motion";
-import { Bell, MapPin, ChevronRight, Activity, Compass, X } from "lucide-react";
+import { Bell, MapPin, ChevronRight, Activity, Compass, X, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
@@ -19,6 +19,47 @@ const IslamicEventsWidget = lazy(() => import("@/components/IslamicEventsWidget"
 const QazaTracker = lazy(() => import("@/components/QazaTracker"));
 
 const WidgetFallback = () => <div className="h-40 w-full rounded-2xl bg-card/40 animate-pulse border border-border/40" />;
+
+/**
+ * Per-prayer identity tints for the dashboard grid icon chips (subtle alpha
+ * washes that sit on both light and dark themes): dawn indigo for Fajr,
+ * high-sun gold for Dhuhr, deepening amber for Asr, sunset rose for Maghrib
+ * and night blue for Isha. Active prayer keeps the brand amber.
+ */
+const PRAYER_TINTS: Record<string, { bg: string; color: string }> = {
+  fajr: { bg: 'rgba(99,102,241,0.12)', color: '#818CF8' },
+  sunrise: { bg: 'rgba(251,191,36,0.14)', color: '#D97706' },
+  dhuhr: { bg: 'rgba(245,158,11,0.13)', color: '#F59E0B' },
+  asr: { bg: 'rgba(217,119,6,0.12)', color: '#D97706' },
+  maghrib: { bg: 'rgba(244,63,94,0.11)', color: '#FB7185' },
+  isha: { bg: 'rgba(96,165,250,0.12)', color: '#60A5FA' },
+  jummah: { bg: 'rgba(201,134,10,0.13)', color: '#C9860A' },
+};
+
+const iconTintStyle = (prayerName: string, isActive?: boolean): React.CSSProperties => {
+  if (isActive) return { background: 'rgba(201,134,10,0.14)', color: '#C9860A' };
+  const tint = PRAYER_TINTS[(prayerName || '').toLowerCase()];
+  return tint
+    ? { background: tint.bg, color: tint.color }
+    : { background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
+};
+
+/** Decorative eight-pointed star (khatam) used on the dark hero cards. */
+const HeroStarOrnament = ({ className = '', opacity = 0.12 }: { className?: string; opacity?: number }) => (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 100 100"
+    className={`pointer-events-none ${className}`}
+    style={{ opacity }}
+  >
+    <g stroke="#C9860A" strokeWidth="1" fill="none">
+      <rect x="28" y="28" width="44" height="44" rx="2" />
+      <rect x="28" y="28" width="44" height="44" rx="2" transform="rotate(45 50 50)" />
+      <circle cx="50" cy="50" r="13" />
+      <circle cx="50" cy="50" r="5" />
+    </g>
+  </svg>
+);
 
 
 interface PrayerTime {
@@ -201,6 +242,10 @@ function PremiumDashboardInner({
     return PRAYER_ARABIC_NAMES[base] || null;
   })();
 
+  // End of the upcoming prayer's valid window, promoted to the hero so the
+  // countdown card answers "until when?" without hunting the grid below.
+  const upcomingEndsAt = prayers.find((p) => p.isUpcoming)?.endsAt || null;
+
   return (
     <div
       className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300"
@@ -311,6 +356,8 @@ function PremiumDashboardInner({
           className="relative overflow-hidden rounded-[24px]"
           style={{ background: 'linear-gradient(145deg, #1A1E2E, #1E2438)', boxShadow: '0 4px 24px rgba(0,0,0,0.25)' }}
         >
+          {/* Eight-pointed star ornament — ties the hero to the Services hub. */}
+          <HeroStarOrnament className="absolute -top-7 -right-7 w-40 h-40 z-0" opacity={0.14} />
           <div className="relative z-10 p-5">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: '#C9860A' }}>
@@ -337,17 +384,24 @@ function PremiumDashboardInner({
                 <LiveCountdown targetTime={nextPrayer.targetTime} />
               </div>
             </div>
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-3">
               <span className="text-xs text-white/40">{t('atTime', { time: nextPrayer.time })}</span>
+              {upcomingEndsAt && (
+                <span
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  dir="auto"
+                  style={{ background: 'rgba(201,134,10,0.12)', color: '#E8A020' }}
+                >
+                  <Clock className="w-2.5 h-2.5" strokeWidth={2.5} />
+                  {t('endsAt', { time: upcomingEndsAt })}
+                </span>
+              )}
             </div>
-            {/* NOTE: keep vertical rhythm above the progress bar — an extra
-                small "window end / iqamah-style" line is planned to slot in
-                between the 'atTime' row and this bar (orchestrator, next round). */}
             {/* Amber progress bar */}
-            <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <m.div
                 className="h-full rounded-full"
-                style={{ background: 'linear-gradient(90deg, #C9860A, #E8A020)' }}
+                style={{ background: 'linear-gradient(90deg, #C9860A, #E8A020)', boxShadow: '0 0 8px rgba(201,134,10,0.55)' }}
                 {...motionProps({ initial: { width: 0 }, animate: { width: `${nextPrayer.progress}%` }, transition: { duration: 1, ease: 'easeOut', delay: 0.4 } })}
               />
             </div>
@@ -365,7 +419,7 @@ function PremiumDashboardInner({
             })}
             className="w-full"
           >
-                      <div className="flex items-center justify-between px-1 mb-4">
+                      <div className="flex items-center justify-between px-1 mb-1">
                         <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{t('prayerTimes')}</h2>
                         <button
                           onClick={onLocationClick}
@@ -375,11 +429,17 @@ function PremiumDashboardInner({
                           {t('changeCity')}
                         </button>
                       </div>
+                      {/* One-line rule for how the shown end times are derived
+                          (single source of truth, mirrored in the README). */}
+                      <p className="text-[11px] leading-snug text-muted-foreground/80 px-1 mb-3" dir="auto">
+                        {t('endsFormula')}
+                      </p>
 
                       <div className="grid grid-cols-2 gap-3">
                         {prayers.length === 0 && (
                           // Loading skeleton — same footprint as a prayer card
-                          // so the grid never jumps when times arrive.
+                          // (icon chip, name, time, ends chip) so the grid never
+                          // jumps when times arrive.
                           <>
                             {[0, 1, 2, 3].map((i) => (
                               <div
@@ -389,7 +449,8 @@ function PremiumDashboardInner({
                               >
                                 <div className="w-8 h-8 rounded-xl bg-muted mb-3" />
                                 <div className="h-3.5 w-16 rounded bg-muted mb-2" />
-                                <div className="h-3 w-12 rounded bg-muted" />
+                                <div className="h-3 w-12 rounded bg-muted mb-2" />
+                                <div className="h-4 w-20 rounded-full bg-muted" />
                               </div>
                             ))}
                           </>
@@ -408,13 +469,20 @@ function PremiumDashboardInner({
                               boxShadow: '0 0 0 1px rgba(201,134,10,0.1)',
                             } : {}}
                           >
+                            {/* Amber wash bleeding down from the top edge on the
+                                current prayer — reads as "you are here". */}
+                            {prayer.isActive && (
+                              <div
+                                aria-hidden="true"
+                                className="absolute inset-x-0 top-0 h-16 pointer-events-none"
+                                style={{ background: 'linear-gradient(180deg, rgba(201,134,10,0.10), transparent)' }}
+                              />
+                            )}
                             <div className="relative z-10">
                               <div className="flex items-center justify-between mb-3">
                                 <div
                                   className="w-8 h-8 flex items-center justify-center rounded-xl"
-                                  style={prayer.isActive
-                                    ? { background: 'rgba(201,134,10,0.12)', color: '#C9860A' }
-                                    : { background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
+                                  style={iconTintStyle(prayer.originalName || prayer.name, prayer.isActive)}
                                 >
                                   {prayer.icon}
                                 </div>
@@ -435,13 +503,17 @@ function PremiumDashboardInner({
                                 {prayer.time}
                               </p>
                               {prayer.endsAt && (
-                                <p
-                                  className="text-[11px] mt-0.5 text-muted-foreground"
+                                <span
+                                  className={`inline-flex items-center gap-1 mt-1.5 px-2 py-[3px] rounded-full border text-[10px] font-semibold ${prayer.isActive ? '' : 'bg-muted/50 border-border/60 text-muted-foreground'}`}
                                   dir="auto"
                                   title={prayer.endsBasisKey ? t(prayer.endsBasisKey) : undefined}
+                                  style={prayer.isActive
+                                    ? { background: 'rgba(201,134,10,0.10)', borderColor: 'rgba(201,134,10,0.28)', color: '#C9860A' }
+                                    : undefined}
                                 >
+                                  <Clock className="w-2.5 h-2.5" strokeWidth={2.5} />
                                   {t('endsAt', { time: prayer.endsAt })}
-                                </p>
+                                </span>
                               )}
                             </div>
                           </m.div>

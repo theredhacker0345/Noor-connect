@@ -1206,5 +1206,6 @@
   "notifEventReminderTitle": "Rappel : {{name}} demain",
   "notifEventReminderBody": "Préparez-vous pour {{name}}. {{message}}",
   "endsAt": "Jusqu'à {{time}}",
-  "islamicMidnight": "minuit islamique"
+  "islamicMidnight": "minuit islamique",
+  "endsFormula": "Le temps de chaque prière s'achève au début de la suivante — Isha se termine à minuit islamique (hanafites : l'aube)."
 }

@@ -3,7 +3,7 @@
  */
 
 /** Current application version — update this on every release. */
-export const CURRENT_APP_VERSION = '2.5.0';
+export const CURRENT_APP_VERSION = '2.4.0';
 
 /**
 * Metal Price Constants and Configuration
