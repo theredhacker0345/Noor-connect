@@ -8,27 +8,61 @@ import { ExpirationPlugin } from 'workbox-expiration';
 // The __WB_MANIFEST placeholder will be replaced by the actual list of assets during build
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Serve index.html for all navigation requests (SPA routing fallback)
+// v2: forces a clean cache rebuild so entries poisoned by the old
+// cache-first navigation (HTML stored under asset URLs) are dropped.
+const HTML_CACHE_NAME = 'noor-connect-html-v2';
+const ASSET_CACHE_NAME = 'noor-connect-assets-v2';
+const API_CACHE_NAME = 'noor-connect-api-v2';
+const HADITH_CACHE_NAME = 'noor-connect-hadith-v2';
+const NASHEED_CACHE_NAME = 'noor-connect-nasheed-v2';
+
+// Serve index.html for all navigation requests (SPA routing fallback).
+// CRITICAL: network-first so every navigation gets the FRESH index.html
+// after a redeploy. The old cache-first precache handler served stale
+// HTML that referenced deleted chunks (MIME-type / "Failed to fetch
+// dynamically imported module" errors). Cached HTML is only used when
+// the network is unavailable (offline fallback).
 try {
-  const handler = createHandlerBoundToURL('/index.html');
-  const navigationRoute = new NavigationRoute(handler, {
-    allowlist: [new RegExp('^/')] // allow all navigation routes
-  });
+  const offlineHandler = createHandlerBoundToURL('/index.html');
+  const navigationRoute = new NavigationRoute(
+    async (args) => {
+      try {
+        return await new NetworkFirst({
+          cacheName: HTML_CACHE_NAME,
+          networkTimeoutSeconds: 3,
+          plugins: [new CacheableResponsePlugin({ statuses: [200] })],
+        }).handle(args);
+      } catch (err) {
+        console.log('SW: Navigation offline — serving precached index.html');
+        return offlineHandler(args);
+      }
+    },
+    { allowlist: [new RegExp('^/')] } // allow all navigation routes
+  );
   registerRoute(navigationRoute);
 } catch (e) {
   console.log('SW: Error setting up navigation route', e);
 }
 
-const ASSET_CACHE_NAME = 'noor-connect-assets-v1';
-const API_CACHE_NAME = 'noor-connect-api-v1';
-const HADITH_CACHE_NAME = 'noor-connect-hadith-v1';
-const NASHEED_CACHE_NAME = 'noor-connect-nasheed-v1';
+// Reject HTML responses from the asset cache: a missing chunk request
+// rewritten to index.html returns 200 + text/html and must never be
+// cached under a .js/.css URL (it would brick the app until the cache
+// expired).
+const noHtmlCachePlugin = {
+  cacheWillUpdate: async ({ request, response }) => {
+    if (!response || !response.ok) return null;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) return null;
+    return response;
+  },
+};
 
 registerRoute(
   ({ request }) => ['script', 'style', 'worker'].includes(request.destination),
   new StaleWhileRevalidate({
     cacheName: ASSET_CACHE_NAME,
     plugins: [
+      noHtmlCachePlugin,
       new CacheableResponsePlugin({ statuses: [200], types: ['basic'] }),
       new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 }),
     ],
@@ -106,7 +140,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up caches and claim clients
 self.addEventListener('activate', (event) => {
-  const currentCaches = [ASSET_CACHE_NAME, API_CACHE_NAME, HADITH_CACHE_NAME];
+  const currentCaches = [HTML_CACHE_NAME, ASSET_CACHE_NAME, API_CACHE_NAME, HADITH_CACHE_NAME, NASHEED_CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(

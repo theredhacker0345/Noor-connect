@@ -9,6 +9,11 @@ import { localNotifications } from "@/lib/local-notifications";
 import { whenIdle } from "@/lib/performance-optimizations";
 import './lib/i18n-new'; // Initialize new offline-first i18n
 import { initUpdateSafety } from "@/lib/update-safety";
+import { installStaleChunkRecovery } from "@/lib/stale-chunk-recovery";
+
+// Self-heal stale-chunk failures after redeploys (clear caches + one
+// guarded reload). Must be installed before any route can lazy-load.
+installStaleChunkRecovery();
 
 // Update-safety check (version-change detection + data-loss sentinel).
 // Fire-and-forget: internally guarded, never throws and never blocks render.

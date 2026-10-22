@@ -431,7 +431,9 @@ const handleCheckIn = useCallback((pKey: PrayerName) => {
         time: p.time,
         icon: prayerIcons[p.name] || <Sun className="w-5 h-5" />,
         isActive: nextPrayerName === p.name,
-        isUpcoming: isUpcoming,
+        // "NEXT" pill must mark ONLY the actual next prayer, not every
+        // remaining prayer of the day.
+        isUpcoming: Boolean(isUpcoming) && nextPrayerName === p.name,
         isCompleted,
         onCheckIn: () => handleCheckIn(pKey),
       };

@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { recoverFromStaleChunk } from '@/lib/stale-chunk-recovery';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  recovering: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -22,6 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
+      recovering: false,
     };
   }
 
@@ -30,12 +33,20 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: true,
       error,
       errorInfo: null,
+      recovering: false,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
+    // Stale-chunk failures after a redeploy (missing hashed chunks served
+    // as text/html): self-heal by purging caches and reloading once.
+    if (recoverFromStaleChunk(error)) {
+      this.setState({ recovering: true });
+      return;
+    }
+
     this.setState({
       error,
       errorInfo,
@@ -56,6 +67,15 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   render() {
+    if (this.state.recovering) {
+      // Recovery reload is in flight — keep the shell minimal.
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-muted border-t-primary" aria-label="Updating Noor Connect" />
+        </div>
+      );
+    }
+
     if (this.state.hasError) {
       // Custom fallback UI
       if (this.props.fallback) {

@@ -4,7 +4,7 @@
  * FOSS-friendly - no proprietary wake lock libraries
  */
 
-import { LocalNotifications, type LocalNotificationSchema, type ActionType } from '@capacitor/local-notifications';
+import { LocalNotifications, type LocalNotificationSchema, type ActionType, type ActionPerformed } from '@capacitor/local-notifications';
 import { AladhanAPI, type AladhanPrayerTime } from './aladhan-api';
 import { getEffectiveAladhanMethodId } from './prayer-method-resolver';
 import { getMadhab } from './storage';
@@ -220,33 +220,37 @@ export class LocalNotificationManager {
         return false;
       }
 
-      // Register action types for notification buttons
-      try {
-        await LocalNotifications.registerActionTypes({
-          types: [
-            {
-              id: 'prayer_actions',
-              actions: [
-                {
-                  id: 'stop_adhan',
-                  title: '⏹ Stop Adhan',
-                  requiresAuthentication: false,
-                  foreground: false,
-                  destructive: false
-                },
-                {
-                  id: 'open_app',
-                  title: '🕌 Open App',
-                  requiresAuthentication: false,
-                  foreground: true,
-                  destructive: false
-                }
-              ]
-            }
-          ]
-        });
-      } catch (error) {
-        console.warn('Failed to register notification action types:', error);
+      // Register action types for notification buttons.
+      // registerActionTypes is Android/iOS-only — on web it throws
+      // "Not implemented on web", so guard it behind a native check.
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await LocalNotifications.registerActionTypes({
+            types: [
+              {
+                id: 'prayer_actions',
+                actions: [
+                  {
+                    id: 'stop_adhan',
+                    title: '⏹ Stop Adhan',
+                    requiresAuthentication: false,
+                    foreground: false,
+                    destructive: false
+                  },
+                  {
+                    id: 'open_app',
+                    title: '🕌 Open App',
+                    requiresAuthentication: false,
+                    foreground: true,
+                    destructive: false
+                  }
+                ]
+              }
+            ]
+          });
+        } catch (error) {
+          console.warn('Failed to register notification action types:', error);
+        }
       }
 
       // Listen for notification actions (e.g., "Stop Adhan")
