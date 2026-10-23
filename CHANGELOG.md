@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pregnancy Mode is now easy to find: a dedicated **Pregnancy** button in the Noor Cycle header (visible whenever tracking is idle) and a prominent sky-tinted "Pregnancy Mode" card directly under the Today-tab hero — no more hunting for the old collapsed "Expecting?" row.
 - Noor Cycle Fiqh tab: the recommended-dhikr list is now a tap-to-count counter (per-dhikr goals like 33/34/100, daily totals, counts reset each day and persist in a dedicated storage key).
 - Noor Cycle Today tab: a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion) that adapts to haidh / tuhr / premenstrual / fertile / pregnancy phases, plus a daily water tracker.
+- Noor Cycle one-tap flow logging: while a period is active, a "Today's Flow" card on the Today tab saves the day's flow (None / Spotting / Light / Medium / Heavy) in a single tap with a light haptic — no need to open the Log tab for the most frequent entry.
 - The Qisas library is complete: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the 24 existing stories — 25 prophets, from Adam to the Final Messenger.
 - 60 new authentic duʿās across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — 140 duʿās total, every entry sourced from the Qur'an or the six hadith collections.
 
@@ -35,6 +36,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Home-screen console spam eliminated at its root**: the shared `useI18n` hook returned brand-new helper functions on every render, so any component doing `useEffect(..., [formatDate])` re-ran after every state update — `WeeklySalahChart` refreshed and logged "Prayer history data refreshed" about 50 times per second. The helpers are now memoized (stable identities), the leftover debug log is removed, and the chart skips state updates when the data is unchanged.
+- **End-Period double-tap confirm**: ending a period no longer happens on a single accidental tap — the button now asks for a second tap within 3 seconds (and rewrote the on-screen end-time explainer to describe the actual calculation: offline `adhan`-library chaining with the Isha midnight midpoint).
 - **Islamic midnight was civil midnight**: the fallback computed 00:00 of the next civil day instead of the fiqh midnight. It is now the true Maghrib → tomorrow-Fajr midpoint (equivalent to adhan's `SunnahTimes.middleOfTheNight`), with a polar-day guard.
 - **Tahajjud window corrected**: the old fallback midpointed civil midnight → Fajr; the window now starts at the last third of the night (`SunnahTimes.lastThirdOfTheNight`). Sleep/Tahajjud reminders inherit the corrected windows.
 - **Aladhan offline fallback poisoned night fields**: the offline path hard-coded `Midnight`/`Firstthird`/`Lastthird` to `00:00`, which parsed downstream as a real (already-past) time. The fields are now simply absent when unknown, and fiqh night semantics are always computed locally (Aladhan's default `Midnight` spans Sunset↔Sunrise, not the fiqh span).

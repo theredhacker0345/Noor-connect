@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Baby, ChevronDown, Droplets, CheckCircle, Moon, AlertTriangle, Sparkles, Wind, BookOpen, Star, CalendarClock, GlassWater, Thermometer, Heart } from "lucide-react";
+import { Baby, ChevronDown, Droplets, CheckCircle, Moon, AlertTriangle, Sparkles, Wind, BookOpen, Star, CalendarClock, GlassWater, Thermometer, Heart, X } from "lucide-react";
 import { PRAYER_ALARM_TOGGLE_EVENT } from "@/lib/prayer-alarm-events";
+import hapticService from "@/lib/haptic-service";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HaidhGhuslChecklist as GhuslChecklist } from "@/components/haidh/HaidhGhuslChecklist";
@@ -22,6 +23,7 @@ import {
   type HaidhTrackerData,
   type FiqhStatus,
   type CyclePhase,
+  type FlowIntensity,
 } from "@/lib/haidh-tracker";
 
 interface Props {
@@ -35,6 +37,15 @@ interface Props {
   pregEntryOpen: boolean;
   onPregEntryOpenChange: (open: boolean) => void;
 }
+
+/** Same options/order as the Log tab — kept in sync on purpose. */
+const FLOW_QUICK: { id: FlowIntensity; label: string; dots: number }[] = [
+  { id: "none", label: "None", dots: 0 },
+  { id: "spotting", label: "Spotting", dots: 1 },
+  { id: "light", label: "Light", dots: 1 },
+  { id: "medium", label: "Medium", dots: 2 },
+  { id: "heavy", label: "Heavy", dots: 3 },
+];
 
 const toDateStr = (d: Date) => {
   const y = d.getFullYear();
@@ -59,6 +70,31 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
   const [pregLmp, setPregLmp] = useState(today);
   const [pregDue, setPregDue] = useState("");
   const [duasOpen, setDuasOpen] = useState(false);
+
+  // ── End-Period double-tap confirmation ─────────────────────────
+  // Ending a period is a significant state change (fiqh status flips, prayer
+  // alarms resume, stats are shaped by it) — a single accidental tap used to
+  // end the cycle instantly. First tap arms the button for 3s.
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const confirmEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (confirmEndTimer.current) clearTimeout(confirmEndTimer.current);
+  }, []);
+  const handleEndTap = () => {
+    hapticService.trigger(confirmEnd ? 'medium' : 'light');
+    if (!confirmEnd) {
+      setConfirmEnd(true);
+      if (confirmEndTimer.current) clearTimeout(confirmEndTimer.current);
+      confirmEndTimer.current = setTimeout(() => setConfirmEnd(false), 3000);
+      return;
+    }
+    if (confirmEndTimer.current) clearTimeout(confirmEndTimer.current);
+    setConfirmEnd(false);
+    onEnd();
+  };
+
+  // Today's already-logged flow (drives the quick-log selection highlight).
+  const todayFlow = getLogForDate(data, today)?.flow ?? null;
 
   const activeDays = useMemo(() => {
     if (!cycle) return 0;
@@ -219,10 +255,18 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
                 <Droplets className="w-4 h-4 mr-2" /> Log Today
               </Button>
               <Button
-                onClick={onEnd}
-                className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-900/20 whitespace-nowrap"
+                onClick={handleEndTap}
+                className={cn(
+                  "h-12 rounded-2xl font-bold text-white whitespace-nowrap transition-colors",
+                  confirmEnd
+                    ? "bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-900/20"
+                    : "bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-900/20"
+                )}
+                aria-label={confirmEnd ? "Tap again to confirm ending the period" : "End period"}
               >
-                <CheckCircle className="w-4 h-4 mr-2 shrink-0" /> End Period
+                {confirmEnd
+                  ? <><X className="w-4 h-4 mr-2 shrink-0" /> Tap again to confirm</>
+                  : <><CheckCircle className="w-4 h-4 mr-2 shrink-0" /> End Period</>}
               </Button>
             </div>
           </div>
@@ -399,6 +443,59 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
         )}
       </motion.div>
 
+      {/* ── One-tap flow quick-log (active period only) ────────────────────
+          The single most frequent action during a period, previously hidden
+          two tabs away: pick today's flow right here. Tapping writes the
+          same DailyLog as the Log tab (fires haidh-tracker-updated), with a
+          light haptic. Symptoms/mood stay in the Log tab. */}
+      {data.isActive && (
+        <div className="bg-card border border-rose-500/20 rounded-[28px] p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Droplets className="w-4 h-4 text-rose-500" />
+              <span className="text-xs font-black uppercase tracking-widest text-rose-500">Today's Flow</span>
+            </div>
+            {todayFlow && (
+              <span className="text-xs text-muted-foreground font-medium capitalize">{todayFlow}</span>
+            )}
+          </div>
+          <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Log today's flow">
+            {FLOW_QUICK.map(f => {
+              const selected = todayFlow === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    hapticService.trigger('light');
+                    logDay(new Date(), { flow: f.id });
+                  }}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-2.5 text-[10px] font-bold leading-tight transition-all border",
+                    selected
+                      ? "bg-rose-500/20 border-rose-500/50 text-rose-600 dark:text-rose-400 shadow-sm"
+                      : "bg-background border-border text-muted-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <span className="flex gap-0.5" aria-hidden="true">
+                    {Array.from({ length: f.dots }).map((_, i) => (
+                      <span key={i} className={cn("w-1.5 h-1.5 rounded-full", selected ? "bg-rose-500" : "bg-muted-foreground/40")} />
+                    ))}
+                    {f.dots === 0 && <span className="w-1.5 h-1.5 rounded-full border border-muted-foreground/40" />}
+                  </span>
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground/70 mt-2.5">
+            One tap saves instantly — symptoms, mood and notes are in the Log tab.
+          </p>
+        </div>
+      )}
+
       {/* Pregnancy Mode entry — prominent, directly under the hero (idle only).
           Visibility is controlled from the page so the header button can open it. */}
       {!data.isActive && !pregnancy && (
@@ -570,6 +667,7 @@ export function HaidhTodayTab({ data, fiqh, onStart, onEnd, onBabyArrived, onTab
               key={i}
               onClick={() => {
                 const next = i < waterGlasses ? i : i + 1;
+                if (next !== waterGlasses) hapticService.trigger('light');
                 setWaterGlasses(next);
                 localStorage.setItem(`noor-water-${today}`, String(next));
               }}

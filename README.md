@@ -23,9 +23,9 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 ## 🆕 What's New in v2.4.0
 
 ### ⏱️ Prayer End Times
-- **Every prayer card on the home screen now shows when the prayer's valid time ends** ("Ends 06:12") — Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha
-- **Madhab-aware Isha end**: Islamic midnight (Maghrib → Fajr midpoint) for the majority opinion (Shafi'i/Maliki/Hanbali), dawn (Fajr) for Hanafi — with a tooltip explaining the basis
-- **How end times are calculated**: each prayer's window simply ends where the next one begins (Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha), except Isha, whose end is madhab-aware — Islamic midnight (the exact midpoint of Maghrib and the next dawn) for the majority opinion, or the next dawn itself for Hanafi — all computed fully offline from the bundled `adhan` library
+- **Every prayer card on the home screen now shows when the prayer's valid time ends** ("Ends 06:12")
+- **How end times are calculated** — fully offline by the bundled [`adhan`](https://github.com/batoulapps/adhan-js) library, from your location + chosen calculation method: each end time is simply the **next prayer's computed start** (Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha). The one exception is **Isha**, whose end is the **Islamic midnight** — the exact midpoint between Maghrib and tomorrow's Fajr (the adhan library's `SunnahTimes.middleOfTheNight`) — or **tomorrow's Fajr itself** when the Hanafi madhab is selected
+- **Yes, the madhab setting changes it**: switching madhab in Settings re-runs the whole offline calculation — Asr moves (Shafi'i standard shadow vs Hanafi double shadow), which shifts Dhuhr's end with it, and Isha's end switches between Islamic midnight and tomorrow's Fajr; Islamic midnight and the Tahajjud (last-third) window are always recomputed with the same method + madhab
 - **Islamic midnight fixed**: previously computed as civil 00:00; now the true Maghrib → tomorrow-Fajr midpoint (the same value as the adhan library's `SunnahTimes.middleOfTheNight`)
 - **Tahajjud window corrected**: now starts at the last third of the night, so sleep and Tahajjud reminders fire at the right time
 
@@ -278,6 +278,7 @@ A complete, fiqh-aware cycle tracker (route: `/noor-cycle`, visible for female p
 - **Pregnancy Mode**: a 40-week progress ring, weeks + days, trimester badge and due-date countdown (Naegele's rule, 280 days), du'as of pregnancy and birth, honest fiqh notes (pregnancy bleeding = istiḥāḍah, prayers continue), and a one-tap "Baby arrived" handoff that starts Nifās and pauses prayer alerts. Starting pregnancy never destroys cycle data, and predictions pause while expecting.
 - **App-wide fiqh integration**: during haidh/nifas the app automatically silences prayer notifications, halts qaza auto-sync, and adjusts quiz streak logic; a smart Sunday reminder helps you plan making up missed Ramadan fasts.
 - **Tap-to-count dhikr counter** in the Fiqh tab with per-dhikr goals (33/33/34/100), daily totals and automatic daily reset; a **daily water tracker** (8 glasses) and a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion).
+- **One-tap flow quick-log**: while a period is active, a "Today's Flow" card on the Today tab saves the day's flow (None / Spotting / Light / Medium / Heavy) in a single tap with a light haptic — the most frequent entry no longer requires opening the Log tab. **Ending a period asks for a confirming second tap** (3-second window), so an accidental touch can't end your cycle.
 - **Ghusl checklist**, missed-fast tallying (increment, decrement, mark-as-made-up), cycle analytics with charts, and a **PDF doctor report** export (jsPDF) you can hand to a clinician.
 - Everything is stored locally under a single storage key and included in backups.
 

@@ -2,7 +2,7 @@
  * Weekly Salah History Chart
  * Shows prayer completion over the past 7 days
  */
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calendar } from "lucide-react";
 import { getPrayerHistory, type DailyPrayers } from "@/lib/salah-tracker";
@@ -47,9 +47,12 @@ export function WeeklySalahChart() {
   const [dataVersion, setDataVersion] = useState(0);
   const [weeklyStats, setWeeklyStats] = useState({ completed: 0, total: 0, percentage: 0 });
 
+  // Guards against redundant state updates (e.g. a burst of 'salah-updated'
+  // events with unchanged data) so the chart can never feed a render loop.
+  const lastSnapshot = useRef<string>("");
+
   const refreshData = useCallback(() => {
     const history = getPrayerHistory(7);
-    console.log('Prayer history data refreshed:', history);
 
     // Reverse to show oldest first (left to right)
     const data = history.reverse().map((day: DailyPrayers) => {
@@ -65,20 +68,32 @@ export function WeeklySalahChart() {
 
     // Only show real data - no fake/sample data
     if (data.length === 0) {
-      setChartData([]);
-      setWeeklyStats({ completed: 0, total: 0, percentage: 0 });
+      if (lastSnapshot.current !== "empty") {
+        lastSnapshot.current = "empty";
+        setChartData([]);
+        setWeeklyStats({ completed: 0, total: 0, percentage: 0 });
+      }
     } else {
-      setChartData(data);
-      setDataVersion(v => v + 1);
-
-      // Calculate weekly stats
       const totalCompleted = data.reduce((sum, d) => sum + d.completed, 0);
       const totalPossible = 7 * 5;
-      setWeeklyStats({
+      const stats = {
         completed: totalCompleted,
         total: totalPossible,
         percentage: Math.round((totalCompleted / totalPossible) * 100)
-      });
+      };
+
+      // Skip setState entirely when nothing changed — a setState with fresh
+      // object identities re-renders, and (pre-useI18n memoization) that
+      // re-render used to recreate this callback and re-run the effect,
+      // refreshing + logging ~50×/sec. Belt-and-braces alongside the now
+      // stable useI18n helpers.
+      const snapshot = JSON.stringify([data, stats]);
+      if (snapshot !== lastSnapshot.current) {
+        lastSnapshot.current = snapshot;
+        setChartData(data);
+        setDataVersion(v => v + 1);
+        setWeeklyStats(stats);
+      }
     }
   }, [formatDate]);
 
