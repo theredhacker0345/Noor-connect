@@ -1233,7 +1233,7 @@
     "subtitle": "Download a complete tafsir (all 114 surahs) per author — real size shown, works offline",
     "download": "Download",
     "downloaded": "Downloaded ·",
-    "progress": "{done}/{total} surahs · {size}",
+    "progress": "{{done}}/{{total}} surahs · {{size}}",
     "cancel": "Cancel",
     "delete": "Delete",
     "confirmDelete": "Delete this tafsir from your device? You can download it again anytime."

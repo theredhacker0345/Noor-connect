@@ -50,7 +50,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - **Safe migration**: starting pregnancy never deletes existing cycle data, and period predictions pause while expecting
 
 ### 📿 Noor Cycle — More for Every Day
-- **New Knowledge tab**: 35 pre-written fiqh Questions & Answers on ḥayḍ, nifās and istiḥāḍah — searchable, filterable across 10 categories, with madhab-difference notes and source lineage (SeekersGuidance · IslamQA.org · IslamQA.info style). No user-submitted content — everything is curated in advance and works offline
+- **New Knowledge tab**: 50 pre-written fiqh Questions & Answers on ḥayḍ, nifās and istiḥāḍah — searchable, filterable across 10 categories, with madhab-difference notes, and a "Source" chip on every answer that opens the **exact verified fatwa page** it was checked against (IslamQA.info). Q&A text follows the selected app language where translations exist (Bengali complete; other languages fall back to English per field). No user-submitted content — everything is curated in advance and works offline
 - **Tap-to-count dhikr counter** in the Fiqh tab with per-dhikr goals (33/33/34/100), haptic ticks, daily totals, and counts that reset each day
 - **Phase-aware self-care card**: hydration, iron-rich and sunnah foods (with cited sources), sleep, movement and self-compassion — adapting to haidh / tuhr / premenstrual / fertile / pregnancy phases
 - **Daily water tracker** right on the Today tab
@@ -139,6 +139,7 @@ A dedicated Tafsir page opens any surah with the **Uthmani-script Arabic text an
 
 - **27 tafsir editions in 6 languages**: 10 English (Ibn Kathir abridged, Al-Jalalayn, Al-Qushairi, Maarif-ul-Quran, Kashani, Al-Tustari, Asbab Al-Nuzul, Ibn Abbas, Kashf Al-Asrar, Tazkirul Quran), 8 Arabic (Ibn Kathir, Al-Saddi, Al-Baghawi, Tanwir al-Miqbas, Al-Wasit, Al-Tabari, Muyassar, Al-Qurtubi), 4 Bengali, 3 Urdu, 1 Russian and 1 Kurdish edition.
 - **Offline editions bundled**: Tafsir Ibn Kathir ships inside the app in English, Arabic and Urdu as local JSON, so commentary on those three works works with zero connectivity; all other editions stream from the spa5k tafsir API on jsDelivr.
+- **Whole-tafsir downloads per author**: any edition can be downloaded completely (all 114 surahs) in one tap from Settings → Storage — with honest progress (surah n/114 plus real megabytes, not estimates), resume support (already-stored surahs are skipped), cancel, a true on-disk size once finished, and per-author delete. A downloaded edition then reads **fully offline** in the Tafsir reader — the reader serves it from the on-device store first, preserving exact ayah boundaries, and still layers the Arabic text and translation when a connection is available.
 - **Robust parsing**: the tafsir service normalizes many payload shapes (strings, keyed objects, per-ayah records) so editions from different sources render consistently, with graceful fallback from local file to API.
 
 #### Quran Audio and Downloads
@@ -274,12 +275,13 @@ A focused dhikr counter designed for flow.
 - **Lifetime totals** and session counts with haptic ticks on every tap, and a quick-counter widget on the dashboard that stays in sync with the main page.
 
 #### Noor Cycle (Women's Wellness)
-A complete, fiqh-aware cycle tracker (route: `/noor-cycle`, visible for female profiles) built around a unified `haidh-tracker-v2` engine with **six tabs**: Today, Calendar, Log, Islamic (fiqh), Analytics, and Settings.
+A complete, fiqh-aware cycle tracker (route: `/noor-cycle`, visible for female profiles) built around a unified `haidh-tracker-v2` engine with **seven tabs**: Today, Calendar, Log, Stats, Fiqh, Knowledge, and Settings.
 
 - **Madhab-aware rules**: minimum/maximum haidh and nifas days per the Hanafi (3–10 days), Maliki, Shafi'i and Hanbali schools, with automatic **istihadhah detection** when bleeding exceeds your madhab's limits.
 - **Phase engine**: haidh, tuhr, premenstrual and fertile phases with fertile-window tracking and ovulation-day insights; flow intensity, mood, pain-scale (1–10) and symptom logging (cramps, headache, fatigue and more) per day.
 - **Pregnancy Mode**: a 40-week progress ring, weeks + days, trimester badge and due-date countdown (Naegele's rule, 280 days), du'as of pregnancy and birth, honest fiqh notes (pregnancy bleeding = istiḥāḍah, prayers continue), and a one-tap "Baby arrived" handoff that starts Nifās and pauses prayer alerts. Starting pregnancy never destroys cycle data, and predictions pause while expecting.
 - **App-wide fiqh integration**: during haidh/nifas the app automatically silences prayer notifications, halts qaza auto-sync, and adjusts quiz streak logic; a smart Sunday reminder helps you plan making up missed Ramadan fasts.
+- **Knowledge tab**: 50 curated fiqh Q&As (ḥayḍ, nifās, istiḥāḍah and the worship around them) with madhab-difference notes and a "Source" chip per answer that opens the exact verified IslamQA.info page; searchable, category-filterable, following the app language where translations exist (Bengali complete).
 - **Tap-to-count dhikr counter** in the Fiqh tab with per-dhikr goals (33/33/34/100), daily totals and automatic daily reset; a **daily water tracker** (8 glasses) and a phase-aware self-care card (hydration, iron-rich and sunnah foods with cited sources, sleep, movement, self-compassion).
 - **One-tap flow quick-log**: while a period is active, a "Today's Flow" card on the Today tab saves the day's flow (None / Spotting / Light / Medium / Heavy) in a single tap with a light haptic — the most frequent entry no longer requires opening the Log tab. **Ending a period asks for a confirming second tap** (3-second window), so an accidental touch can't end your cycle.
 - **Ghusl checklist**, missed-fast tallying (increment, decrement, mark-as-made-up), cycle analytics with charts, and a **PDF doctor report** export (jsPDF) you can hand to a clinician.

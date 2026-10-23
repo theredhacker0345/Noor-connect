@@ -467,8 +467,10 @@ self.addEventListener('message', (event) => {
       break;
 
     case 'UPDATE_PRAYER_TIMES':
-      PRAYER_TIMES = data.timings;
-      console.log('Service Worker: Prayer times updated:', PRAYER_TIMES);
+      // Clients post { type, data: { timings } }; accept the legacy flat
+      // shape too so a mismatch can never silently blank the timings table.
+      PRAYER_TIMES = (data.data && data.data.timings) || data.timings || {};
+      console.log('Service Worker: Prayer times updated:', Object.keys(PRAYER_TIMES).length, 'prayers');
       break;
 
     case 'TEST_NOTIFICATION':

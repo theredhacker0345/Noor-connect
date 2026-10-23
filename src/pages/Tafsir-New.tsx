@@ -60,6 +60,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppBar } from "@/components/AppBar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { fetchSurahTafsir, TAFSIR_EDITIONS, type TafsirEdition } from "@/lib/tafsir";
+import { getStoredTafsirAyahs } from "@/lib/tafsir-download";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -222,6 +223,55 @@ const Tafsir = () => {
         setCurrentSurahTafsir(JSON.parse(cached));
         setTafsirLoading(false);
         setLoadingFromOffline(false);
+        return;
+      }
+
+      // Whole-tafsir downloads (Settings → Storage): serve the surah from the
+      // on-device store first. This path needs zero tafsir requests, so a
+      // downloaded edition reads fully offline. Arabic text + translation are
+      // a bonus layer and degrade gracefully when there is no connection.
+      const storedAyahs = await getStoredTafsirAyahs(selectedEdition, surah.number);
+      if (storedAyahs && storedAyahs.length > 0) {
+        setLoadingFromOffline(true);
+        const arabicByAyah = new Map<number, string>();
+        const translationByAyah = new Map<number, string>();
+        try {
+          const res = await fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/editions/quran-uthmani,en.sahih`);
+          const quranData = await res.json();
+          const arabicEdition = quranData?.data?.[0];
+          const translationEdition = quranData?.data?.[1];
+          if (Array.isArray(arabicEdition?.ayahs)) {
+            arabicEdition.ayahs.forEach((a: any, idx: number) => {
+              const n = Number(a?.numberInSurah ?? a?.number ?? idx + 1);
+              if (Number.isFinite(n) && typeof a?.text === "string") {
+                arabicByAyah.set(n, a.text);
+              }
+            });
+          }
+          if (Array.isArray(translationEdition?.ayahs)) {
+            translationEdition.ayahs.forEach((a: any, idx: number) => {
+              const n = Number(a?.numberInSurah ?? a?.number ?? idx + 1);
+              if (Number.isFinite(n) && typeof a?.text === "string") {
+                translationByAyah.set(n, a.text);
+              }
+            });
+          }
+        } catch {
+          // Offline: the downloaded tafsir alone still renders.
+        }
+        const storedTafsirs: TafsirData[] = storedAyahs.map((text, idx) => ({
+          surah: surah.number,
+          ayah: idx + 1,
+          text,
+          arabic: arabicByAyah.get(idx + 1),
+          translation: translationByAyah.get(idx + 1),
+        }));
+        setCurrentSurahTafsir({
+          surah: surah.number,
+          surahName: surah.name,
+          englishName: surah.englishName,
+          tafsirs: storedTafsirs
+        });
         return;
       }
 

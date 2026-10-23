@@ -68,6 +68,10 @@ export const CHANGELOG_DATA: VersionChangelog[] = [
       { type: 'fix', description: 'Storage pressure can no longer wipe user data \u2014 when local storage fills, only re-downloadable caches are cleared and the write retried; bookmarks, Quran progress, tasbeeh counts, notes and settings are never deleted. A read-only boot-time update-safety check now logs diagnostics if data ever appears missing after an update.' },
       { type: 'improvement', description: 'Haptics \u2014 devices without a vibration motor (desktops, tablets, TV boxes) now get a clear popup explaining vibration won\u02bct work, plus a persistent banner and a disabled Test button; the Haptics page was redesigned with consistent cards and typography.' },
       { type: 'fix', description: 'The home prayer grid no longer shows a gold "NEXT" pill on every remaining prayer of the day \u2014 only the actual next prayer is marked. Three prophet stories (Nuh, Hud, Saleh) are correctly classified as "pre-flood" again.' },
+      { type: 'fix', description: 'Tafsir downloads \u2014 the progress line rendered its raw placeholders ({done}/{total} surahs \u00b7 {size}) in every language; it now shows the real surah count and megabytes downloaded.' },
+      { type: 'fix', description: 'The Knowledge library really ships all 50 Q&As now \u2014 the previous release listed 50 in the notes but only 35 answers made it into the app data, and the "Source" chips opened nothing. Every answer carries a working link to the exact verified fatwa page.' },
+      { type: 'improvement', description: 'A downloaded tafsir edition now reads fully offline in the Tafsir reader \u2014 the reader previously ignored downloads and re-fetched from the network; ayah boundaries are preserved exactly.' },
+      { type: 'fix', description: 'Service Worker prayer-time sync fixed \u2014 the payload shape mismatch left the background prayer checker empty ("Prayer times updated: undefined"), so its backup prayer notifications never fired.' },
     ],
   },
   {

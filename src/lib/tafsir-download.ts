@@ -20,6 +20,10 @@ export interface StoredSurahTafsir {
   text: string;
   /** UTF-8 byte length of `text` (real, not estimated). */
   bytes: number;
+  /** Per-ayah texts in order 1..n — preferred for faithful offline reading
+   * (an ayah's own text may itself contain blank lines, which would break a
+   * naive \n\n split of `text`). Older records may lack this field. */
+  ayahs?: string[];
 }
 
 interface TafsirDownloadMeta {
@@ -152,7 +156,18 @@ export async function downloadWholeTafsir(
           .filter(Boolean)
           .join("\n\n");
         if (!text) throw new Error("empty tafsir payload");
-        const record: StoredSurahTafsir = { surah, text, bytes: utf8ByteLength(text) };
+        // Keep the exact per-ayah array (including ayahs with empty text) so
+        // offline reading preserves ayah numbering — `text` alone can't, since
+        // an ayah's own commentary may itself contain blank lines.
+        const ayahTexts = (ayahs || []).map(
+          a => (typeof (a as { text?: unknown })?.text === "string" ? (a as { text: string }).text : "")
+        );
+        const record: StoredSurahTafsir = {
+          surah,
+          text,
+          bytes: utf8ByteLength(text),
+          ayahs: ayahTexts.length > 0 ? ayahTexts : undefined,
+        };
         await STORE.setItem(surahKey(editionId, surah), record);
         existing[surah] = record;
         done += 1;
@@ -218,4 +233,21 @@ export async function deleteTafsirDownload(editionId: string): Promise<void> {
 export async function getStoredTafsir(editionId: string, surah: number): Promise<string | null> {
   const v = await STORE.getItem<StoredSurahTafsir>(surahKey(editionId, surah));
   return v?.text || null;
+}
+
+/**
+ * Stored per-ayah tafsir texts for a surah (offline reads), or null if the
+ * edition is not downloaded. Prefers the faithful per-ayah array; older
+ * records (text-only) fall back to splitting on blank lines.
+ */
+export async function getStoredTafsirAyahs(editionId: string, surah: number): Promise<string[] | null> {
+  const v = await STORE.getItem<StoredSurahTafsir>(surahKey(editionId, surah));
+  if (!v) return null;
+  if (Array.isArray(v.ayahs) && v.ayahs.length > 0 && v.ayahs.every(a => typeof a === "string")) {
+    return v.ayahs;
+  }
+  if (typeof v.text === "string" && v.text.trim()) {
+    return v.text.split("\n\n");
+  }
+  return null;
 }

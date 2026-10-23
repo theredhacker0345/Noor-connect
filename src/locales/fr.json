@@ -1233,7 +1233,7 @@
     "subtitle": "Téléchargez un tafsir complet (114 sourates) par auteur — taille réelle affichée, hors ligne",
     "download": "Télécharger",
     "downloaded": "Téléchargé ·",
-    "progress": "{done}/{total} sourates · {size}",
+    "progress": "{{done}}/{{total}} sourates · {{size}}",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "confirmDelete": "Supprimer ce tafsir de votre appareil ? Vous pourrez le retélécharger à tout moment."
