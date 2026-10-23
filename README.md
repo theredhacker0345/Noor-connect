@@ -24,8 +24,8 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### ⏱️ Prayer End Times
 - **Every prayer card on the home screen now shows when the prayer's valid time ends** ("Ends 06:12")
-- **How end times are calculated** — fully offline by the bundled [`adhan`](https://github.com/batoulapps/adhan-js) library, from your location + chosen calculation method: each end time is simply the **next prayer's computed start** (Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha). The one exception is **Isha**, whose end is the **Islamic midnight** — the exact midpoint between Maghrib and tomorrow's Fajr (the adhan library's `SunnahTimes.middleOfTheNight`) — or **tomorrow's Fajr itself** when the Hanafi madhab is selected
-- **Yes, the madhab setting changes it**: switching madhab in Settings re-runs the whole offline calculation — Asr moves (Shafi'i standard shadow vs Hanafi double shadow), which shifts Dhuhr's end with it, and Isha's end switches between Islamic midnight and tomorrow's Fajr; Islamic midnight and the Tahajjud (last-third) window are always recomputed with the same method + madhab
+- **How end times are calculated**: each prayer ends when the next prayer starts (Fajr ends at sunrise); Isha ends at Islamic midnight, or at Fajr for Hanafi — computed 100% offline from your location + calculation method
+- **Madhab setting? Yes, it changes it**: Hanafi moves Asr later (so Dhuhr ends later) and makes Isha end at Fajr; other madhabs end Isha at Islamic midnight
 - **Islamic midnight fixed**: previously computed as civil 00:00; now the true Maghrib → tomorrow-Fajr midpoint (the same value as the adhan library's `SunnahTimes.middleOfTheNight`)
 - **Tahajjud window corrected**: now starts at the last third of the night, so sleep and Tahajjud reminders fire at the right time
 
@@ -49,16 +49,19 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - **Safe migration**: starting pregnancy never deletes existing cycle data, and period predictions pause while expecting
 
 ### 📿 Noor Cycle — More for Every Day
+- **New Knowledge tab**: 35 pre-written fiqh Questions & Answers on ḥayḍ, nifās and istiḥāḍah — searchable, filterable across 10 categories, with madhab-difference notes and source lineage (SeekersGuidance · IslamQA.org · IslamQA.info style). No user-submitted content — everything is curated in advance and works offline
 - **Tap-to-count dhikr counter** in the Fiqh tab with per-dhikr goals (33/33/34/100), haptic ticks, daily totals, and counts that reset each day
 - **Phase-aware self-care card**: hydration, iron-rich and sunnah foods (with cited sources), sleep, movement and self-compassion — adapting to haidh / tuhr / premenstrual / fertile / pregnancy phases
 - **Daily water tracker** right on the Today tab
 
-### 📖 Complete Qisas & 140 Duʿās
+### 📖 Complete Qisas, 25-Chapter Seerah & 140 Duʿās
+- **Seerah grew from 17 to 25 story chapters**: new standalone stories for the Pledges of Aqabah, the Hijrah, Khaybar, the Conquest of Makkah, Hunain & Ta'if, Tabuk, the Year of Delegations and the Farewell Pilgrimage — each with a Lessons & Reflections section
 - **25 prophet stories — the collection is complete**: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the library, from Adam to the Final Messenger
 - **60 new authentic duʿās** across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — **140 duʿās total**, every entry sourced from the Qur'an or the six hadith collections
 - **Dua category bar fixed**: all 35 category chips now scroll horizontally on every screen size (they were previously clipped and unreachable)
 
 ### 🛡️ Stability & Performance
+- **Live-stream audio no longer repeats the last phrase**: media-error recovery now pins playback to the exact pre-glitch position, resumes the element if the re-attach paused it, rate-limits rapid recoveries, and the mount-time double-init race that could glitch the first seconds of audio was removed
 - **Update console spam eliminated at the root**: stale service-worker chunks now self-heal (purge caches + one reload) instead of crashing the app with MIME errors
 - **E-book PDFs fixed**: archive.org books no longer fail with a pdf.js initialization error
 - **Quran page opens much faster** via smarter preloading and fewer stacked GPU blur layers
@@ -97,7 +100,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 | 🧠 Islamic Quiz | 176 questions, 5 game modes, XP, lives, mystery boxes | [Islamic Quiz](#islamic-quiz) |
 | 🌿 Islamic Remedies | Mood-based Tibb-e-Nabawi index with 96 remedies | [Islamic Remedies (Tibb-e-Nabawi)](#islamic-remedies-tibb-e-nabawi) |
 | 📚 E-Books | 272-book library, PDF reader, offline downloads, collections | [E-Books Library](#e-books-library) |
-| 📜 Seerah | Ar-Raheeq Al-Makhtum in 17 chapters with progress tracking | [Seerah of the Prophet (Peace Be Upon Him)](#seerah-of-the-prophet-peace-be-upon-him) |
+| 📜 Seerah | Ar-Raheeq Al-Makhtum in 25 story chapters with progress tracking | [Seerah of the Prophet (Peace Be Upon Him)](#seerah-of-the-prophet-peace-be-upon-him) |
 | 📖 Qisas | Complete stories of all 25 prophets, from Adam to Muhammad ﷺ | [Qisas Al-Anbiya (Stories of the Prophets)](#qisas-al-anbiya-stories-of-the-prophets) |
 | 📚 Hadith | 87,000+ hadith across 16 collections with bookmarks | [Hadith Encyclopedia](#hadith-encyclopedia) |
 | 💰 Zakat | Gold & silver nisab with live prices and offline fallbacks | [Zakat Calculator](#zakat-calculator) |
@@ -327,7 +330,7 @@ A modern Islamic e-book reader with a **272-book catalog** bundled in the app, s
 - **Collections**: organize books into custom collections (ships with "Ramadan Reading" and "Favorites"), backed by the collections storage layer.
 
 #### Seerah of the Prophet (Peace Be Upon Him)
-The Prophet's ﷺ biography presented as **Ar-Raheeq Al-Makhtum (The Sealed Nectar)** by Safiur Rahman Mubarakpuri — the Muslim World League prize-winning biography — in **17 structured chapters** bundled fully offline.
+The Prophet's ﷺ biography presented as **Ar-Raheeq Al-Makhtum (The Sealed Nectar)** by Safiur Rahman Mubarakpuri — the Muslim World League prize-winning biography — in **25 story chapters** bundled fully offline: the original 17 plus 8 new standalone stories (Aqabah, the Hijrah, Khaybar, the Conquest of Makkah, Hunain & Ta'if, Tabuk, the Year of Delegations, the Farewell Pilgrimage), each closing with a Lessons & Reflections section.
 
 - Chapter grid with per-chapter progress tracking and a Continue Reading experience.
 - Reader with clean typography, offline availability, and progress that syncs into your backup.

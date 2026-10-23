@@ -1207,5 +1207,5 @@
   "notifEventReminderBody": "Prepare for {{name}}. {{message}}",
   "endsAt": "Ends {{time}}",
   "islamicMidnight": "Islamic midnight",
-  "endsFormula": "How it's calculated: offline, by the bundled adhan library — each end time is the next prayer's computed start (Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha), except Isha, which ends at Islamic midnight — the exact midpoint of Maghrib and tomorrow's Fajr — or at tomorrow's Fajr when the Hanafi madhab is selected in Settings."
+  "endsFormula": "Each prayer ends when the next prayer starts (Fajr ends at sunrise); Isha ends at Islamic midnight, or at Fajr for Hanafi."
 }

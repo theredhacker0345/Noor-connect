@@ -31,6 +31,10 @@ export function GlobalQuranPlayer() {
 
     const [isExpanded, setIsExpanded] = useState(false);
     const [isRepeating, setIsRepeating] = useState(false);
+    // Ref mirror for the `ended` listener (registered once with [] deps) — a
+    // stale closure read the initial false forever, silently breaking repeat.
+    const isRepeatingRef = useRef(false);
+    useEffect(() => { isRepeatingRef.current = isRepeating; }, [isRepeating]);
     // Local seek position drives the slider + time labels at full update rate
     // WITHOUT touching the global store (which notifies every useGlobalQuran
     // consumer and writes localStorage). Global progress is pushed at ~1Hz.
@@ -100,7 +104,8 @@ export function GlobalQuranPlayer() {
                 sourceUrl = `${server}${paddedSurah}.mp3`;
             }
 
-            if (audio.src !== sourceUrl) {
+            const absSourceUrl = new URL(sourceUrl, window.location.href).href;
+            if (audio.src !== absSourceUrl) {
                 setIsAudioLoading(true);
                 audio.src = sourceUrl;
                 audio.load();
@@ -171,7 +176,7 @@ export function GlobalQuranPlayer() {
             }
         };
         const handleEnded = () => {
-            if (isRepeating) {
+            if (isRepeatingRef.current) {
                 audio.currentTime = 0;
                 audio.play().catch(() => {});
             } else {

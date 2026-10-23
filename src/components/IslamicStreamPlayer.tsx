@@ -171,13 +171,11 @@ export default function IslamicStreamPlayer() {
       });
       hlsRef.current = hls;
 
-      let mediaRecoveryAttempts = 0;
-
       hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(url));
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
         retryCountRef.current[tab] = 0;
-        
+
         // Extract available quality levels
         if (data.levels && data.levels.length > 0) {
           const formattedLevels = data.levels.map((l, i) => ({
@@ -202,6 +200,45 @@ export default function IslamicStreamPlayer() {
         });
       });
 
+      /* ── Media-error recovery (fixes the "audio repeats the same words" glitch).
+         recoverMediaError() rebuilds the MSE buffers; if playback resumes from the
+         current FRAGMENT boundary instead of the exact pre-error position, the
+         last spoken phrase is heard again. We therefore pin the position after
+         the first buffered fragment, resume the element if the re-attach left it
+         paused, and rate-limit recoveries so a decode loop cannot rapid-fire
+         phrase replays. */
+      let mediaRecoveryAttempts = 0;
+      let lastRecoveryAt = 0;
+      const runMediaRecovery = (swapCodec: boolean) => {
+        const since = Date.now() - lastRecoveryAt;
+        if (since < 3000) {
+          // Too soon after the previous recovery — wait out the cooldown.
+          if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+          retryTimerRef.current = setTimeout(() => {
+            if (!mountedRef.current) return;
+            runMediaRecovery(swapCodec);
+          }, 3100 - since);
+          return;
+        }
+        lastRecoveryAt = Date.now();
+        const pinnedAt = video.currentTime;
+        let pinned = false;
+        const pinPosition = () => {
+          if (pinned || !mountedRef.current) return;
+          pinned = true;
+          if (pinnedAt > 0 && Math.abs(video.currentTime - pinnedAt) > 0.25) {
+            try { video.currentTime = pinnedAt; } catch { /* not seekable yet — hls resumes from lastCurrentTime */ }
+          }
+          if (video.paused && !video.ended && !video.error) {
+            video.play().catch(() => { /* autoplay policy — user can tap play */ });
+          }
+        };
+        hls.once(Hls.Events.FRAG_BUFFERED, pinPosition);
+        setTimeout(pinPosition, 3000); // fallback if no fragment buffers (e.g. live edge shift)
+        if (swapCodec) hls.swapAudioCodec();
+        hls.recoverMediaError();
+      };
+
       hls.on(Hls.Events.ERROR, (_e, data) => {
         if (!data.fatal) return;
         
@@ -211,12 +248,11 @@ export default function IslamicStreamPlayer() {
             if (mediaRecoveryAttempts < 3) {
               mediaRecoveryAttempts++;
               console.warn('Recovering media error...');
-              hls.recoverMediaError();
+              runMediaRecovery(false);
             } else if (mediaRecoveryAttempts < 6) {
               mediaRecoveryAttempts++;
               console.warn('Swapping audio codec and recovering...');
-              hls.swapAudioCodec();
-              hls.recoverMediaError();
+              runMediaRecovery(true);
             } else {
               fallbackOrError(tab);
             }
@@ -303,12 +339,10 @@ export default function IslamicStreamPlayer() {
     };
   }, [flushListenTime]);
 
-  /* ─── Initialize stream URLs once ─── */
-  useEffect(() => {
-    const url = streamUrlsRef.current[activeTabRef.current].primary;
-    if (url) initHLS(url, activeTabRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  /* ─── Stream lifecycle: the [activeTab] effect initialises on mount too, so
+         no separate mount-init is needed (running both caused a double
+         initHLS race — instance A created then immediately destroyed — which
+         could glitch the first seconds of audio). ─── */
 
   /* ─── Switch tab → init new stream ─── */
   useEffect(() => {

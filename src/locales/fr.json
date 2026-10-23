@@ -1207,5 +1207,5 @@
   "notifEventReminderBody": "Préparez-vous pour {{name}}. {{message}}",
   "endsAt": "Jusqu'à {{time}}",
   "islamicMidnight": "minuit islamique",
-  "endsFormula": "Comment c'est calculé : hors-ligne, par la bibliothèque adhan intégrée — chaque heure de fin correspond au début calculé de la prière suivante (Fajr finit au lever du soleil, Dhuhr à Asr, Asr au Maghrib, Maghrib à Isha), sauf Isha, qui finit à minuit islamique — le milieu exact entre le Maghrib et le Fajr du lendemain — ou au Fajr du lendemain si le madhab hanafite est choisi dans les paramètres."
+  "endsFormula": "Chaque prière se termine quand la suivante commence (Fajr au lever du soleil) ; Isha se termine à minuit islamique, ou au Fajr pour le hanafisme."
 }
