@@ -47,6 +47,14 @@ export default function IslamicStreamPlayer() {
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef<Record<StreamLocation, number>>({ makkah: 0, madinah: 0 });
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Position-pin timer used by media-error recovery — MUST be cancelled when
+  // the stream is destroyed/re-initialised, otherwise a stale pin fires
+  // against the FRESH stream and rewinds playback ("same words again").
+  const pinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Live mirror of `streams` so event handlers registered once (online/offline)
+  // never read a stale mount-time closure.
+  const streamsRef = useRef(streams);
+  streamsRef.current = streams;
   const mountedRef = useRef(true);
   const playStartRef = useRef<number>(0);
   const isNative = Capacitor.isNativePlatform();
@@ -115,6 +123,7 @@ export default function IslamicStreamPlayer() {
   /* ─── Destroy HLS ─── */
   const destroyHLS = useCallback(() => {
     flushListenTime();
+    if (pinTimerRef.current) { clearTimeout(pinTimerRef.current); pinTimerRef.current = null; }
     const video = videoRef.current;
     if (video) { video.pause(); video.src = ''; video.load(); }
     if (hlsRef.current) {
@@ -132,6 +141,9 @@ export default function IslamicStreamPlayer() {
     retryCountRef.current[tab] = attempt + 1;
     retryTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
+      // The user may have switched Makkah/Madinah while the backoff was
+      // pending — never attach the OLD tab's stream to the shared element.
+      if (tab !== activeTabRef.current) return;
       const urls = streamUrlsRef.current[tab];
       const url = fallbackTriedRef.current[tab] && urls.fallback ? urls.fallback : urls.primary;
       if (url) initHLS(url, tab);
@@ -226,6 +238,9 @@ export default function IslamicStreamPlayer() {
         const pinPosition = () => {
           if (pinned || !mountedRef.current) return;
           pinned = true;
+          // Recovery landed — give the rate-limiter a fresh budget so a much
+          // later media error can still use cheap recovery.
+          mediaRecoveryAttempts = 0;
           if (pinnedAt > 0 && Math.abs(video.currentTime - pinnedAt) > 0.25) {
             try { video.currentTime = pinnedAt; } catch { /* not seekable yet — hls resumes from lastCurrentTime */ }
           }
@@ -234,7 +249,10 @@ export default function IslamicStreamPlayer() {
           }
         };
         hls.once(Hls.Events.FRAG_BUFFERED, pinPosition);
-        setTimeout(pinPosition, 3000); // fallback if no fragment buffers (e.g. live edge shift)
+        // Tracked timer: cleared on destroy/re-init so a pending pin can never
+        // fire against a different (fresh) stream and rewind it.
+        if (pinTimerRef.current) clearTimeout(pinTimerRef.current);
+        pinTimerRef.current = setTimeout(pinPosition, 3000); // fallback if no fragment buffers (e.g. live edge shift)
         if (swapCodec) hls.swapAudioCodec();
         hls.recoverMediaError();
       };
@@ -277,14 +295,31 @@ export default function IslamicStreamPlayer() {
 
       hls.attachMedia(video);
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = url;
-      video.addEventListener('loadedmetadata', () => {
+      // Native HLS (Safari): named handlers so they can be REMOVED before each
+      // (re)init — the old anonymous {once:true} listener leaked across re-inits
+      // when metadata never fired, and <video> `error` was never handled (frozen
+      // UI instead of fallback). Empty-src guard prevents destroyHLS's
+      // video.src='' from tripping the error path.
+      const onLoadedMetadata = () => {
+        cleanupVideoHandlers();
         setStreams(prev => ({ ...prev, [tab]: { ...prev[tab], isLoading: false, isPlaying: true } }));
         playStartRef.current = Date.now();
-        video.play().catch(() => {
-          playStartRef.current = 0;
-        });
-      }, { once: true });
+        video.play().catch(() => { playStartRef.current = 0; });
+      };
+      const onVideoError = () => {
+        if (!video.currentSrc || video.currentSrc === '') return; // teardown artefact, not a real failure
+        cleanupVideoHandlers();
+        fallbackOrError(tab);
+      };
+      const cleanupVideoHandlers = () => {
+        video.removeEventListener('loadedmetadata', onLoadedMetadata);
+        video.removeEventListener('error', onVideoError);
+      };
+      cleanupVideoHandlers();
+      video.addEventListener('loadedmetadata', onLoadedMetadata);
+      video.addEventListener('error', onVideoError);
+      video.src = url;
+      video.load();
     } else {
       setStreams(prev => ({
         ...prev,
@@ -316,9 +351,11 @@ export default function IslamicStreamPlayer() {
   useEffect(() => {
     const goOnline = () => {
       setIsOnline(true);
-      const urls = streamUrlsRef.current[activeTabRef.current];
-      const url = fallbackTriedRef.current[activeTabRef.current] && urls.fallback ? urls.fallback : urls.primary;
-      if (url && streams[activeTabRef.current]?.error) initHLS(url, activeTabRef.current);
+      const url = streamUrlsRef.current[activeTabRef.current];
+      const tabUrl = fallbackTriedRef.current[activeTabRef.current] && url.fallback ? url.fallback : url.primary;
+      // streamsRef (live mirror) instead of the stale mount-time `streams` —
+      // the old closure always read error:null so reconnect-on-online never ran.
+      if (tabUrl && streamsRef.current[activeTabRef.current]?.error) initHLS(tabUrl, activeTabRef.current);
     };
     const goOffline = () => setIsOnline(false);
     window.addEventListener('online', goOnline);
@@ -350,7 +387,12 @@ export default function IslamicStreamPlayer() {
     fallbackTriedRef.current[activeTab] = false;
     const url = streamUrlsRef.current[activeTab].primary;
     if (url) initHLS(url, activeTab);
-    return () => { destroyHLS(); };
+    return () => {
+      // Kill any pending retry/pin from THIS tab before tearing down — they
+      // must never fire against the next tab's stream.
+      if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+      destroyHLS();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 

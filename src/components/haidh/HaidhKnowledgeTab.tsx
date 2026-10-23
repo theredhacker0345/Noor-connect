@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { GraduationCap, Search, ChevronDown, BookOpen, ShieldCheck, X } from "lucide-react";
+import { GraduationCap, Search, ChevronDown, BookOpen, ShieldCheck, X, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   HAIDH_KNOWLEDGE,
   KNOWLEDGE_CATEGORIES,
   type KnowledgeCategoryId,
 } from "@/data/haidh/knowledge";
+import { getKnowledgeDict, getKnowledgeCategoryLabel } from "@/data/haidh/knowledge-i18n";
+import { useLanguage } from "@/contexts/LanguageContext-new";
+import i18n from "@/lib/i18n-new";
 
 interface Props {
   /** Current madhab from tracker settings (shaded on the header chip). */
@@ -27,19 +30,33 @@ export function HaidhKnowledgeTab({ madhab }: Props) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<KnowledgeCategoryId | "all">("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  const { language } = useLanguage();
+
+  // Per-language Q&A text with per-field English fallback.
+  const dict = useMemo(() => getKnowledgeDict(language), [language]);
+  const textOf = (qa: (typeof HAIDH_KNOWLEDGE)[number]) => ({
+    question: dict?.[qa.id]?.q || qa.question,
+    answer: dict?.[qa.id]?.a || qa.answer,
+    madhabNotes: dict?.[qa.id]?.mn ?? qa.madhabNotes,
+  });
+  const sourceLabel = i18n.t("knowledgeSourceLabel") || "Source";
+  const categoryLabel = (id: string, fallback: string) => getKnowledgeCategoryLabel(language, id, fallback);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return HAIDH_KNOWLEDGE.filter((qa) => {
       if (category !== "all" && qa.category !== category) return false;
       if (!q) return true;
+      const txt = textOf(qa);
       return (
+        txt.question.toLowerCase().includes(q) ||
+        txt.answer.toLowerCase().includes(q) ||
         qa.question.toLowerCase().includes(q) ||
         qa.answer.toLowerCase().includes(q) ||
         qa.tags.some((t) => t.toLowerCase().includes(q))
       );
     });
-  }, [query, category]);
+  }, [query, category, dict]);
 
   const countsByCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -105,7 +122,7 @@ export function HaidhKnowledgeTab({ madhab }: Props) {
           <ChipButton
             key={c.id}
             active={category === c.id}
-            label={c.label}
+            label={categoryLabel(c.id, c.label)}
             count={countsByCategory.get(c.id) ?? 0}
             onClick={() => setCategory(c.id)}
           />
@@ -126,6 +143,7 @@ export function HaidhKnowledgeTab({ madhab }: Props) {
           {filtered.map((qa) => {
             const open = openId === qa.id;
             const cat = KNOWLEDGE_CATEGORIES.find((c) => c.id === qa.category);
+            const txt = textOf(qa);
             return (
               <div
                 key={qa.id}
@@ -142,10 +160,10 @@ export function HaidhKnowledgeTab({ madhab }: Props) {
                 >
                   <span className="min-w-0">
                     <span className="block text-[10px] font-black uppercase tracking-widest text-primary/70 mb-1">
-                      {cat?.label}
+                      {cat ? categoryLabel(cat.id, cat.label) : ""}
                     </span>
                     <span className="block text-sm font-bold text-foreground leading-snug">
-                      {qa.question}
+                      {txt.question}
                     </span>
                   </span>
                   <ChevronDown
@@ -163,18 +181,18 @@ export function HaidhKnowledgeTab({ madhab }: Props) {
                     className="overflow-hidden"
                   >
                     <div className="px-4 pb-4 space-y-3">
-                      {qa.answer.split("\n\n").map((para, i) => (
+                      {txt.answer.split("\n\n").map((para, i) => (
                         <p key={i} className="text-sm text-foreground/80 leading-relaxed">
                           {para}
                         </p>
                       ))}
-                      {qa.madhabNotes && (
+                      {txt.madhabNotes && (
                         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-3">
                           <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">
                             Madhab differences
                           </p>
                           <p className="text-xs text-foreground/70 leading-relaxed">
-                            {qa.madhabNotes}
+                            {txt.madhabNotes}
                           </p>
                         </div>
                       )}
@@ -184,6 +202,16 @@ export function HaidhKnowledgeTab({ madhab }: Props) {
                           Reflects fatwas on {qa.source} — confirm your personal case with a local scholar.
                         </p>
                       </div>
+                      <a
+                        href={qa.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${sourceLabel}: ${qa.source}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 active:scale-95 transition-all w-fit"
+                      >
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                        {sourceLabel} · {qa.source}
+                      </a>
                     </div>
                   </motion.div>
                 )}

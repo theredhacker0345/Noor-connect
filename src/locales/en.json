@@ -1012,7 +1012,7 @@
   "hadithReflection4": "Balance between perfection and optimism in worship.",
   "hadithReflection5": "True faith manifests in protecting others from harm.",
   "hadithReflection6": "The declaration of faith is the key to Paradise.",
-  "jummah": "Jummah",
+  "jummah": "Jumma",
   "pwaGetAndroidApp": "Get the Android App",
   "pwaFdrDesc": "Download Noor Connect from F-Droid for the full experience — offline, faster, with native widgets and prayer alarms.",
   "pwaGetOnFdroid": "Get on F-Droid",
@@ -1207,5 +1207,35 @@
   "notifEventReminderBody": "Prepare for {{name}}. {{message}}",
   "endsAt": "Ends {{time}}",
   "islamicMidnight": "Islamic midnight",
-  "endsFormula": "Each prayer ends when the next prayer starts (Fajr ends at sunrise); Isha ends at Islamic midnight, or at Fajr for Hanafi."
+  "endsFormula": "End times are calculated on your device from the prayer times themselves — never fetched from an API.",
+  "knowledgeSourceLabel": "Source",
+  "extraPrayers": "Extra prayers",
+  "contactFaq": {
+    "greeting": "Salam — how can we help?",
+    "responseTime": "We usually reply within a few days",
+    "faqTitle": "Quick answers",
+    "faqSubtitle": "The five questions we hear most",
+    "faqBackupsQ": "Where are my backups stored?",
+    "faqBackupsA": "Automatically, about every 20 minutes of activity, into the app's private storage on your own device. You can save a copy to Google Drive (Android) or export a .json file from Settings → Backup. Nothing is uploaded to our servers — there are none.",
+    "faqMethodQ": "How do I change the prayer calculation method?",
+    "faqMethodA": "Open Settings → Prayer → Calculation Method. Pick one of the 13 presets (or keep the region-recommended one) and all prayer times recalculate instantly. You can also switch the Asr madhab in the same place.",
+    "faqNotificationsQ": "Why am I not receiving notifications?",
+    "faqNotificationsA": "Check Settings → Notifications — every reminder type has its own switch, and a \"Send test notification\" button shows whether delivery works at all. On Android, also allow notifications for the app and remove it from battery optimization.",
+    "faqPrivacyQ": "Is my location data sent anywhere?",
+    "faqPrivacyA": "Your location stays on your device. It is only sent to the prayer-times API (api.aladhan.com) to calculate your timetable, and to the city-search service when you look up a city. The app has no accounts, no ads and no analytics.",
+    "faqDownloadsQ": "How do I delete downloaded content?",
+    "faqDownloadsA": "Settings → Storage lists everything you've downloaded — Quran audio, ebooks and tafsir editions — each with its own delete button, so you can free space without touching anything else.",
+    "reachTitle": "Still stuck? Talk to us",
+    "reachSubtitle": "Real channels, answered by the developer"
+  },
+  "tafsirDl": {
+    "title": "Tafsir downloads",
+    "subtitle": "Download a complete tafsir (all 114 surahs) per author — real size shown, works offline",
+    "download": "Download",
+    "downloaded": "Downloaded ·",
+    "progress": "{done}/{total} surahs · {size}",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirmDelete": "Delete this tafsir from your device? You can download it again anytime."
+  }
 }

@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, memo, lazy, Suspense, useState } from "react";
 import { m } from "framer-motion";
-import { Bell, MapPin, ChevronRight, Activity, Compass, X, Clock } from "lucide-react";
+import { Bell, MapPin, ChevronRight, ChevronDown, Activity, Compass, X, Clock, Sparkles } from "lucide-react";
+import { formatTime } from "@/lib/time-formatter";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
@@ -194,6 +195,8 @@ function PremiumDashboardInner({
   const { isRamadan, ramadanDay } = useIslamicCalendar();
   const { t } = useI18n();
   const [timeFormat, setTimeFormat] = useState<'12' | '24'>(() => (localStorage.getItem('time-format') as '12' | '24') || '24');
+  // Optional (nafl) prayer windows — collapsed behind a small toggle chip.
+  const [showOptionalPrayers, setShowOptionalPrayers] = useState(false);
 
   useEffect(() => {
     const handleFormatChange = (e: CustomEvent) => {
@@ -519,6 +522,48 @@ function PremiumDashboardInner({
                           </m.div>
                         ))}
                       </div>
+
+                      {/* Optional (nafl) prayer windows — Ishraq / Duha / Tahajjud.
+                          Computed offline (madhab-aware) by the prayer hook; hidden
+                          behind a small chip so the main grid stays clean. */}
+                      {(() => {
+                        const we = prayerTimesHook?.prayerTimesWithEnd || null;
+                        const rows = we ? [
+                          { key: 'ishraq', win: we.ishraq },
+                          { key: 'duha', win: we.duha },
+                          { key: 'tahajjud', win: we.tahajjud },
+                        ].filter(r => r.win?.start && r.win?.end
+                          && !Number.isNaN(new Date(r.win.start).getTime())
+                          && !Number.isNaN(new Date(r.win.end).getTime())) : [];
+                        if (rows.length === 0) return null;
+                        return (
+                          <div className="mt-3 px-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowOptionalPrayers(v => !v)}
+                              aria-expanded={showOptionalPrayers}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-muted/60 border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 active:scale-95 transition-all min-h-[32px] ${showOptionalPrayers ? 'text-foreground border-primary/40' : ''}`}
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              {t('extraPrayers')}
+                              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showOptionalPrayers ? 'rotate-180' : ''}`} />
+                            </button>
+                            {showOptionalPrayers && (
+                              <div className="mt-2 grid grid-cols-3 gap-3">
+                                {rows.map(({ key, win }) => (
+                                  <div key={key} className="p-3 rounded-[16px] bg-card/60 border border-border/60">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary/80" dir="auto">{t(key)}</p>
+                                    <p className="text-sm font-bold text-foreground mt-0.5 tabular-nums" dir="auto">{formatTime(new Date(win.start), timeFormat)}</p>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5" dir="auto">
+                                      {t('endsAt', { time: formatTime(new Date(win.end), timeFormat) })}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
           </m.section>
 
           {/* ── Daily Salah ── */}

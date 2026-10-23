@@ -24,8 +24,9 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### ⏱️ Prayer End Times
 - **Every prayer card on the home screen now shows when the prayer's valid time ends** ("Ends 06:12")
-- **How end times are calculated**: each prayer ends when the next prayer starts (Fajr ends at sunrise); Isha ends at Islamic midnight, or at Fajr for Hanafi — computed 100% offline from your location + calculation method
+- **How end times are calculated**: on your device, from the prayer times themselves — never fetched from an API. Prayer starts come from your calculation method (Aladhan API when online, the bundled adhan library's astronomical calculation offline); every end time is derived locally from those starts — Fajr ends at sunrise, each prayer at the next one's start, Isha at Islamic midnight (Fajr for Hanafi), and on Fridays Jumma ends 90 minutes after its start
 - **Madhab setting? Yes, it changes it**: Hanafi moves Asr later (so Dhuhr ends later) and makes Isha end at Fajr; other madhabs end Isha at Islamic midnight
+- **Jumma on Friday**: the Dhuhr card shows "Jumma" all day Friday, and its end time becomes the Jumu'ah service window — start + 90 minutes — instead of the generic "until Asr" end
 - **Islamic midnight fixed**: previously computed as civil 00:00; now the true Maghrib → tomorrow-Fajr midpoint (the same value as the adhan library's `SunnahTimes.middleOfTheNight`)
 - **Tahajjud window corrected**: now starts at the last third of the night, so sleep and Tahajjud reminders fire at the right time
 
@@ -75,7 +76,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 | Feature Area | One-line Summary | Documentation |
 |--------------|------------------|---------------|
-| 🏠 Home Dashboard | Prayer check-ins, next-prayer countdown, daily ayah & hadith, quick widgets | [Home Dashboard](#home-dashboard) |
+| 🏠 Home Dashboard | Prayer check-ins, next-prayer countdown, daily ayah & hadith | [Home Dashboard](#home-dashboard) |
 | 📖 Quran Reader | 604-page Madani Mushaf, 114 surahs, bookmarks, continue reading | [Quran Reader](#quran-reader-madani-mushaf) |
 | 🌐 Tafsir | 27 commentary editions in 6 languages, 3 bundled offline | [Tafsir Library](#tafsir-library) |
 | 🎧 Quran Audio | mp3quran.net reciter directory, offline surah downloads, global mini-player | [Quran Audio and Downloads](#quran-audio-and-downloads) |
@@ -122,7 +123,6 @@ The dashboard is the app's daily cockpit. It combines a premium Spotify-inspired
 
 - **One-tap prayer check-in**: mark Fajr–Isha as prayed directly from the dashboard. Check-ins are time-validated against today's calculated times — you cannot check in before the prayer time has entered, and missed prayers are automatically offered to the Qaza tracker.
 - **Daily Ayah & Daily Hadith**: a Qur'anic verse and an authentic hadith refresh every day, selected by a non-repeating picker so you don't see the same content twice in a row, with share and copy support.
-- **Quick widgets**: tasbeeh counter, Qibla shortcut, Quran progress ring, habit tracker, Ramadan countdown, and upcoming Islamic events — each deep-linkable via `noorconnect://app/<path>` from outside the app.
 - **Seasonal overlays**: Eid Mubarak celebration overlay, festive popups for Islamic occasions, and a salam greeting animation you can disable in settings.
 
 #### Quran Reader (Madani Mushaf)
@@ -189,7 +189,7 @@ Prayer times are calculated **fully offline on-device** using the battle-tested 
 - **Smart defaults by region**: before you pick anything, the app recommends the method used in your part of the world (e.g. Umm Al-Qura for Saudi Arabia, Egyptian for Egypt, ISNA for North America) so times match your local mosques.
 - **Asr madhab selector**: choose Standard (Shafi'i, Maliki, Hanbali) or Hanafi for the afternoon shadow calculation.
 - **Aladhan API fallback**: when online, monthly calendar data from Aladhan (with the equivalent method ID) is cached in localStorage as a cross-check and fallback source.
-- **Prayer end times**: every prayer shows when its window ends (Fajr ends at sunrise, Dhuhr at Asr, and so on), plus optional times — Imsak, Ishraq, Duha, Tahajjud and Midnight — behind a "Show Optional Times" toggle.
+- **Prayer end times**: every prayer shows when its window ends (Fajr ends at sunrise, Dhuhr at Asr, and so on), plus optional times — Ishraq, Duha and Tahajjud — behind an "Extra prayers" toggle on the home prayer card. On Friday the Dhuhr card reads "Jumma" and ends 90 minutes after start.
 - **12/24-hour formatting** follows your preference and locale everywhere times are shown.
 
 #### Adhan System

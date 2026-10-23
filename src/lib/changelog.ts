@@ -35,6 +35,12 @@ export const CHANGELOG_DATA: VersionChangelog[] = [
     date: '2026-10-23',
     title: 'Prayer End Times, Pregnancy Mode & Complete Prophet Stories',
     changes: [
+      { type: 'feature', description: 'Jumma on Friday \u2014 the Dhuhr card reads "Jumma" all day Friday and ends 90 minutes after start (the Jumu\u02bfah service window).' },
+      { type: 'feature', description: 'Extra prayers toggle \u2014 Ishraq, Duha and Tahajjud (madhab-aware, computed offline) behind a small chip under the prayer grid.' },
+      { type: 'feature', description: 'Knowledge section grows to 50 fiqh Q&As, each with a "Source" chip that opens the exact page the ruling was checked against; Q&As now follow your app language (Bengali complete, more coming).' },
+      { type: 'feature', description: 'Tafsir downloads \u2014 download any author\u2019s complete tafsir with real progress and size, read it offline with font-size control and ayah jump, and delete per author in Settings \u2192 Storage.' },
+      { type: 'improvement', description: 'Contact page redesigned with quick answers to the five most-asked questions and the app\u2019s real contact channels.' },
+      { type: 'fix', description: 'Live stream player no longer replays a short audio burst after recovery, and switching Makkah/Madinah mid-retry no longer attaches the wrong channel.' },
       { type: 'feature', description: 'Prayer end times \u2014 every prayer card on the home screen now shows when the prayer\u2019s valid time ends ("Ends 06:12"). Isha\u2019s end is madhab-aware: Islamic midnight for the majority opinion (Shafi\u02bf\u012b/Maliki/Hanbali) and dawn (Fajr) for Hanafi.' },
       { type: 'fix', description: 'Islamic midnight & Tahajjud corrected \u2014 "midnight" was computed as civil 00:00; it is now the true midpoint between Maghrib and tomorrow\u2019s Fajr, and Tahajjud begins at the last third of the night. Sleep and Tahajjud reminders inherit the corrected windows.' },
       { type: 'feature', description: 'Notifications, rebuilt: Android notification channels (Prayer Times, Ramadan, Noor Cycle, Sleep and more) with proper importance and vibration, richer localized text (localized prayer names with Arabic and per-prayer reminders), and localized adhan, Ramadan and Islamic-event notifications \u2014 all in your language.' },

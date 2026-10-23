@@ -359,12 +359,12 @@ const handleCheckIn = useCallback((pKey: PrayerName) => {
       const pKey = p.name.toLowerCase() as PrayerName;
       const isCompleted = todayPrayers ? !!todayPrayers[pKey] : false;
 
-      // Check if it's Friday and handle Jummah logic
+      // Friday: the Dhuhr slot shows "Jumma" for the whole day (owner choice) —
+      // the localized label comes from the existing 'jummah' locale key.
       const isFriday = now.getDay() === 5;
-      const isAfter2PM = now.getHours() >= 14;
       let displayName = p.name;
 
-      if (p.name === 'Dhuhr' && isFriday && !isAfter2PM) {
+      if (p.name === 'Dhuhr' && isFriday) {
         displayName = 'Jummah';
       }
 

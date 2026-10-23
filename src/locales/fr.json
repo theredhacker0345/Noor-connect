@@ -1207,5 +1207,35 @@
   "notifEventReminderBody": "Préparez-vous pour {{name}}. {{message}}",
   "endsAt": "Jusqu'à {{time}}",
   "islamicMidnight": "minuit islamique",
-  "endsFormula": "Chaque prière se termine quand la suivante commence (Fajr au lever du soleil) ; Isha se termine à minuit islamique, ou au Fajr pour le hanafisme."
+  "endsFormula": "Les heures de fin sont calculées sur votre appareil à partir des heures de prière elles-mêmes — jamais via une API.",
+  "knowledgeSourceLabel": "Source",
+  "extraPrayers": "Prières supplémentaires",
+  "contactFaq": {
+    "greeting": "Salam — comment pouvons-nous aider ?",
+    "responseTime": "Nous répondons généralement sous quelques jours",
+    "faqTitle": "Réponses rapides",
+    "faqSubtitle": "Les cinq questions les plus fréquentes",
+    "faqBackupsQ": "Où sont stockées mes sauvegardes ?",
+    "faqBackupsA": "Automatiquement, environ toutes les 20 minutes d'activité, dans le stockage privé de l'app sur votre appareil. Vous pouvez enregistrer une copie sur Google Drive (Android) ou exporter un fichier .json depuis Réglages → Sauvegarde. Rien n'est envoyé sur nos serveurs — nous n'en avons pas.",
+    "faqMethodQ": "Comment changer la méthode de calcul des horaires ?",
+    "faqMethodA": "Réglages → Prière → Méthode de calcul. Choisissez l'un des 13 préréglages (ou gardez celui recommandé pour votre région) : tous les horaires sont recalculés aussitôt. Le madhab pour l'Asr se change au même endroit.",
+    "faqNotificationsQ": "Pourquoi ne reçois-je pas de notifications ?",
+    "faqNotificationsA": "Vérifiez Réglages → Notifications — chaque rappel a son propre interrupteur, et un bouton « Envoyer une notification de test » montre si la livraison fonctionne. Sur Android, autorisez les notifications de l'app et retirez-la de l'optimisation de batterie.",
+    "faqPrivacyQ": "Ma position est-elle envoyée quelque part ?",
+    "faqPrivacyA": "Votre position reste sur votre appareil. Elle n'est envoyée qu'à l'API des horaires de prière (api.aladhan.com) pour calculer votre emploi du temps, et au service de recherche de villes lorsque vous cherchez une ville. Sans comptes, sans pubs, sans analytique.",
+    "faqDownloadsQ": "Comment supprimer le contenu téléchargé ?",
+    "faqDownloadsA": "Réglages → Stockage liste tout ce que vous avez téléchargé — audio du Coran, livres et tafsirs — chacun avec son bouton de suppression, pour libérer de l'espace sans toucher au reste.",
+    "reachTitle": "Toujours bloqué ? Parlons-en",
+    "reachSubtitle": "Vrais canaux, réponses du développeur"
+  },
+  "tafsirDl": {
+    "title": "Téléchargements de tafsir",
+    "subtitle": "Téléchargez un tafsir complet (114 sourates) par auteur — taille réelle affichée, hors ligne",
+    "download": "Télécharger",
+    "downloaded": "Téléchargé ·",
+    "progress": "{done}/{total} sourates · {size}",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "confirmDelete": "Supprimer ce tafsir de votre appareil ? Vous pourrez le retélécharger à tout moment."
+  }
 }

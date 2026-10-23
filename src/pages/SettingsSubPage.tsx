@@ -35,6 +35,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useLanguage } from '@/contexts/LanguageContext-new';
 import { useI18n } from '@/hooks/useI18n';
+import { ContactPage } from '@/components/settings/ContactPage';
+import { TafsirStorageCard } from '@/components/tafsir/TafsirStorageCard';
 import { LANGUAGES, SUPPORTED_CODES } from '@/lib/language-config';
 
 import { getMadhab, setMadhab, type MadhabType } from '@/lib/storage';
@@ -738,6 +740,9 @@ const SettingsSubPage: React.FC = () => {
               </Button>
             </Card>
 
+            {/* Per-author whole-Quran tafsir downloads — real sizes + delete */}
+            <TafsirStorageCard />
+
             <AlertDialog open={showClearCacheDialog} onOpenChange={setShowClearCacheDialog}>
               <AlertDialogContent className="rounded-2xl">
                 <AlertDialogHeader>
@@ -978,65 +983,8 @@ const SettingsSubPage: React.FC = () => {
           </div>
         )}
 
-        {/* CONTACT SECTION — Developer Info */}
-        {sectionId === 'contact' && (
-          <div className="space-y-4">
-            <Card className="p-5 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border-emerald-500/20 rounded-2xl overflow-hidden space-y-3">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                  <Briefcase className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">{t('contactHeadline')}</h3>
-                  <p className="text-xs text-slate-400">{t('contactSubtitle')}</p>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                {t('contactBody')}
-              </p>
-
-              <div className="space-y-2.5 pt-2">
-                <Button
-                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all rounded-xl"
-                  onClick={() => window.open('https://wa.me/923352706540', '_blank')}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  <span className="font-medium">{t('letsTalkWhatsapp')}</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full h-11 justify-center bg-white dark:bg-slate-900 hover:bg-emerald-500/10 hover:text-emerald-700 transition-all rounded-xl border-slate-200 dark:border-slate-800"
-                  onClick={() => window.open('https://ubaid-ur-rehmanportfolio.vercel.app/', '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2 text-emerald-600" />
-                  <span className="font-medium">{t('viewMyWork')}</span>
-                </Button>
-
-                <button
-                  className="w-full min-h-11 flex items-center gap-2.5 text-left text-xs text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors p-2 rounded-xl border border-slate-100 dark:border-slate-800/60"
-                  onClick={() => window.location.href = 'mailto:arifubaid0345@gmail.com'}
-                >
-                  <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">Gmail</span> — arifubaid0345@gmail.com
-                  </span>
-                </button>
-
-                <button
-                  className="w-full min-h-11 flex items-center gap-2.5 text-left text-xs text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors p-2 rounded-xl border border-slate-100 dark:border-slate-800/60"
-                  onClick={() => window.location.href = 'mailto:ubaid0345@proton.me'}
-                >
-                  <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    {t('otherEmail')} <span className="font-semibold text-slate-800 dark:text-slate-200">Proton</span> — ubaid0345@proton.me
-                  </span>
-                </button>
-              </div>
-            </Card>
-          </div>
-        )}
+        {/* CONTACT SECTION — Card + FAQ redesign (see ContactPage) */}
+        {sectionId === 'contact' && <ContactPage />}
       </main>
     </div>
   );

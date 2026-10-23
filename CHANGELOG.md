@@ -12,6 +12,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Jumma on Friday**: the Dhuhr card shows "Jumma" for the whole day on Friday, and its end time becomes the Jumu'ah service window — start + 90 minutes — instead of the generic "until Asr" valid-time end used on other days.
+- **Extra prayers on the home card**: a small "Extra prayers" toggle under the prayer grid reveals Ishraq, Duha and Tahajjud with their start/end windows — computed offline by the bundled adhan library, madhab-aware (Ishraq ≈ 15 minutes after sunrise, 20 for Hanafi; Duha at the mid-morning midpoint; Tahajjud from the last third of the night until Fajr).
+- **Knowledge grows to 50 Q&As with exact source pages**: 15 new pre-written fiqh answers (delaying menses with medication, bleeding before birth, classifying pill/implant bleeding, joining prayers under hardship, wet dreams and ghusl, and more), and every answer now carries a "Source · IslamQA.info" chip that opens the exact verified page the ruling was checked against. Q&A content follows the selected app language where translations are available (Bengali complete; additional languages fall back to English for now).
+- **Tafsir downloads per author**: download a complete tafsir edition (all 114 surahs) in one tap with real progress (surah n/114 + MB so far), resumable and cancellable; downloaded editions show their true size, work fully offline in the reader (with font-size control and ayah jump), and can be deleted individually from Settings → Storage.
+- **Contact page redesigned**: a warm greeting header, five fact-checked FAQ accordions (backups, prayer method, notifications, privacy, downloads), the app's real contact channels, and an honest response-time badge.
+- **Live stream stability**: fixed stale position-pin timers and tab-switch retry races in the Makkah/Madinah player that could replay a short audio burst ("same word twice"); recovery attempts now reset correctly and reconnect-on-network is live again.
+
+### Fixed
+
+- README no longer claims deep-linkable home-screen widgets (tasbeeh/Qibla/habit/etc. via `noorconnect://app/<path>`) — the app ships no OS widgets.
+
 - **Prayer end times on the home screen**: every prayer card in the dashboard grid now shows when that prayer's valid time ends ("Ends 06:12"), formatted per the user's 12/24-hour preference and re-formatted live when the preference changes. Fajr ends at sunrise, Dhuhr at Asr, Asr at Maghrib, Maghrib at Isha.
 - **Madhab-aware Isha end**: Isha's window end follows the user's madhab — Islamic midnight (midpoint of Maghrib → tomorrow's Fajr) for the jumhur position (Shafi'i/Maliki/Hanbali, the app default), and Subh Sadiq (tomorrow's Fajr) for Hanafi. A tooltip on the Isha card explains the Islamic-midnight basis.
 - **Android notification channels**: a central registry of 8 stable channel ids (Prayer Times, Prayer Prep, Ramadan, Hydration, Noor Cycle, Reminders, Events, Sleep) with localized names/descriptions, sensible importance levels and vibration — visible and manageable in Android's notification settings.

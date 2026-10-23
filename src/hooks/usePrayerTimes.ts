@@ -345,15 +345,21 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
         ...prayerDates,
         midnight: sunnah.middleOfTheNight,
         imsak: optionalTimes.imsak || new Date(prayerDates.fajr.getTime() - 10 * 60000),
-        ishraq: new Date(prayerDates.sunrise.getTime() + 15 * 60000),
+        // Ishraq: sun must clear the horizon — jumhur ≈ 15 min after sunrise,
+        // Ḥanafī practice waits ≈ 20 min (shadows start moving).
+        ishraq: new Date(prayerDates.sunrise.getTime() + (getMadhab() === 'hanafi' ? 20 : 15) * 60000),
         duha: new Date(prayerDates.sunrise.getTime() + (prayerDates.dhuhr.getTime() - prayerDates.sunrise.getTime()) / 2),
         tahajjud: sunnah.lastThirdOfTheNight,
       };
 
+      // Jumma (Friday): the Dhuhr slot is the Jumu'ah service — its shown end
+      // is a fixed 90-minute service window after start (owner decision),
+      // instead of the generic "until Asr" valid-time end used on other days.
+      const isFriday = now.getDay() === 5;
       const withEnd: PrayerTimesWithEnd = {
         fajr: { start: times.fajr, end: times.sunrise },
         sunrise: { start: times.sunrise, end: times.sunrise }, // Sunrise is an event, not a prayer period
-        dhuhr: { start: times.dhuhr, end: times.asr },
+        dhuhr: { start: times.dhuhr, end: isFriday ? new Date(times.dhuhr.getTime() + 90 * 60000) : times.asr },
         asr: { start: times.asr, end: times.maghrib },
         maghrib: { start: times.maghrib, end: times.isha },
         isha: { start: times.isha, end: ishaEnd },
