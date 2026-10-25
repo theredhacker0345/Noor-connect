@@ -61,8 +61,8 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - **Phase-aware self-care card**: hydration, iron-rich and sunnah foods (with cited sources), sleep, movement and self-compassion — adapting to haidh / tuhr / premenstrual / fertile / pregnancy phases
 - **Daily water tracker** right on the Today tab
 
-### 📖 Complete Qisas, 25-Chapter Seerah & 140 Duʿās
-- **Seerah grew from 17 to 25 story chapters**: new standalone stories for the Pledges of Aqabah, the Hijrah, Khaybar, the Conquest of Makkah, Hunain & Ta'if, Tabuk, the Year of Delegations and the Farewell Pilgrimage — each with a Lessons & Reflections section
+### 📖 Complete Qisas, 33-Chapter Seerah & 140 Duʿās
+- **Seerah grew from 17 to 33 story chapters**: 16 new standalone stories — the Pledges of Aqabah, the Hijrah, Khaybar, the Conquest of Makkah, Hunain & Ta'if, Tabuk, the Year of Delegations, the Farewell Pilgrimage, the Final Illness and the Passing of the Prophet, Abu Bakr al-Siddiq, the Ahl al-Bayt, the Ten Promised Paradise, the Ummahat al-Mu'minin, the Daily Sunnah, the Prophet's Character and the Living Legacy — each with a Lessons & Reflections section
 - **25 prophet stories — the collection is complete**: the story of Prophet Muhammad ﷺ (sirah from Ibn Hisham, Bukhari, Muslim and classical scholarship) joins the library, from Adam to the Final Messenger
 - **60 new authentic duʿās** across 8 new categories (Rizq, Wudu, Dressing, After Adhan, Anxiety & Grief, Guidance & Steadfastness, Laylatul Qadr, Istikharah) — **140 duʿās total**, every entry sourced from the Qur'an or the six hadith collections
 - **Dua category bar fixed**: all 35 category chips now scroll horizontally on every screen size (they were previously clipped and unreachable)
@@ -107,7 +107,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 | 🧠 Islamic Quiz | 229 verified questions, 5 game modes, XP, lives, mystery boxes | [Islamic Quiz](#islamic-quiz) |
 | 🌿 Islamic Remedies | Mood-based Tibb-e-Nabawi index with 96 remedies | [Islamic Remedies (Tibb-e-Nabawi)](#islamic-remedies-tibb-e-nabawi) |
 | 📚 E-Books | 272-book library, PDF reader, offline downloads, collections | [E-Books Library](#e-books-library) |
-| 📜 Seerah | Ar-Raheeq Al-Makhtum in 25 story chapters with progress tracking | [Seerah of the Prophet (Peace Be Upon Him)](#seerah-of-the-prophet-peace-be-upon-him) |
+| 📜 Seerah | Ar-Raheeq Al-Makhtum in 33 story chapters with progress tracking | [Seerah of the Prophet (Peace Be Upon Him)](#seerah-of-the-prophet-peace-be-upon-him) |
 | 📖 Qisas | Complete stories of all 25 prophets, from Adam to Muhammad ﷺ | [Qisas Al-Anbiya (Stories of the Prophets)](#qisas-al-anbiya-stories-of-the-prophets) |
 | 📚 Hadith | 87,000+ hadith across 16 collections with bookmarks | [Hadith Encyclopedia](#hadith-encyclopedia) |
 | 💰 Zakat | Gold & silver nisab with live prices and offline fallbacks | [Zakat Calculator](#zakat-calculator) |
@@ -341,7 +341,7 @@ A modern Islamic e-book reader with a **272-book catalog** bundled in the app, s
 - **Collections**: organize books into custom collections (ships with "Ramadan Reading" and "Favorites"), backed by the collections storage layer.
 
 #### Seerah of the Prophet (Peace Be Upon Him)
-The Prophet's ﷺ biography presented as **Ar-Raheeq Al-Makhtum (The Sealed Nectar)** by Safiur Rahman Mubarakpuri — the Muslim World League prize-winning biography — in **25 story chapters** bundled fully offline: the original 17 plus 8 new standalone stories (Aqabah, the Hijrah, Khaybar, the Conquest of Makkah, Hunain & Ta'if, Tabuk, the Year of Delegations, the Farewell Pilgrimage), each closing with a Lessons & Reflections section.
+The Prophet's ﷺ biography presented as **Ar-Raheeq Al-Makhtum (The Sealed Nectar)** by Safiur Rahman Mubarakpuri — the Muslim World League prize-winning biography — in **33 story chapters** bundled fully offline: the original 17 plus 16 new standalone stories (Aqabah, the Hijrah, Khaybar, the Conquest of Makkah, Hunain & Ta'if, Tabuk, the Year of Delegations, the Farewell Pilgrimage, the Final Illness and the Passing of the Prophet, Abu Bakr al-Siddiq, the Ahl al-Bayt, the Ten Promised Paradise, the Ummahat al-Mu'minin, the Daily Sunnah, the Prophet's Character, the Living Legacy), each closing with a Lessons & Reflections section.
 
 - Chapter grid with per-chapter progress tracking and a Continue Reading experience.
 - Reader with clean typography, offline availability, and progress that syncs into your backup.
