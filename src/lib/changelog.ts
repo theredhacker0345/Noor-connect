@@ -72,6 +72,9 @@ export const CHANGELOG_DATA: VersionChangelog[] = [
       { type: 'fix', description: 'The Knowledge library really ships all 50 Q&As now \u2014 the previous release listed 50 in the notes but only 35 answers made it into the app data, and the "Source" chips opened nothing. Every answer carries a working link to the exact verified fatwa page.' },
       { type: 'improvement', description: 'A downloaded tafsir edition now reads fully offline in the Tafsir reader \u2014 the reader previously ignored downloads and re-fetched from the network; ayah boundaries are preserved exactly.' },
       { type: 'fix', description: 'Service Worker prayer-time sync fixed \u2014 the payload shape mismatch left the background prayer checker empty ("Prayer times updated: undefined"), so its backup prayer notifications never fired.' },
+      { type: 'feature', description: 'Prayer End Reminder \u2014 get notified a few minutes before each prayer\u2019s valid time ends ("Asr ends in 15 minutes"). One-tap switch on the Profile page, full setup with a 10/15/20/30-minute selector on Settings \u2192 Notifications; end times follow the same fiqh rule shown on the home cards, and the text is localized in all 7 languages.' },
+      { type: 'feature', description: 'Islamic Quiz grows from 175 to 229 verified questions \u2014 54 new questions across Quran, Hadith, Prayer, Seerah, Sahabah, Fiqh and more, each grounded in the Qur\u2019an or authentic hadith with the exact reference (Bukhari/Muslim number or verse) cited in the explanation.' },
+      { type: 'fix', description: 'Profile page \u2014 the "Prayer Notifications" row no longer shows a raw count of scheduled notifications; the row is clean and the new Prayer End Reminder quick toggle takes its place on the page.' },
     ],
   },
   {

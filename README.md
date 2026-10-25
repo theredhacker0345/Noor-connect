@@ -32,9 +32,15 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### 🔔 Smarter Notifications
 - **Android notification channels**: Prayer Times, Prayer Prep, Ramadan, Hydration, Noor Cycle, Reminders, Events and Sleep — each with proper importance, vibration and localized names you can manage in Android settings
+- **Prayer End Reminder**: an optional alert a few minutes before each prayer's valid time ends ("Asr ends in 15 minutes") — one-tap switch on the Profile page, lead time selectable (10/15/20/30 min) under Settings → Notifications; localized in all 7 languages, scheduled entirely on-device
 - **Richer, localized notification text**: prayer alerts carry the localized prayer name with its Arabic name and an authentic per-prayer reminder; adhan, Ramadan countdown and Islamic-event notifications are now fully localized in all 7 languages
 - **Two text bugs fixed**: prayer reminders no longer show "undefined", and Quran-recitation notification actions route correctly again
 - **Notification History redesigned**: grouped by day, per-type icons, clear-all
+- **Profile cleanup**: the "Prayer Notifications" settings row no longer shows a raw count of scheduled notifications
+
+### 🧠 Islamic Quiz — More Verified Questions
+- **175 → 229 questions**: 54 new verified questions across Qur'an, Hadith, Prayer, Seerah, Sahabah, Prophets, Fiqh, Ramadan, Calendar, Worship and more
+- **Every answer sourced**: explanations cite the exact evidence — Bukhari/Muslim numbers (e.g. the gate Ar-Rayyan for those who fast, Bukhari 1896) or Qur'an verses (e.g. the four sacred months, 9:36) — with difficulty from easy to hard
 
 ### 🧭 Services Hub & Home Polish
 - **Services redesigned**: a "Discover Resources" hero with clearly grouped sections (Worship & Prayer, Qur'an & Recitation, Learning, Media, Calculators) — seasonal Fitrana and Eid-checklist cards unchanged
@@ -98,7 +104,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 | 📿 Digital Tasbeeh | 5 dhikrs, Zen Mode, lifetime totals, haptic ticks | [Digital Tasbeeh](#digital-tasbeeh) |
 | 🤲 Duas | 140 authentic supplications in 35 categories with audio & counters | [Duas and Supplications](#duas-and-supplications) |
 | ✨ 99 Names | Asma-ul-Husna with meanings, descriptions and favorites | [99 Names of Allah](#99-names-of-allah) |
-| 🧠 Islamic Quiz | 176 questions, 5 game modes, XP, lives, mystery boxes | [Islamic Quiz](#islamic-quiz) |
+| 🧠 Islamic Quiz | 229 verified questions, 5 game modes, XP, lives, mystery boxes | [Islamic Quiz](#islamic-quiz) |
 | 🌿 Islamic Remedies | Mood-based Tibb-e-Nabawi index with 96 remedies | [Islamic Remedies (Tibb-e-Nabawi)](#islamic-remedies-tibb-e-nabawi) |
 | 📚 E-Books | 272-book library, PDF reader, offline downloads, collections | [E-Books Library](#e-books-library) |
 | 📜 Seerah | Ar-Raheeq Al-Makhtum in 25 story chapters with progress tracking | [Seerah of the Prophet (Peace Be Upon Him)](#seerah-of-the-prophet-peace-be-upon-him) |
@@ -206,6 +212,7 @@ The adhan is a first-class citizen, on web and natively on Android.
 A rich local-notification engine (no push server, nothing leaves your phone) keeps you on your deen throughout the day:
 
 - **Prayer notifications with quotes**: each prayer notification carries rotating quotes from the Qur'an and authentic hadith, with **action buttons** — ⏹ Stop Adhan and 🕌 Open App — on both native Android and PWA notifications.
+- **Prayer End Reminder**: an optional alert a few minutes before each prayer's valid time ends ("Asr ends in 15 minutes") — one-tap switch on the Profile page, lead time selectable (10/15/20/30 min) under Settings → Notifications; end boundaries follow the fiqh rule shown on the home cards (Fajr → sunrise, others → next prayer, Isha → Islamic midnight / dawn for Hanafi). Fully local scheduling, localized in all 7 languages.
 - **Night & day sunnah reminders**: Tahajjud prompts during the last third of the night, mid-morning Salat al-Duha alerts, Monday & Thursday sunnah-fasting reminders, an evening daily-Quran tilawat goal nudge, and bedtime Azkar (Ayatul Kursi and the protection surahs) plus rotating Islamic sleep reminders anchored to your Isha time.
 - **Friday Kahf reminder**, daily ayah/hadith, dhikr reminders, and morning/evening adhkar notifications.
 - **Ramadan**: Suhoor and Iftar countdown notifications (deterministic IDs so they update in place, and a boot-time safety clear that sweeps away ghost reminders outside Ramadan).
@@ -309,7 +316,9 @@ A serious hadith library, fully offline: **16 collections totalling 87,000+ hadi
 The complete Asma-ul-Husna: all **99 Names with Arabic script, transliteration, meaning and a short description** of each Name's significance. Debounced search finds a Name fast, favorites let you keep the Names you're memorizing close, and the list renders smoothly even on low-end devices.
 
 #### Islamic Quiz
-A gamified quiz built to make knowledge stick, with **176 questions across 14 categories** (Qur'an, Hadith, Fiqh, Aqeedah, Pillars, Prayer, Prophets, Sahabah, Seerah, History, Ramadan, Angels, Arabic, Tafsir).
+A gamified quiz built to make knowledge stick, with **229 questions across 14 categories** (Qur'an, Hadith, Fiqh, Aqeedah, Pillars, Prayer, Prophets, Sahabah, Seerah, History, Ramadan, Angels, Arabic, Tafsir).
+
+- **Verified content**: every question's answer is grounded in the Qur'an or authentic hadith collections — explanations cite the exact reference (e.g. Bukhari 1896, Muslim 810, Quran 33:40), from "the gate of Paradise for those who fast (Ar-Rayyan)" to "the 17 fard rakats of the day" and "the four sacred months".
 
 - **5 game modes**: Classic (scored run), Daily (a fresh daily challenge), Category drills, **Time Attack** (answer as many as possible in 2 minutes) and **Survival** (endless until your first mistake).
 - **XP economy**: 10 XP per correct answer with combo-streak and accuracy bonuses, levels with titles, and a persistent daily-streak system.

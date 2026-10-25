@@ -20,11 +20,12 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { CURRENT_APP_VERSION } from '@/lib/constants';
 import { useI18n } from '@/hooks/useI18n';
 import hapticService from '@/lib/haptic-service';
+import { Switch } from '@/components/ui/switch';
+import { notificationManager } from '@/lib/notification-manager';
 
 interface SettingsRow {
   id: string;
@@ -104,7 +105,6 @@ const GROUPS: SettingsGroup[] = [
         gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/20',
         iconColor: 'text-emerald-600 dark:text-emerald-400',
         route: '/settings/notifications',
-        asyncKey: 'notifications',
       },
       {
         id: 'adhan',
@@ -225,8 +225,31 @@ const Profile: React.FC = () => {
   const { t } = useI18n();
   const [asyncValues, setAsyncValues] = useState<Record<string, string | null>>({});
 
+  // NC-9: quick access to the "prayer time is ending" reminder straight from
+  // the Profile page (full config lives in /settings/notifications).
+  const [endReminderEnabled, setEndReminderEnabled] = useState(false);
+
+  useEffect(() => {
+    try {
+      setEndReminderEnabled(notificationManager.getPreferences().prayerEndReminder ?? false);
+    } catch {
+      setEndReminderEnabled(false);
+    }
+  }, []);
+
+  const handleEndReminderToggle = (checked: boolean) => {
+    setEndReminderEnabled(checked);
+    try {
+      notificationManager.updatePreferences({ prayerEndReminder: checked });
+      // Re-schedules all prayer-window notifications for the new pref.
+      window.dispatchEvent(new Event('prayer-notification-prefs-changed'));
+    } catch (error) {
+      console.warn('Failed to update prayer-end reminder preference:', error);
+    }
+  };
+
   // Translate dynamic pill values that are app words (theme "System", haptic "On/Off");
-  // other values (theme names, calculation methods, byte sizes, counts) are shown as-is.
+  // other values (theme names, calculation methods, byte sizes) are shown as-is.
   const displayAsyncValue = (asyncKey: string, val: string): string => {
     if (asyncKey === 'haptic') {
       if (val === 'On') return t('on');
@@ -266,19 +289,6 @@ const Profile: React.FC = () => {
         results['prayer'] = getCalcMethodDisplay(calcMethod);
       } catch {
         results['prayer'] = null;
-      }
-
-      try {
-        if (typeof LocalNotifications !== 'undefined' && LocalNotifications.getPending) {
-          const pending = await LocalNotifications.getPending();
-          results['notifications'] = pending?.notifications?.length !== undefined
-            ? String(pending.notifications.length)
-            : '0';
-        } else {
-          results['notifications'] = '0';
-        }
-      } catch {
-        results['notifications'] = null;
       }
 
       try {
@@ -361,62 +371,90 @@ const Profile: React.FC = () => {
 
         {/* Group Cards */}
         {GROUPS.map((group) => (
-          <section key={group.id} className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-                {t(group.title)}
-              </h2>
-              {group.badge && (
-                <span className="text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-md bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                  {t(group.badge)}
-                </span>
-              )}
-            </div>
+          <React.Fragment key={group.id}>
+            <section className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                  {t(group.title)}
+                </h2>
+                {group.badge && (
+                  <span className="text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded-md bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    {t(group.badge)}
+                  </span>
+                )}
+              </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80">
-              {group.rows.map((row) => {
-                const IconComponent = row.icon;
-                const hasAsyncKey = !!row.asyncKey;
-                const val = hasAsyncKey ? asyncValues[row.asyncKey!] : undefined;
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80">
+                {group.rows.map((row) => {
+                  const IconComponent = row.icon;
+                  const hasAsyncKey = !!row.asyncKey;
+                  const val = hasAsyncKey ? asyncValues[row.asyncKey!] : undefined;
 
-                return (
-                  <div
-                    key={row.id}
-                    onClick={() => navigate(row.route)}
-                    className="group flex items-center justify-between px-4 py-3.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-all duration-150 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${row.gradient} border flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
-                        <IconComponent className={`w-5 h-5 ${row.iconColor}`} />
+                  return (
+                    <div
+                      key={row.id}
+                      onClick={() => navigate(row.route)}
+                      className="group flex items-center justify-between px-4 py-3.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-all duration-150 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${row.gradient} border flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105`}>
+                          <IconComponent className={`w-5 h-5 ${row.iconColor}`} />
+                        </div>
+
+                        <div className="min-w-0 flex-1 pe-2">
+                          <div className="text-[14px] font-semibold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
+                            {t(row.title)}
+                          </div>
+                          <div className="text-[11px] font-normal text-slate-400 dark:text-slate-400 mt-0.5 truncate">
+                            {t(row.subtitle)}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="min-w-0 flex-1 pe-2">
-                        <div className="text-[14px] font-semibold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
-                          {t(row.title)}
-                        </div>
-                        <div className="text-[11px] font-normal text-slate-400 dark:text-slate-400 mt-0.5 truncate">
-                          {t(row.subtitle)}
-                        </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ms-2">
+                        {hasAsyncKey && (
+                          val === undefined ? (
+                            <div className="w-8 h-4 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+                          ) : val !== null ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                              {displayAsyncValue(row.asyncKey!, val)}
+                            </span>
+                          ) : null
+                        )}
+                        <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition-transform" />
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            </section>
 
-                    <div className="flex items-center gap-2 flex-shrink-0 ms-2">
-                      {hasAsyncKey && (
-                        val === undefined ? (
-                          <div className="w-8 h-4 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
-                        ) : val !== null ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                            {displayAsyncValue(row.asyncKey!, val)}
-                          </span>
-                        ) : null
-                      )}
-                      <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:translate-x-0.5 transition-transform" />
+            {/* NC-9: quick toggle for the "prayer time is ending" reminder,
+                surfaced directly on the Profile page under the prayer group. */}
+            {group.id === 'prayer' && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-emerald-500/20 dark:border-emerald-500/15 shadow-sm px-4 py-3.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Bell className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                      {t('prayerEndReminder')}
+                    </div>
+                    <div className="text-[11px] font-normal text-slate-400 dark:text-slate-400 mt-0.5">
+                      {t('prayerEndReminderQuickSubtitle')}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                </div>
+                <div className="flex-shrink-0 ms-2">
+                  <Switch
+                    checked={endReminderEnabled}
+                    onCheckedChange={handleEndReminderToggle}
+                  />
+                </div>
+              </div>
+            )}
+          </React.Fragment>
         ))}
 
         {/* Privacy & Version Footer */}

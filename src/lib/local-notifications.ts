@@ -18,6 +18,7 @@ import {
   notificationManager,
   PRE_PRAYER_MINUTES_OPTIONS,
   POST_PRAYER_MINUTES_OPTIONS,
+  PRAYER_END_MINUTES_OPTIONS,
 } from './notification-manager';
 import { ensureNoorNotificationChannels, NOTIFICATION_CHANNELS, NOTIFICATION_ACCENT_COLOR } from './notification-channels';
 import { getPrayerDisplayPair, PRAYER_ARABIC_NAMES, PRAYER_ORDER } from './prayer-display';
@@ -45,10 +46,13 @@ const SCHEDULE_WINDOW_DAYS = 30;
 // value (9999-12-31) = 999912335 + 20000 = 999932335 < 2^31 - 1, so IDs stay int32-safe.
 const PRE_PRAYER_ID_OFFSET = 10000;
 const POST_PRAYER_ID_OFFSET = 20000;
+// NC-9: "prayer time is ending" reminders use a third offset (+30000).
+// Same collision-safety argument as above; max id stays < 2^31 - 1.
+const PRAYER_END_ID_OFFSET = 30000;
 
 // extra.type values owned by this scheduler. clearPrayerNotifications() and
 // getScheduledPrayerNotifications() cancel/list every pending notification of these types.
-const PRAYER_NOTIFICATION_TYPES = ['prayer_reminder', 'pre_prayer_reminder', 'post_prayer_reminder'];
+const PRAYER_NOTIFICATION_TYPES = ['prayer_reminder', 'pre_prayer_reminder', 'post_prayer_reminder', 'prayer_end_reminder'];
 
 // Pending-notification extra payloads are untyped (Record<string, any>); keep the
 // membership test in one place so the filter stays string-safe.
@@ -130,6 +134,59 @@ const getPrayerEndsAtText = (
     const cleaned = endTime.replace(/\s*\(.*?\)\s*/g, '').trim();
     if (!/^\d{1,2}:\d{2}$/.test(cleaned)) return null;
     return i18n.t('notifPrayerEndsAt', { time: formatNotificationTime(cleaned) });
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * NC-9: compute the END of a prayer window as a Date, mirroring the display
+ * logic of getPrayerEndsAtText (Fajr -> Sunrise; each prayer -> next prayer's
+ * start; Isha -> tomorrow's Fajr when cached). Returns null when the boundary
+ * is unavailable or the data is malformed.
+ */
+const getPrayerEndDate = (
+  prayerName: string,
+  timings: AladhanPrayerTime,
+  targetDate: Date
+): Date | null => {
+  try {
+    let endTime: string | null = null;
+    if (prayerName === 'Fajr' && typeof timings.Sunrise === 'string') {
+      endTime = timings.Sunrise;
+    } else {
+      const idx = PRAYER_ORDER.indexOf(prayerName as typeof PRAYER_ORDER[number]);
+      const nextName = idx >= 0 && idx < PRAYER_ORDER.length - 1 ? PRAYER_ORDER[idx + 1] : null;
+      if (nextName && typeof timings[nextName] === 'string') {
+        endTime = timings[nextName];
+      } else if (prayerName === 'Isha') {
+        // Isha ends at tomorrow's Fajr - only when the data is already cached.
+        const tomorrow = new Date(targetDate);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const storedLocation = localStorage.getItem(LOCATION_STORAGE_KEY);
+        if (storedLocation) {
+          const loc = JSON.parse(storedLocation) as { latitude?: number; longitude?: number };
+          if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+            const tomorrowData = AladhanAPI.getPrayerTimesForDate(
+              tomorrow,
+              loc.latitude,
+              loc.longitude
+            );
+            if (tomorrowData && typeof tomorrowData.timings.Fajr === 'string') {
+              endTime = tomorrowData.timings.Fajr;
+            }
+          }
+        }
+      }
+    }
+    if (!endTime) return null;
+    const cleaned = endTime.replace(/\s*\(.*?\)\s*/g, '').trim();
+    if (!/^\d{1,2}:\d{2}$/.test(cleaned)) return null;
+    const [endHours, endMinutes] = cleaned.split(':').map(Number);
+    if (!Number.isFinite(endHours) || !Number.isFinite(endMinutes)) return null;
+    const endDate = new Date(targetDate);
+    endDate.setHours(endHours, endMinutes, 0, 0);
+    return endDate;
   } catch {
     return null;
   }
@@ -217,14 +274,31 @@ const getPostPrayerNotificationMessage = (prayerName: string): { title: string; 
 };
 
 /**
- * Task 21-d: read pre/post reminder preferences with the same merge-with-defaults
- * behavior the settings page uses, so existing installs get sensible defaults.
+ * NC-9: prayer-end reminder text ("Asr time ends in 15 minutes").
+ * Resolved via t() at SCHEDULE time (same convention as pre/post reminders).
+ * Expanded view adds a short line encouraging completing the prayer on time.
+ */
+const getPrayerEndNotificationMessage = (prayerName: string, minutes: number): { title: string; body: string; largeBody?: string } => {
+  const prayer = getLocalizedPrayerName(prayerName);
+  return {
+    title: i18n.t('prayerEndNotifTitle', { prayer, minutes }),
+    body: i18n.t('prayerEndNotifBody', { prayer, minutes }),
+    largeBody: i18n.t('prayerEndNotifHint'),
+  };
+};
+
+/**
+ * NC-9: read pre/post AND end-of-window reminder preferences with the same
+ * merge-with-defaults behavior the settings page uses, so existing installs
+ * get sensible defaults.
  */
 const getPrePostReminderSettings = (): {
   preEnabled: boolean;
   preMinutes: number;
   postEnabled: boolean;
   postMinutes: number;
+  endEnabled: boolean;
+  endMinutes: number;
 } => {
   const prefs = notificationManager.getPreferences();
   return {
@@ -232,6 +306,8 @@ const getPrePostReminderSettings = (): {
     preMinutes: PRE_PRAYER_MINUTES_OPTIONS.includes(prefs.prePrayerMinutes) ? prefs.prePrayerMinutes : 15,
     postEnabled: prefs.postPrayerReminder ?? false,
     postMinutes: POST_PRAYER_MINUTES_OPTIONS.includes(prefs.postPrayerMinutes) ? prefs.postPrayerMinutes : 15,
+    endEnabled: prefs.prayerEndReminder ?? false,
+    endMinutes: PRAYER_END_MINUTES_OPTIONS.includes(prefs.prayerEndMinutes) ? prefs.prayerEndMinutes : 15,
   };
 };
 
@@ -452,7 +528,8 @@ export class LocalNotificationManager {
         adhanEnabledSignature,
         adhanConfigText,
         `pre-${prePostSettings.preEnabled ? prePostSettings.preMinutes : 'off'}`,
-        `post-${prePostSettings.postEnabled ? prePostSettings.postMinutes : 'off'}`
+        `post-${prePostSettings.postEnabled ? prePostSettings.postMinutes : 'off'}`,
+        `end-${prePostSettings.endEnabled ? prePostSettings.endMinutes : 'off'}`
       ].join('|');
 
       const previousSignature = localStorage.getItem(LAST_SCHEDULE_SIGNATURE_KEY);
@@ -645,6 +722,54 @@ export class LocalNotificationManager {
                 scheduleTime: postDate,
                 prayerName,
               });
+            }
+          }
+
+          // NC-9: schedule the END-OF-WINDOW reminder (endDate - endMinutes).
+          // "Asr ends in 15 minutes" - fired before the prayer time expires so
+          // the user can still pray within the window. Only when the end Date
+          // is valid, lies after the prayer start, and is still in the future.
+          if (prePostSettings.endEnabled) {
+            const endDate = getPrayerEndDate(prayerName, dayData.timings, targetDate);
+            if (endDate && endDate.getTime() > prayerDate.getTime()) {
+              const remindDate = new Date(endDate.getTime() - prePostSettings.endMinutes * 60000);
+              if (remindDate > now) {
+                const endNotificationId = notificationId + PRAYER_END_ID_OFFSET;
+                const endMessage = getPrayerEndNotificationMessage(prayerName, prePostSettings.endMinutes);
+                const endNotification: LocalNotificationSchema = {
+                  id: endNotificationId,
+                  title: endMessage.title,
+                  body: endMessage.body,
+                  largeBody: endMessage.largeBody,
+                  schedule: {
+                    at: remindDate,
+                    allowWhileIdle: true,
+                    repeats: false,
+                  },
+                  sound: 'default',
+                  smallIcon: 'ic_notification',
+                  largeIcon: 'ic_launcher',
+                  iconColor: NOTIFICATION_ACCENT_COLOR,
+                  channelId: NOTIFICATION_CHANNELS.prayerPrep,
+                  group: 'noor-prayers',
+                  extra: {
+                    prayerName,
+                    prayerTime: cleaned,
+                    type: 'prayer_end_reminder',
+                    location: locationData,
+                    scheduledDate: targetDate.toISOString(),
+                  },
+                };
+
+                notifications.push(endNotification);
+                this.scheduledNotifications.set(endNotificationId, {
+                  id: endNotificationId,
+                  title: endMessage.title,
+                  body: endMessage.body,
+                  scheduleTime: remindDate,
+                  prayerName,
+                });
+              }
             }
           }
 

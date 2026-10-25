@@ -44,7 +44,7 @@ import { AladhanAPI } from '@/lib/aladhan-api';
 import { getStorageStats, clearAllBooks, formatFileSize } from '@/lib/ebooks-storage';
 import { downloadManager } from '@/lib/download-manager';
 import { clearCache } from '@/lib/backup';
-import { notificationManager, PRE_PRAYER_MINUTES_OPTIONS, POST_PRAYER_MINUTES_OPTIONS, type NotificationPreferences } from '@/lib/notification-manager';
+import { notificationManager, PRE_PRAYER_MINUTES_OPTIONS, POST_PRAYER_MINUTES_OPTIONS, PRAYER_END_MINUTES_OPTIONS, type NotificationPreferences } from '@/lib/notification-manager';
 import { unifiedNotifications } from '@/lib/unified-notifications';
 import { getGenderSettings, setGender, type Gender } from '@/lib/gender-settings';
 import { usePrayerAlarm } from '@/hooks/usePrayerAlarm';
@@ -171,6 +171,8 @@ const SettingsSubPage: React.FC = () => {
     prePrayerMinutes: 15,
     postPrayerReminder: false,
     postPrayerMinutes: 15,
+    prayerEndReminder: false,
+    prayerEndMinutes: 15,
     maxDailyNotifications: 5,
   });
 
@@ -231,15 +233,20 @@ const SettingsSubPage: React.FC = () => {
     const updated = { ...notificationPrefs, [key]: checked };
     setNotificationPrefs(updated);
     notificationManager.updatePreferences({ [key]: checked });
-    // Task 21-d: pre/post reminder toggles change the scheduled notification set.
-    if (key === 'prePrayerReminder' || key === 'postPrayerReminder') {
+    // Task 21-d / NC-9: pre/post + end-of-window reminder toggles change the
+    // scheduled notification set.
+    if (
+      key === 'prePrayerReminder' ||
+      key === 'postPrayerReminder' ||
+      key === 'prayerEndReminder'
+    ) {
       window.dispatchEvent(new Event('prayer-notification-prefs-changed'));
     }
     toast({ title: t(checked ? 'notificationEnabledToast' : 'notificationDisabledToast') });
   };
 
-  // Task 21-d: persist pre/post reminder minute values and reschedule.
-  const handleNotificationMinutes = (key: 'prePrayerMinutes' | 'postPrayerMinutes', minutes: number) => {
+  // Task 21-d / NC-9: persist reminder minute values and reschedule.
+  const handleNotificationMinutes = (key: 'prePrayerMinutes' | 'postPrayerMinutes' | 'prayerEndMinutes', minutes: number) => {
     setNotificationPrefs({ ...notificationPrefs, [key]: minutes });
     notificationManager.updatePreferences({ [key]: minutes });
     window.dispatchEvent(new Event('prayer-notification-prefs-changed'));
@@ -634,6 +641,40 @@ const SettingsSubPage: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {POST_PRAYER_MINUTES_OPTIONS.map((minutes) => (
+                      <SelectItem key={minutes} value={String(minutes)}>
+                        {String(minutes)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* NC-9: "prayer time is ending" reminder (Switch + minutes Select).
+                Fires BEFORE each prayer window expires (Fajr -> Sunrise,
+                others -> next prayer, Isha -> tomorrow's Fajr). */}
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <Label className="text-sm font-bold">{t('prayerEndReminder')}</Label>
+                <p className="text-xs text-slate-400">{t('prayerEndReminderDescription')}</p>
+              </div>
+              <Switch
+                checked={notificationPrefs.prayerEndReminder ?? false}
+                onCheckedChange={(c) => handleNotificationToggle('prayerEndReminder', c)}
+              />
+            </div>
+            {notificationPrefs.prayerEndReminder && (
+              <div className="pb-3">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">{t('prayerEndMinutesLabel')}</Label>
+                <Select
+                  value={String(notificationPrefs.prayerEndMinutes ?? 15)}
+                  onValueChange={(v) => handleNotificationMinutes('prayerEndMinutes', Number(v))}
+                >
+                  <SelectTrigger className="w-full h-11 rounded-xl mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {PRAYER_END_MINUTES_OPTIONS.map((minutes) => (
                       <SelectItem key={minutes} value={String(minutes)}>
                         {String(minutes)}
                       </SelectItem>
