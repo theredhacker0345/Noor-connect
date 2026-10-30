@@ -492,7 +492,7 @@ Contributions are welcome — translations, bug reports, and feature work all he
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
 
 <p align="center">
-  <i>"Indeed, in the remembrance of Allah do hearts find rest." (Ar-Ra'd 13:28)</i>
+  <i>""Whoever treads a path in search of knowledge, Allah will make easy for him a path to Paradise." (Sahih Muslim 2699a)</i>
 </p>
 
 ---
