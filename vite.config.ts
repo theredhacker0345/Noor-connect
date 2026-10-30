@@ -120,14 +120,16 @@ export default defineConfig(({ mode }) => ({
         "icon-128x128.png",
         "icon-144x144.png",
         "icon-152x152.png",
-        "icon-384x384.png"
+        "icon-384x384.png",
+        "icon-192-maskable.png",
+        "icon-512-maskable.png"
       ],
       manifest: {
         id: "com.noorconnect.app.v1.2",
         name: "Noor Connect - Islamic Companion",
         short_name: "Noor Connect",
         description: "Prayer times, Qur'an, Qibla, Tasbeeh, and Daily Hadith. Your complete Islamic companion app.",
-        theme_color: "#000000",
+        theme_color: "#0B3D2E",
         background_color: "#000000",
         display: "standalone",
         orientation: "portrait",
@@ -187,7 +189,13 @@ export default defineConfig(({ mode }) => ({
             src: "/icon-192x192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "any"
+          },
+          {
+            src: "/icon-192-maskable.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable"
           },
           {
             src: "/icon-384x384.png",
@@ -199,7 +207,13 @@ export default defineConfig(({ mode }) => ({
             src: "/icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "any"
+          },
+          {
+            src: "/icon-512-maskable.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable"
           }
         ]
       },
