@@ -31,6 +31,22 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
+    version: '2.5.0',
+    date: '2026-10-31',
+    title: 'Turkish Language, ~190 MB Slimmer APK & Prayer Accuracy Fixes',
+    changes: [
+      { type: 'feature', description: 'Turkish Language (Türkçe): Full Turkish translation for all app strings, with native Turkish prayer names (İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı). The app now supports 8 languages.' },
+      { type: 'improvement', description: 'APK ~190 MB Smaller: Tafsir no longer ships bundled (−175 MB) — download any edition you want from Settings → Storage. A legacy duplicate hadith file (−16 MB) and a corrupted duplicate source dataset (−137 MB repo) are also gone. Hadith libraries are unchanged and still work fully offline.' },
+      { type: 'fix', description: 'Adhan Alarms Survive Reboot: The boot receiver was accidentally unregistered in 2.3.0, so adhan alarms were lost after a phone restart. Alarms are now restored on boot and after time or timezone changes.' },
+      { type: 'fix', description: 'Correct Times for Remote Cities: Prayer times, alarms, countdowns and Ramadan notifications are now interpreted in the selected city\'s timezone instead of the phone\'s — no more shifted times when manually choosing a city abroad.' },
+      { type: 'fix', description: 'Gulf Region & Morocco Prayer Methods Fixed: These methods silently calculated with Muslim World League angles; the correct custom angles are now used, verified against the Aladhan API.' },
+      { type: 'fix', description: 'Web Adhan Notifications Now Reliable: Browser service-worker prayer alerts only fired ~3 out of 5 prayers due to a timing-window bug; all prayers now notify.' },
+      { type: 'fix', description: 'Custom Adhan Audio in Background Alarms: Uploaded adhan audio now plays correctly in native Android alarms — previously only built-in adhans worked in the background.' },
+      { type: 'fix', description: 'Update Dialog Messages Fixed: Version and check-time placeholders now display real values instead of literal {version}/{time} — this was broken in every language.' },
+      { type: 'improvement', description: 'No More Language Flash on Launch: The app now remembers your language synchronously and opens directly in it instead of flashing English for a moment.' },
+    ],
+  },
+  {
     version: '2.4.0',
     date: '2026-10-23',
     title: 'Prayer End Times, Pregnancy Mode & Complete Prophet Stories',

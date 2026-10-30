@@ -1,6 +1,8 @@
 import { unifiedNotifications } from './unified-notifications';
 import i18n from './i18n-new';
 import { NOTIFICATION_CHANNELS } from './notification-channels';
+import { LOCATION_STORAGE_KEY } from './location-config';
+import { zonedWallTimeToDate } from './tz-time';
 
 export class RamadanNotifications {
   private static instance: RamadanNotifications;
@@ -21,9 +23,12 @@ export class RamadanNotifications {
       return null;
     }
 
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
+    // Prayer times are wall clock in the location's timezone, not the device's.
+    let timeZone: string | undefined;
+    try {
+      timeZone = JSON.parse(localStorage.getItem(LOCATION_STORAGE_KEY) || '')?.timeZone;
+    } catch { /* no stored location timezone */ }
+    return zonedWallTimeToDate(`${hours}:${minutes}`, timeZone);
   }
 
   // Schedule Suhoor reminder (30 minutes before Fajr)

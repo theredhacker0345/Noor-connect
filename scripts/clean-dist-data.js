@@ -9,11 +9,10 @@
  *                           (the Mushaf viewer fetches /mushaf/<page>.webp). Deleting
  *                           it here used to strip all mushaf pages from the APK.
  *
- *  - dist/data/tafsir/    → Tafsir JSON files (174 MB). The app uses OFFLINE_EDITIONS
- *                           (3 editions) and falls back to CDN for the rest. Removing
- *                           forces ALL editions to use CDN jsdelivr.net. Online-only
- *                           for Tafsir is acceptable since it's an advanced feature.
- *                           Removed.
+ *  - dist/data/tafsir/    → GONE since v2.3.0: tafsir is CDN-first (jsdelivr) with
+ *                           optional per-edition offline downloads via /settings/storage.
+ *                           The bundled copy was removed from public/, so dist never
+ *                           contains it and nothing needs deleting here.
  *
  *  - dist/data/hadith-collections/ → Hadith JSON (~110 MB). NOT deleted: the app loads
  *                           these at runtime with fetch(), so they must ship in the APK.
@@ -94,9 +93,7 @@ function compressJsonDir(dir) {
   };
 }
 
-const deleteTargets = [
-  { path: path.join(distDir, 'data', 'tafsir'),           label: 'dist/data/tafsir (online-only fallback available)' },
-];
+const deleteTargets = [];
 
 const compressTargets = [
   {

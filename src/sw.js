@@ -232,11 +232,11 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 const sentPrayerAlerts = {};
+let lastPrayerCheckMs = Date.now();
 
 async function checkPrayerTimes() {
   try {
     const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const today = now.toDateString();
 
     // Reset sent alerts at midnight for a new day
@@ -245,18 +245,24 @@ async function checkPrayerTimes() {
       Object.keys(sentPrayerAlerts).forEach(k => delete sentPrayerAlerts[k]);
     }
 
-    // Check prayer times with a 2-minute window to handle 15-min check interval
+    // Fire any prayer that fell since the previous check (checks may be spaced
+    // 15+ minutes apart — a fixed ±2-minute window missed ~3 of 5 prayers).
+    // Cap at 20 min so an SW resumed after hours of suspension doesn't
+    // fire stale prayers from before it went away.
+    const sinceMs = Math.min(now.getTime() - lastPrayerCheckMs, 20 * 60000);
+    lastPrayerCheckMs = now.getTime();
+
     for (const [prayer, data] of Object.entries(PRAYER_TIMES)) {
       if (!data.time || sentPrayerAlerts[prayer]) continue;
 
       const [h, m] = data.time.split(':').map(Number);
       if (isNaN(h) || isNaN(m)) continue;
 
-      const prayerMinutes = h * 60 + m;
-      const diff = Math.abs(currentMinutes - prayerMinutes);
+      const prayerMs = now.getTime() - (now.getHours() * 60 + now.getMinutes()) * 60000
+        + (h * 60 + m) * 60000;
 
-      // Fire if within 2 minutes of the exact time (accounts for 15-min check interval)
-      if (diff <= 2) {
+      // Prayer time elapsed during this check window → notify once
+      if (prayerMs > lastPrayerCheckMs - sinceMs && prayerMs <= lastPrayerCheckMs) {
         sentPrayerAlerts[prayer] = true;
         await sendPrayerNotification(prayer, data);
       }

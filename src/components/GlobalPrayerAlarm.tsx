@@ -5,6 +5,7 @@ import { getAdhanUrlForPrayer, type PrayerName } from '@/lib/adhan-preferences';
 import { localNotifications } from '@/lib/local-notifications';
 import { adhanService, type AdhanConfig } from '@/lib/adhan-service';
 import { getFallbackLocationByTimezone, LOCATION_STORAGE_KEY } from '@/lib/location-config';
+import { zonedNowHhmm } from '@/lib/tz-time';
 import { getEffectiveAladhanMethodId } from '@/lib/prayer-method-resolver';
 import { getMadhab } from '@/lib/storage';
 import {
@@ -49,6 +50,7 @@ interface PrayerTime {
 interface CachedPrayerTimes {
   times: PrayerTime[];
   date: string;
+  timeZone?: string;
 }
 
 const normalizeTimeString = (time: string): string =>
@@ -209,29 +211,23 @@ export const GlobalPrayerAlarm = () => {
         { name: 'Isha', time: normalizeTimeString(timings.Isha) },
       ];
 
+      let cachedTimeZone: string | undefined;
+      try {
+        cachedTimeZone = JSON.parse(localStorage.getItem(LOCATION_STORAGE_KEY) || '')?.timeZone;
+      } catch { /* no stored location — fall back to device timezone */ }
+
       const cachedData = {
         times: prayerTimes,
         date: new Date().toDateString(),
+        timeZone: cachedTimeZone,
       } satisfies CachedPrayerTimes;
 
       localStorage.setItem(PRAYER_TIMES_KEY, JSON.stringify(cachedData));
 
-      // Push to native adhan scheduler if available
-      try {
-        const { Capacitor } = await import('@capacitor/core');
-        if (Capacitor.isNativePlatform()) {
-          const { localNotifications } = await import('@/lib/local-notifications');
-          await localNotifications.schedulePrayerNotifications(
-            prayerTimes.map(p => ({
-              name: p.name,
-              time: p.time,
-              date: new Date()
-            }))
-          );
-        }
-      } catch (err) {
-        console.warn('Failed to schedule native background alarms', err);
-      }
+      // Native adhan alarms are scheduled centrally (with correct per-day dates
+      // and timezone) by localNotifications.schedulePrayerNotificationsFromAPI —
+      // a former attempt here passed `date: new Date()` for every prayer, which
+      // scheduled nothing.
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
       console.error('Error fetching prayer times:', error);
@@ -356,7 +352,7 @@ export const GlobalPrayerAlarm = () => {
     const cached = readCachedPrayerTimes();
     if (!cached) return;
 
-    const { times, date } = cached;
+    const { times, date, timeZone } = cached;
     const today = new Date().toDateString();
 
     if (date !== today) {
@@ -365,10 +361,8 @@ export const GlobalPrayerAlarm = () => {
     }
 
     const now = new Date();
-    const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
+    // Prayer times are wall clock in the location's timezone — compare like for like.
+    const currentTimeStr = zonedNowHhmm(timeZone, now);
     const lastPlayed = localStorage.getItem(LAST_PLAYED_KEY);
     const lastReminder = localStorage.getItem(LAST_REMINDER_KEY);
     const reminderMinutes = parseInt(localStorage.getItem(REMINDER_MINUTES_KEY) || '0', 10);

@@ -23,6 +23,7 @@ import {
 import { ensureNoorNotificationChannels, NOTIFICATION_CHANNELS, NOTIFICATION_ACCENT_COLOR } from './notification-channels';
 import { getPrayerDisplayPair, PRAYER_ARABIC_NAMES, PRAYER_ORDER } from './prayer-display';
 import { formatPrayerTime, getTimeFormat } from './time-formatter';
+import { zonedWallTimeToDate } from './tz-time';
 
 // Task 2: Use SW registration for more robust "Native" notifications
 let swRegistration: ServiceWorkerRegistration | null = null;
@@ -499,6 +500,7 @@ export class LocalNotificationManager {
         latitude?: number;
         longitude?: number;
         source?: string;
+        timeZone?: string;
       };
 
       if (typeof locationData.latitude !== 'number' || typeof locationData.longitude !== 'number') {
@@ -593,8 +595,9 @@ export class LocalNotificationManager {
           const prayerTime = dayData.timings[prayerName];
           const cleaned = prayerTime.replace(/\s*\(.*?\)\s*/g, '').trim();
           const [hours, minutes] = cleaned.split(':').map(Number);
-          const prayerDate = new Date(targetDate);
-          prayerDate.setHours(hours, minutes, 0, 0);
+          // Aladhan timings are wall clock in the location's timezone; parsing
+          // them device-locally shifted every alarm by the timezone difference.
+          const prayerDate = zonedWallTimeToDate(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`, locationData.timeZone, targetDate);
 
           if (prayerDate <= now) {
             continue;

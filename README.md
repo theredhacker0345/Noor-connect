@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.4.0 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.5.0 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -17,6 +17,29 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - ✅ **Official License Grant**: Free perpetual license to integrate the nasheed catalog under the NCN Community License
 - ✅ **Official Feature**: Noor Connect is featured on the [No Copyright Nasheed website](https://nocopyrightnasheed.com/) as a trusted partner
 - 🎵 **400-track curated library** with a highly optimized audio player
+
+---
+
+## 🆕 What's New in v2.5.0
+
+### 🇹🇷 Turkish Language
+- **Full Turkish (Türkçe) translation for all 1,242 app strings**, with native Turkish prayer names (İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı) — 8 languages total
+
+### 📦 ~190 MB Smaller APK
+- **Tafsir no longer bundled (−175 MB)**: all editions stream from CDN; per-edition offline downloads from 2.4.0 still available in Settings → Storage
+- Dead data removed: a corrupted duplicate hadith dataset (137 MB in the repo) and an orphaned 16 MB legacy file
+
+### 🕌 Prayer Accuracy Fixes
+- Adhan alarms survive reboot (the boot receiver was unregistered since 2.3.0)
+- Correct times for remote cities — no more timezone-shifted alarms and countdowns
+- Gulf Region & Morocco methods use their declared angles (verified to the minute vs the Aladhan API)
+- Web adhan notifications fire reliably for all five prayers (was ~3/5)
+- Custom adhan audio now works in native background alarms
+- Release signing config fixed for the signed-APK CI workflow
+
+### 🌐 i18n Fixes
+- Update-dialog placeholders ({version}, {time}) now render real values in every language
+- No more English flash on launch — the app opens directly in your language
 
 ---
 

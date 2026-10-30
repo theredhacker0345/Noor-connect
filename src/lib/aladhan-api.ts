@@ -4,6 +4,7 @@
  */
 import { getMadhab } from './storage';
 import { formatPrayerTime } from './time-formatter';
+import { zonedWallTimeToDate, zonedNowHhmm } from './tz-time';
 
 export interface AladhanPrayerTime {
   Fajr: string;
@@ -441,24 +442,24 @@ export class AladhanAPI {
     isRamadan: boolean = false
   ): Promise<{ name: string; time: string; countdown: string; targetDate?: Date } | null> {
     try {
-      const { timings } = await this.getTodaysPrayerTimes(latitude, longitude, method);
+      const { timings, timezone } = await this.getTodaysPrayerTimes(latitude, longitude, method);
       const now = new Date();
 
-      // Convert prayer times to Date objects
+      // Convert prayer times to Date objects (wall clock in the location's timezone)
       const prayerTimes = [
-        { name: 'Fajr', time: this.parseTime(timings.Fajr) },
-        { name: 'Sunrise', time: this.parseTime(timings.Sunrise) },
-        { name: 'Dhuhr', time: this.parseTime(timings.Dhuhr) },
-        { name: 'Asr', time: this.parseTime(timings.Asr) },
-        { name: 'Maghrib', time: this.parseTime(timings.Maghrib) },
-        { name: 'Isha', time: this.parseTime(timings.Isha) }
+        { name: 'Fajr', time: this.parseTime(timings.Fajr, timezone) },
+        { name: 'Sunrise', time: this.parseTime(timings.Sunrise, timezone) },
+        { name: 'Dhuhr', time: this.parseTime(timings.Dhuhr, timezone) },
+        { name: 'Asr', time: this.parseTime(timings.Asr, timezone) },
+        { name: 'Maghrib', time: this.parseTime(timings.Maghrib, timezone) },
+        { name: 'Isha', time: this.parseTime(timings.Isha, timezone) }
       ];
 
       // Add Ramadan times if applicable
       if (isRamadan) {
         prayerTimes.unshift(
-          { name: 'Suhoor Ends', time: this.parseTime(timings.Imsak || timings.Fajr) },
-          { name: 'Iftar', time: this.parseTime(timings.Maghrib) }
+          { name: 'Suhoor Ends', time: this.parseTime(timings.Imsak || timings.Fajr, timezone) },
+          { name: 'Iftar', time: this.parseTime(timings.Maghrib, timezone) }
         );
       }
 
@@ -471,7 +472,7 @@ export class AladhanAPI {
 
           return {
             name: prayer.name,
-            time: formatPrayerTime(prayer.time),
+            time: zonedNowHhmm(timezone, prayer.time),
             countdown: hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`,
             targetDate: prayer.time // Return the Date object directly
           };
@@ -479,14 +480,9 @@ export class AladhanAPI {
       }
 
       // If all events passed, get tomorrow's first prayer
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowBase = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const { timings: tomorrowTimings } = await this.getTodaysPrayerTimes(latitude, longitude, method);
-      const firstPrayerTime = this.parseTime(tomorrowTimings.Fajr);
-      // Adjust date to tomorrow
-      firstPrayerTime.setDate(tomorrow.getDate());
-      firstPrayerTime.setMonth(tomorrow.getMonth());
-      firstPrayerTime.setFullYear(tomorrow.getFullYear());
+      const firstPrayerTime = this.parseTime(tomorrowTimings.Fajr, timezone, tomorrowBase);
 
       const diff = firstPrayerTime.getTime() - now.getTime();
       const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -494,7 +490,7 @@ export class AladhanAPI {
 
       return {
         name: 'Fajr (Tomorrow)',
-        time: formatPrayerTime(firstPrayerTime),
+        time: zonedNowHhmm(timezone, firstPrayerTime),
         countdown: `${hours}h ${minutes}m`,
         targetDate: firstPrayerTime
       };
@@ -504,18 +500,12 @@ export class AladhanAPI {
   }
 
   /**
-   * Parse time string (HH:MM or "HH:MM (TZ)") to Date object for today
+   * Parse time string (HH:MM or "HH:MM (TZ)") to a Date object — wall clock in
+   * `timeZone` (location's zone from the API), device-local when absent.
+   * `dayBase` picks the civil date in that timezone (defaults to now).
    */
-  private static parseTime(timeStr: string): Date {
+  private static parseTime(timeStr: string, timeZone?: string, dayBase?: Date): Date {
     const cleaned = timeStr.replace(/\s*\(.*?\)\s*/g, '').trim();
-    const parts = cleaned.split(':');
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    if (isNaN(hours) || isNaN(minutes)) {
-      throw new Error(`parseTime: invalid time string "${timeStr}"`);
-    }
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
+    return zonedWallTimeToDate(cleaned, timeZone, dayBase ?? new Date());
   }
 }

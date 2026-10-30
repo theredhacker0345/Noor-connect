@@ -60,6 +60,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AppBar } from "@/components/AppBar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { fetchSurahTafsir, TAFSIR_EDITIONS, type TafsirEdition } from "@/lib/tafsir";
+import { isTafsirDownloaded } from "@/lib/tafsir-download";
 import { getStoredTafsirAyahs } from "@/lib/tafsir-download";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -89,14 +90,15 @@ interface SurahTafsir {
 }
 
 
-// Offline editions available locally
-const OFFLINE_EDITIONS = [
-  "en-tafisr-ibn-kathir",
-  "ar-tafsir-ibn-kathir",
-  "ur-tafseer-ibn-e-kaseer"
-];
 
 const Tafsir = () => {
+  // Editions the user downloaded via Settings — detected from download state, not hardcoded
+  const [offlineEditions, setOfflineEditions] = useState<string[]>([]);
+  useEffect(() => {
+    TAFSIR_EDITIONS.forEach(async ({ id }) => {
+      if (await isTafsirDownloaded(id)) setOfflineEditions((prev) => [...prev, id]);
+    });
+  }, []);
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { t: ti18n } = useI18n();
@@ -194,7 +196,7 @@ const Tafsir = () => {
   const handleSurahSelect = async (surah: Surah) => {
     setSelectedSurah(surah);
     setTafsirLoading(true);
-    setLoadingFromOffline(OFFLINE_EDITIONS.includes(selectedEdition));
+    setLoadingFromOffline(offlineEditions.includes(selectedEdition));
 
     // Add to history
     const historyEntry = {
@@ -480,7 +482,7 @@ const Tafsir = () => {
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <span>{edition.name}</span>
-                            {OFFLINE_EDITIONS.includes(edition.id) && (
+                            {offlineEditions.includes(edition.id) && (
                               <Badge className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 flex items-center gap-1">
                                 <Download className="w-2.5 h-2.5" />
                                 Offline
@@ -589,7 +591,7 @@ const Tafsir = () => {
                           <div className="flex flex-col text-left">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-slate-800">{edition.name}</span>
-                              {OFFLINE_EDITIONS.includes(edition.id) && (
+                              {offlineEditions.includes(edition.id) && (
                                 <Badge className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 flex items-center gap-1">
                                   <Download className="w-3 h-3" />
                                   Offline
@@ -790,7 +792,7 @@ const Tafsir = () => {
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                               <span className="font-bold">{edition.name}</span>
-                              {OFFLINE_EDITIONS.includes(edition.id) && (
+                              {offlineEditions.includes(edition.id) && (
                                 <Badge className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 flex items-center gap-1">
                                   <Download className="w-2.5 h-2.5" />
                                   Offline

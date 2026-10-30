@@ -124,17 +124,59 @@ export const setCalculationMethod = (method: CalculationMethodName): void => {
   localStorage.setItem('calculation-method', method);
 };
 
+// Methods that declare a built-in base plus custom angles. Without applying
+// these, Gulf and Morocco silently computed as plain MWL. Keyed by the stored
+// numeric PRAYER_METHODS id; both also exist on the Aladhan API for Gulf (8).
+const CUSTOM_ANGLE_METHODS: Record<number, MethodAngleOverrides> = {
+  8: { fajrAngle: 19.5, ishaInterval: 90 }, // Gulf Region
+  14: { fajrAngle: 19, ishaAngle: 17 },     // Morocco
+};
+
+/** The user's explicitly chosen numeric PRAYER_METHODS id, if any. */
+export const getExplicitPrayerMethodId = (): number | undefined => {
+  try {
+    const id = parseInt(localStorage.getItem('prayer_calculation_method') || '', 10);
+    return Number.isFinite(id) ? id : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/** Custom angles for the user's explicitly chosen method, if any. */
+export const getMethodAngleOverrides = (): MethodAngleOverrides | undefined => {
+  try {
+    return CUSTOM_ANGLE_METHODS[getExplicitPrayerMethodId() ?? -1];
+  } catch {
+    return undefined;
+  }
+};
+
 // Calculate prayer times for a given date
+export interface MethodAngleOverrides {
+  fajrAngle?: number;
+  ishaAngle?: number;
+  ishaInterval?: number; // minutes after Maghrib; wins over ishaAngle when set
+}
+
 export const calculatePrayerTimes = (
   latitude: number,
   longitude: number,
   date: Date = new Date(),
-  methodName?: CalculationMethodName
+  methodName?: CalculationMethodName,
+  overrides?: MethodAngleOverrides
 ): PrayerTimesResult => {
   const coordinates = new Coordinates(latitude, longitude);
   const method = methodName || getCalculationMethod();
   const params = CALCULATION_METHODS[method]();
-  
+
+  const angleOverrides = overrides ?? (method === 'MuslimWorldLeague' ? getMethodAngleOverrides() : undefined);
+  if (angleOverrides?.fajrAngle) params.fajrAngle = angleOverrides.fajrAngle;
+  if (angleOverrides?.ishaInterval) {
+    params.ishaInterval = angleOverrides.ishaInterval;
+  } else if (angleOverrides?.ishaAngle) {
+    params.ishaAngle = angleOverrides.ishaAngle;
+  }
+
   // Set madhab for Asr calculation
   const madhab = getMadhab();
   // Maliki and Hanbali follow Shafi for Asr calculation (earlier time)

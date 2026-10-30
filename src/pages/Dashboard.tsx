@@ -9,6 +9,7 @@ import { syncMissedPrayersToQaza } from "@/lib/qaza-tracker";
 import { usePrayerTimes } from "@/hooks/usePrayerTimes";
 import { useIslamicCalendar } from "@/hooks/useIslamicCalendar";
 import { getTimeFormat, formatTime } from "@/lib/time-formatter";
+import { zonedWallTimeToDate } from "@/lib/tz-time";
 import { useLocationState } from "@/lib/location-state";
 import { AladhanAPI } from "@/lib/aladhan-api";
 import { getEffectiveAladhanMethodId, getEffectiveCalculationMethod } from "@/lib/prayer-method-resolver";
@@ -127,16 +128,13 @@ export default function Dashboard() {
   }, [timeFormat]);
 
   // Helper function to parse time string to Date (handles "HH:MM (TZ)" from Aladhan API)
+  // Times are wall clock in the location's timezone, not the device's.
   const parseTimeToDate = useCallback((timeStr: string): Date => {
     const cleaned = timeStr.replace(/\s*\(.*?\)\s*/g, '').trim();
-    const parts = cleaned.split(':');
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    const date = new Date();
-    if (isNaN(hours) || isNaN(minutes)) return date;
-    date.setHours(hours, minutes, 0, 0);
-    return date;
-  }, []);
+    const [hours, minutes] = cleaned.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return new Date();
+    return zonedWallTimeToDate(cleaned, location.timeZone);
+  }, [location.timeZone]);
 
   // Load prayer times using global location
   const loadPrayerTimes = useCallback(async () => {

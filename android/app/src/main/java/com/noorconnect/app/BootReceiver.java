@@ -8,11 +8,9 @@ import android.util.Log;
 /**
  * Boot / time / timezone receiver.
  *
- * This receiver handles ONLY the native adhan alarms (NativeAdhanScheduler).
- *
- * Widget refresh + widget alarm rescheduling is handled separately by
- * com.noorconnect.app.widgets.WidgetBootReceiver — see the manifest for
- * its intent-filter.
+ * Restores the native adhan alarms (NativeAdhanScheduler) after reboot or
+ * system clock changes. Registered in AndroidManifest.xml with a
+ * BOOT_COMPLETED / TIME_SET / TIMEZONE_CHANGED intent-filter.
  */
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "BootReceiver";

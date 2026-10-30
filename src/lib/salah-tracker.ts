@@ -9,6 +9,7 @@ import { getEffectiveCalculationMethod } from "./prayer-method-resolver";
 import { getFallbackLocationByTimezone } from "./location-config";
 import { getHaidhData, detectIstihadhah, type CycleEntry, type HaidhTrackerData } from "./haidh-tracker";
 import { getMadhab } from "./storage";
+import { zonedWallTimeToDate } from "./tz-time";
 
 const STORAGE_KEY = 'salah-tracker';
 const STREAK_KEY = 'salah-streak';
@@ -84,7 +85,8 @@ export const resolvePrayerTimes = (): Record<string, { start: Date; end: Date }>
   try {
     let lat = 21.3891;
     let lon = 39.8579;
-    
+    let locationTimeZone: string | undefined;
+
     const locStr = localStorage.getItem('location-storage');
     if (locStr) {
       try {
@@ -93,6 +95,7 @@ export const resolvePrayerTimes = (): Record<string, { start: Date; end: Date }>
           lat = loc.latitude;
           lon = loc.longitude;
         }
+        if (typeof loc.timeZone === 'string') locationTimeZone = loc.timeZone;
       } catch (e) {
         console.error('Error parsing stored location in salah-tracker:', e);
       }
@@ -111,14 +114,10 @@ export const resolvePrayerTimes = (): Record<string, { start: Date; end: Date }>
     const now = new Date();
     const cachedDay = AladhanAPI.getPrayerTimesForDate(now, lat, lon, methodId, school);
     
+    // Aladhan timings are wall clock in the location's timezone
     const parseTime = (timeStr: string, baseDate: Date) => {
       const cleaned = timeStr.replace(/\s*\(.*?\)\s*/g, '').trim();
-      const parts = cleaned.split(':');
-      const h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      const d = new Date(baseDate);
-      d.setHours(h, m, 0, 0);
-      return d;
+      return zonedWallTimeToDate(cleaned, locationTimeZone, baseDate);
     };
 
     let fajrStart: Date, sunriseStart: Date, dhuhrStart: Date, asrStart: Date, maghribStart: Date, ishaStart: Date;

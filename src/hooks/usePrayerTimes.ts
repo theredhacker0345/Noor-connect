@@ -13,6 +13,7 @@ import { formatPrayerTime } from '@/lib/time-formatter';
 import { GeolocationService } from '@/lib/geolocation-service';
 import { getFallbackLocationByTimezone, LOCATION_STORAGE_KEY } from '@/lib/location-config';
 import { getMadhab } from '@/lib/storage';
+import { zonedWallTimeToDate } from '@/lib/tz-time';
 import { usePrayerNotifications } from './usePrayerNotifications';
 
 export interface PrayerTimes {
@@ -290,7 +291,9 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
       }
 
       // Parse the timings back to Date objects
-      // Aladhan API returns times like "05:30 (PKT)" — strip the timezone suffix
+      // Aladhan API returns times like "05:30 (PKT)" — strip the timezone suffix.
+      // Times are wall clock in the location's timezone (`timeZone` from the API
+      // response), not the device's — a remote city must not shift the instants.
       const parseTime = (timeStr: string): Date => {
         const cleaned = timeStr.replace(/\s*\(.*?\)\s*/g, '').trim();
         const parts = cleaned.split(':');
@@ -300,9 +303,7 @@ export function usePrayerTimes(): UsePrayerTimesReturn {
           console.error('Failed to parse time string:', timeStr);
           throw new Error(`Invalid time format: ${timeStr}`);
         }
-        const d = new Date(now);
-        d.setHours(h, m, 0, 0);
-        return d;
+        return zonedWallTimeToDate(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`, timeZone, now);
       };
 
       const prayerDates = {

@@ -77,9 +77,16 @@ export async function getAdhanUrlForPrayer(prayer: PrayerName): Promise<string> 
     // Check if it's a custom adhan
     if (adhanId.startsWith('custom-')) {
         try {
-            const { getCustomAdhanUrl } = await import('@/components/CustomAdhanUpload');
-            const customUrl = await getCustomAdhanUrl(adhanId);
-            if (customUrl) return customUrl;
+            const { Capacitor } = await import('@capacitor/core');
+            const { getCustomAdhanFilePath, getCustomAdhanUrl } = await import('@/components/CustomAdhanUpload');
+            if (Capacitor.isNativePlatform()) {
+                // Android MediaPlayer can't resolve blob: URLs — play from a real file
+                const filePath = await getCustomAdhanFilePath(adhanId);
+                if (filePath) return filePath;
+            } else {
+                const customUrl = await getCustomAdhanUrl(adhanId);
+                if (customUrl) return customUrl;
+            }
         } catch (err) {
             console.error('Failed to load custom adhan url:', err);
         }

@@ -232,6 +232,10 @@ class IslamicCalendarService {
 
     // Tabular Islamic calendar
     // Epoch: Friday, July 16, 622 CE (Julian) = JDN 1948439.5
+    // Verified against api.aladhan.com gToH: matches most dates exactly and
+    // drifts ±1 day in some periods — inherent to tabular calendars vs
+    // moon-sighting. Do not "fix" by switching to the civil-epoch variant
+    // (1948443.5): tested 0/18 matches. Only used when the gToH API is unreachable.
     const hijriEpoch = 1948439.5;
     const julianDay = this.getJulianDay(date);
     const daysSinceEpoch = Math.floor(julianDay - hijriEpoch);

@@ -14,7 +14,7 @@
  *  3. The region-recommended method for the stored location, then MWL.
  */
 import { prayerMethods } from './prayer-methods';
-import { getCalculationMethod, hasExplicitCalculationMethod, type CalculationMethodName } from './prayer-calculator';
+import { getCalculationMethod, getExplicitPrayerMethodId, hasExplicitCalculationMethod, type CalculationMethodName } from './prayer-calculator';
 import { ALADHAN_METHODS } from './aladhan-api';
 
 export function getEffectiveCalculationMethod(latitude?: number, longitude?: number): CalculationMethodName {
@@ -31,5 +31,8 @@ export function getEffectiveCalculationMethod(latitude?: number, longitude?: num
 }
 
 export function getEffectiveAladhanMethodId(latitude?: number, longitude?: number): number {
+  // Aladhan serves Gulf Region (19.5°/90 min) as method 8; the generic MWL id
+  // would silently return 18°-angle times for Gulf users.
+  if (getExplicitPrayerMethodId() === 8) return 8;
   return ALADHAN_METHODS[getEffectiveCalculationMethod(latitude, longitude)] ?? 3;
 }

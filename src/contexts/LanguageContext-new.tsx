@@ -64,6 +64,12 @@ async function persistLanguage(lang: LanguageCode) {
   } catch (e) {
     console.warn('Failed to save language to Preferences:', e);
   }
+  // Synchronous mirror for i18n-new.ts first-paint (Preferences are async-only)
+  try {
+    localStorage.setItem('app-language', lang);
+  } catch {
+    // localStorage unavailable — flash fix simply doesn't apply
+  }
 }
 
 async function loadSavedLanguageCode(): Promise<LanguageCode | null> {

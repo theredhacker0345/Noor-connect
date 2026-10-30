@@ -157,7 +157,8 @@ const FIELD_ALIASES = {
 };
 
 function parseArgs(argv) {
-  const args = { input: "", output: "src/data/hadith-collections", cleanOutput: false };
+  // Runtime fetches from public/ — importing anywhere else silently drifts (v2.3.0 shipped stale data that way)
+  const args = { input: "", output: "public/data/hadith-collections", cleanOutput: false };
 
   for (let i = 0; i < argv.length; i += 1) {
     const current = argv[i];

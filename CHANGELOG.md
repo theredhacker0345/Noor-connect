@@ -8,6 +8,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-31
+
+### 🇹🇷 Turkish Language
+
+- **Full Turkish (Türkçe) translation for all 1,242 app strings** — including native Turkish prayer names (İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı). Turkish is now a first-class language alongside English, Arabic, Urdu, Bengali, Russian, French, and Korean (8 total).
+
+### 📦 Dramatically Smaller App (~190 MB lighter)
+
+- **Tafsir No Longer Bundled (−175 MB)**: The three bundled Ibn Kathir editions (English 43 MB, Arabic 86 MB, Urdu 47 MB) no longer ship inside the APK. All 26 tafsir editions load from the jsDelivr CDN; per-edition offline downloads (Settings → Storage & Cache) continue to work from 2.4.0.
+- **Legacy Duplicate Hadith File Removed (−16 MB)**: `public/data/hadith-collections/hadiths.json` (a 16 MB aggregate referenced by nothing) deleted. The 16 served hadith collections are unchanged and fully offline.
+- **Corrupted Source Copy Removed (−137 MB repo)**: The `src/data/hadith-collections/*/hadiths.json` copies (a botched import: 51% empty translations, placeholder book names, broken numbering) are gone; the importer now writes directly to `public/` so the two can never drift again.
+
+### 🕌 Prayer Time & Adhan Accuracy Fixes
+
+- **Adhan Alarms Survive Reboot**: `BootReceiver` was accidentally left unregistered in the manifest during the 2.3.0 widget removal, so all adhan alarms were lost after a phone restart. Registered with `BOOT_COMPLETED` / `TIME_SET` / `TIMEZONE_CHANGED` intent-filters.
+- **Timezone-Correct Times for Remote Cities**: Aladhan times (wall clock in the *location's* timezone) were parsed in the *device's* timezone at 7 call sites — shifting alarms, countdowns, 30-day notification schedules, salah tracking windows and Ramadan suhoor/iftar reminders for users who select a city abroad. New `src/lib/tz-time.ts` helpers now interpret times in the location's timezone with device-local fallback.
+- **Gulf Region & Morocco Methods Fixed**: Both methods declared custom angles but silently computed as plain Muslim World League — offline calculation now applies the stored custom angles (Gulf 19.5°/90 min, Morocco 19°/17°) and Gulf users get Aladhan method 8. Verified against api.aladhan.com to the minute.
+- **Web Prayer Notifications Now Fire Reliably**: The service worker's ±2-minute window with a 15-minute check interval only caught ~3 of 5 prayers; it now fires any prayer that elapsed since the previous check (20-minute cap).
+- **Custom Adhan Audio in Native Background Alarms**: Uploaded adhan audio was passed to Android MediaPlayer as a WebView `blob:` URL, which it cannot resolve. The audio is now written to app storage via Capacitor Filesystem and played from a real `file://` URI.
+- **Dead Notification Path Removed**: `GlobalPrayerAlarm` passed `date: new Date()` for every prayer to `schedulePrayerNotifications`, which scheduled nothing — native alarms are scheduled solely by the central, timezone-correct path.
+- **Release Signing Fixed**: `build-apks-signed.yml` wrote keystore properties that no `signingConfig` read — `assembleRelease` now signs when CI properties are present and stays unsigned for F-Droid.
+
+### 🌐 i18n Fixes
+
+- **Update Dialog Placeholders Fixed**: `{version}`/`{time}` single-brace placeholders never interpolated (i18next uses `{{double}}`); all locales standardized — users no longer see literal placeholders in any language.
+- **No Language Flash on Launch**: The app language now resolves synchronously on first paint via a localStorage mirror (Capacitor Preferences stay the source of truth).
+- **Dead i18next LanguageDetector Removed**: `lng` was hardcoded in the init, so the detector never ran and its cache diverged from the app's language storage.
+
+### ✅ Verification
+
+- Locale parity: all 8 locales at exactly the same 1,242 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5).
+
 ## [2.4.0] - 2026-10-23
 
 ### Added

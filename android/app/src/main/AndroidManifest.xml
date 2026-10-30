@@ -79,6 +79,19 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Restores adhan alarms after reboot / time / timezone change -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Short-lived foreground service for adhan audio playback only -->
         <service
             android:name=".AdhanPlaybackService"

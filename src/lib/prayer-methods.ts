@@ -234,9 +234,13 @@ class PrayerMethodsService {
     method?: PrayerMethod
   ): Promise<any> {
     const selectedMethod = method || this.getSelectedMethod();
-    
-    // Calculate with custom angles - use the method name for calculation
-    const times = calculatePrayerTimes(latitude, longitude, date, selectedMethod.calculationMethod);
+
+    // Calculate with the method's declared angles (Gulf/Morocco sit on an MWL base)
+    const times = calculatePrayerTimes(latitude, longitude, date, selectedMethod.calculationMethod, {
+      fajrAngle: selectedMethod.fajrAngle,
+      ishaAngle: selectedMethod.ishaAngle,
+      ishaInterval: selectedMethod.ishaInterval,
+    });
 
     return times;
   }

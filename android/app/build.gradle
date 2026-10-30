@@ -22,19 +22,46 @@ android {
         applicationId "com.noorconnect.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 13
-        versionName "2.4.0"
+        versionCode 14
+        versionName "2.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release signing is opt-in: CI (build-apks-signed.yml) writes RELEASE_STORE_*
+    // into local.properties. When absent (e.g. F-Droid build server) releases stay
+    // unsigned, which is exactly what F-Droid expects to sign itself.
+    def localProps = new Properties()
+    def localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        localPropsFile.withInputStream { localProps.load(it) }
+    }
+    def storeFilePath = localProps.getProperty("RELEASE_STORE_FILE")
+    def storePassword = localProps.getProperty("RELEASE_STORE_PASSWORD")
+    def keyAlias = localProps.getProperty("KEY_ALIAS")
+    def keyPassword = localProps.getProperty("KEY_PASSWORD")
+
+    signingConfigs {
+        if (storeFilePath) {
+            release {
+                storeFile file(storeFilePath)
+                storePassword storePassword
+                keyAlias keyAlias
+                keyPassword keyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (storeFilePath) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

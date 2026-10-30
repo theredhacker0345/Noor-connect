@@ -63,6 +63,31 @@ export const getCustomAdhanUrl = async (id: string): Promise<string | null> => {
   }
 };
 
+// Native alarms play through Android MediaPlayer, which cannot resolve a
+// WebView blob: URL — write the audio to a real file and return its file:// URI.
+export const getCustomAdhanFilePath = async (id: string): Promise<string | null> => {
+  try {
+    const adhanStore = await getAdhanStore();
+    const adhans = await adhanStore.getItem<CustomAdhan[]>(CUSTOM_ADHAN_KEY);
+    const adhan = adhans?.find((a) => a.id === id);
+    if (!adhan) return null;
+
+    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+    const safeName = `custom-adhan-${id.replace(/[^a-zA-Z0-9_-]/g, '_')}.mp3`;
+    await Filesystem.writeFile({
+      path: safeName,
+      data: adhan.data, // raw base64
+      directory: Directory.Data,
+      recursive: true,
+    });
+    const { uri } = await Filesystem.getUri({ path: safeName, directory: Directory.Data });
+    return uri;
+  } catch (error) {
+    console.error('getCustomAdhanFilePath error:', error);
+    return null;
+  }
+};
+
 const PRAYERS: PrayerName[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export function CustomAdhanUpload() {
