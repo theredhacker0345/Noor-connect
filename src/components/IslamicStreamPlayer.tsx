@@ -33,6 +33,8 @@ interface StreamState {
   error: string | null;
   isPlaying: boolean;
   isBuffering: boolean;
+  /** True while the auto-reconnect backoff is pending — drives the "Reconnecting…" overlay. */
+  isRetrying: boolean;
 }
 
 const LOCATION_META: Record<StreamLocation, { label: string; arabic: string; color: string }> = {
@@ -51,10 +53,6 @@ export default function IslamicStreamPlayer() {
   // the stream is destroyed/re-initialised, otherwise a stale pin fires
   // against the FRESH stream and rewinds playback ("same words again").
   const pinTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Live mirror of `streams` so event handlers registered once (online/offline)
-  // never read a stale mount-time closure.
-  const streamsRef = useRef(streams);
-  streamsRef.current = streams;
   const mountedRef = useRef(true);
   const playStartRef = useRef<number>(0);
   const isNative = Capacitor.isNativePlatform();
@@ -70,29 +68,46 @@ export default function IslamicStreamPlayer() {
   });
   const fallbackTriedRef = useRef<Record<StreamLocation, boolean>>({ makkah: false, madinah: false });
   const activeTabRef = useRef<StreamLocation>('makkah');
+  // Fired when the video has been stuck waiting on data for too long (weak
+  // connection with a drained buffer) — nudges hls.js back to life.
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // NOTE: `streams` must be declared BEFORE anything reads it — the mirror
+  // refs below read it during render. This exact ordering bug (streamsRef
+  // above the useState) shipped a TDZ ReferenceError that crashed the whole
+  // LiveStreams page ("Cannot access 'K' before initialization").
+  const [streams, setStreams] = useState<Record<StreamLocation, StreamState>>(() => ({
+    makkah: {
+      channel: { name: FALLBACK_STREAMS.makkah?.name || 'Al-Quran Al-Kareem (Makkah)', url: streamUrlsRef.current.makkah.primary },
+      isLoading: true, error: null, isPlaying: false, isBuffering: false, isRetrying: false,
+    },
+    madinah: {
+      channel: { name: FALLBACK_STREAMS.madinah?.name || 'As-Sunnah (Madinah)', url: streamUrlsRef.current.madinah.primary },
+      isLoading: true, error: null, isPlaying: false, isBuffering: false, isRetrying: false,
+    },
+  }));
+
+  // Live mirror of `streams` so event handlers registered once (online/offline)
+  // never read a stale mount-time closure.
+  const streamsRef = useRef(streams);
+  streamsRef.current = streams;
 
   const [activeTab, setActiveTab] = useState<StreamLocation>('makkah');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
+  // Volume/mute survive sessions — radio-style listening shouldn't re-ask
+  // these every time the page opens.
+  const [volume, setVolume] = useState(() => {
+    const v = parseFloat(localStorage.getItem('live-stream-volume') || '');
+    return Number.isFinite(v) ? Math.min(Math.max(v, 0), 1) : 1;
+  });
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('live-stream-muted') === '1');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Quality state
   const [levels, setLevels] = useState<{ id: number, height: number, bitrate: number }[]>([]);
   const [currentLevel, setCurrentLevel] = useState<number>(-1); // -1 is auto
   const [showQualityMenu, setShowQualityMenu] = useState(false);
-
-  const [streams, setStreams] = useState<Record<StreamLocation, StreamState>>(() => ({
-    makkah: {
-      channel: { name: FALLBACK_STREAMS.makkah?.name || 'Al-Quran Al-Kareem (Makkah)', url: streamUrlsRef.current.makkah.primary },
-      isLoading: true, error: null, isPlaying: false, isBuffering: false,
-    },
-    madinah: {
-      channel: { name: FALLBACK_STREAMS.madinah?.name || 'As-Sunnah (Madinah)', url: streamUrlsRef.current.madinah.primary },
-      isLoading: true, error: null, isPlaying: false, isBuffering: false,
-    },
-  }));
 
   const current = streams[activeTab];
   const lowEnd = isLowEndDevice();
@@ -124,6 +139,7 @@ export default function IslamicStreamPlayer() {
   const destroyHLS = useCallback(() => {
     flushListenTime();
     if (pinTimerRef.current) { clearTimeout(pinTimerRef.current); pinTimerRef.current = null; }
+    if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
     const video = videoRef.current;
     if (video) { video.pause(); video.src = ''; video.load(); }
     if (hlsRef.current) {
@@ -132,13 +148,16 @@ export default function IslamicStreamPlayer() {
     }
   }, []);
 
-  /* ─── Auto-retry with backoff ─── */
+  /* ─── Auto-retry with backoff (weak-internet friendly: 5 attempts, up to
+         30 s apart — 3 × 8 s used to give up while the network was still
+         recovering) ─── */
   const scheduleRetry = useCallback((tab: StreamLocation) => {
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     const attempt = retryCountRef.current[tab] || 0;
-    if (attempt >= 3) return;
-    const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+    if (attempt >= 5) return;
+    const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
     retryCountRef.current[tab] = attempt + 1;
+    setStreams(prev => ({ ...prev, [tab]: { ...prev[tab], isRetrying: true } }));
     retryTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
       // The user may have switched Makkah/Madinah while the backoff was
@@ -158,7 +177,7 @@ export default function IslamicStreamPlayer() {
     destroyHLS();
     setStreams(prev => ({
       ...prev,
-      [tab]: { ...prev[tab], isLoading: true, error: null, isPlaying: false, isBuffering: false },
+      [tab]: { ...prev[tab], isLoading: true, error: null, isPlaying: false, isBuffering: false, isRetrying: false },
     }));
 
     if (Hls.isSupported()) {
@@ -173,6 +192,12 @@ export default function IslamicStreamPlayer() {
         backBufferLength: 30, // Keep some history
         maxBufferLength: 60, // aggressive buffer for stability
         maxMaxBufferLength: 120,
+        // Start the bandwidth estimate LOW on first playback: on weak mobile
+        // connections the default (500 kbps) starts at a high rendition and
+        // stalls immediately; starting small ramps up smoothly instead.
+        abrEwmaDefaultEstimate: 250000,
+        abrBandWidthFactor: 0.9,
+        abrBandWidthUpFactor: 0.7,
         manifestLoadingTimeOut: 30000,
         manifestLoadingMaxRetry: 5,
         levelLoadingTimeOut: 30000,
@@ -340,7 +365,7 @@ export default function IslamicStreamPlayer() {
       flushListenTime();
       setStreams(prev => ({
         ...prev,
-        [tab]: { ...prev[tab], error: 'Stream temporarily unavailable. Please try again later.', isLoading: false, isBuffering: false, isPlaying: false },
+        [tab]: { ...prev[tab], error: 'Stream temporarily unavailable. Please try again later.', isLoading: false, isBuffering: false, isPlaying: false, isRetrying: false },
       }));
       destroyHLS();
       scheduleRetry(tab);
@@ -351,13 +376,26 @@ export default function IslamicStreamPlayer() {
   useEffect(() => {
     const goOnline = () => {
       setIsOnline(true);
-      const url = streamUrlsRef.current[activeTabRef.current];
-      const tabUrl = fallbackTriedRef.current[activeTabRef.current] && url.fallback ? url.fallback : url.primary;
+      const tab = activeTabRef.current;
+      const url = streamUrlsRef.current[tab];
+      const tabUrl = fallbackTriedRef.current[tab] && url.fallback ? url.fallback : url.primary;
+      // Backoff attempts burned while offline shouldn't count against the
+      // fresh connection, and the pending offline timer is already cleared.
+      retryCountRef.current[tab] = 0;
       // streamsRef (live mirror) instead of the stale mount-time `streams` —
       // the old closure always read error:null so reconnect-on-online never ran.
-      if (tabUrl && streamsRef.current[activeTabRef.current]?.error) initHLS(tabUrl, activeTabRef.current);
+      if (tabUrl && streamsRef.current[tab]?.error) initHLS(tabUrl, tab);
     };
-    const goOffline = () => setIsOnline(false);
+    const goOffline = () => {
+      setIsOnline(false);
+      // Retrying into a dead network only burns the backoff budget and flips
+      // the UI between error/reconnecting. Pause and wait for 'online'.
+      if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+      setStreams(prev => {
+        const t = activeTabRef.current;
+        return prev[t].isRetrying ? { ...prev, [t]: { ...prev[t], isRetrying: false } } : prev;
+      });
+    };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     return () => {
@@ -365,6 +403,51 @@ export default function IslamicStreamPlayer() {
       window.removeEventListener('offline', goOffline);
     };
   }, []);
+
+  /* ─── Stall watchdog (weak internet): when the buffer drains, the <video>
+         element fires 'waiting' and can sit there forever if hls.js' loader
+         gave up quietly. If we stay data-starved for 10 s while playback is
+         expected, nudge the loader; if another 8 s gets nowhere, escalate to
+         the fallback/error path. The video events also give a more accurate
+         buffering pill than the BUFFER_APPENDING events alone. ─── */
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const clearStall = () => {
+      if (stallTimerRef.current) { clearTimeout(stallTimerRef.current); stallTimerRef.current = null; }
+    };
+    const onWaiting = () => {
+      const tab = activeTabRef.current;
+      setStreams(prev => ({ ...prev, [tab]: { ...prev[tab], isBuffering: true } }));
+      if (stallTimerRef.current) return; // watchdog already armed
+      stallTimerRef.current = setTimeout(() => {
+        stallTimerRef.current = null;
+        const hls = hlsRef.current;
+        const stalledTab = activeTabRef.current;
+        if (video.paused || !hls) return; // paused = user action, not a stall
+        console.warn('[IslamicStreamPlayer] stall watchdog: nudging hls.js to resume loading');
+        try { hls.startLoad(-1); } catch { /* loader already mid-flight */ }
+        stallTimerRef.current = setTimeout(() => {
+          stallTimerRef.current = null;
+          if (!video.paused && video.readyState < 3) fallbackOrError(stalledTab);
+        }, 8000);
+      }, 10000);
+    };
+    const onDataFlowing = () => {
+      clearStall();
+      const tab = activeTabRef.current;
+      setStreams(prev => ({ ...prev, [tab]: { ...prev[tab], isBuffering: false } }));
+    };
+    video.addEventListener('waiting', onWaiting);
+    video.addEventListener('playing', onDataFlowing);
+    video.addEventListener('canplay', onDataFlowing);
+    return () => {
+      video.removeEventListener('waiting', onWaiting);
+      video.removeEventListener('playing', onDataFlowing);
+      video.removeEventListener('canplay', onDataFlowing);
+      clearStall();
+    };
+  }, [fallbackOrError]);
 
   /* ─── Mounted ref cleanup ─── */
   useEffect(() => {
@@ -395,6 +478,13 @@ export default function IslamicStreamPlayer() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  /* ─── Apply persisted volume/mute to the element once on mount ─── */
+  useEffect(() => {
+    const v = videoRef.current;
+    if (v) v.volume = isMuted ? 0 : volume;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ─── Fullscreen listener ─── */
   useEffect(() => {
@@ -430,11 +520,14 @@ export default function IslamicStreamPlayer() {
 
   /* ─── Controls ─── */
   const handleRetry = useCallback(() => {
+    // "Try now" must cancel any pending auto-retry backoff first, or the old
+    // timer fires mid-reconnect and tears down the fresh stream.
+    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
     const url = streamUrlsRef.current[activeTab].primary;
     if (url) {
       fallbackTriedRef.current[activeTab] = false;
       retryCountRef.current[activeTab] = 0;
-      setStreams(prev => ({ ...prev, [activeTab]: { ...prev[activeTab], error: null, isLoading: true } }));
+      setStreams(prev => ({ ...prev, [activeTab]: { ...prev[activeTab], error: null, isLoading: true, isRetrying: false } }));
       initHLS(url, activeTab);
     }
   }, [activeTab, initHLS]);
@@ -456,15 +549,16 @@ export default function IslamicStreamPlayer() {
   const toggleMute = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (isMuted) { v.volume = volume || 1; setIsMuted(false); }
-    else { v.volume = 0; setIsMuted(true); }
+    if (isMuted) { v.volume = volume || 1; setIsMuted(false); localStorage.setItem('live-stream-muted', '0'); }
+    else { v.volume = 0; setIsMuted(true); localStorage.setItem('live-stream-muted', '1'); }
   }, [isMuted, volume]);
 
   const handleVolume = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
+    localStorage.setItem('live-stream-volume', String(val));
     if (videoRef.current) videoRef.current.volume = val;
-    if (val > 0 && isMuted) setIsMuted(false);
+    if (val > 0 && isMuted) { setIsMuted(false); localStorage.setItem('live-stream-muted', '0'); }
   }, [isMuted]);
 
    const toggleFullscreen = useCallback(async () => {
@@ -596,23 +690,46 @@ export default function IslamicStreamPlayer() {
           </div>
         )}
 
-        {/* Error overlay */}
+        {/* Error overlay — two flavours: auto-reconnecting (weak network) or
+            a dead stream the user must manually retry. */}
         {current.error && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-black/80 backdrop-blur-sm p-6">
-            <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
-              <WifiOff className="w-8 h-8 text-red-400" />
-            </div>
-            <div className="text-center space-y-1.5">
-              <p className="text-white font-semibold">Stream Unavailable</p>
-              <p className="text-white/50 text-sm max-w-xs">{current.error}</p>
-            </div>
-            <button
-              onClick={e => { e.stopPropagation(); handleRetry(); }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Retry
-            </button>
+            {current.isRetrying ? (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <p className="text-white font-semibold">Reconnecting…</p>
+                  <p className="text-white/50 text-sm max-w-xs">{current.error}</p>
+                  <p className="text-white/40 text-xs">The stream resumes automatically — no need to tap anything.</p>
+                </div>
+                <button
+                  onClick={e => { e.stopPropagation(); handleRetry(); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm transition-colors border border-white/15"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Try now
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+                  <WifiOff className="w-8 h-8 text-red-400" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <p className="text-white font-semibold">Stream Unavailable</p>
+                  <p className="text-white/50 text-sm max-w-xs">{current.error}</p>
+                </div>
+                <button
+                  onClick={e => { e.stopPropagation(); handleRetry(); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Retry
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -705,9 +822,13 @@ export default function IslamicStreamPlayer() {
                       onClick={e => { e.stopPropagation(); setShowQualityMenu(p => !p); showAndScheduleHide(); }}
                       className="h-8 px-3 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-xs font-bold tracking-wide"
                     >
-                      {currentLevel === -1 
-                        ? 'AUTO' 
-                        : (levels.find(l => l.id === currentLevel)?.height ? `${levels.find(l => l.id === currentLevel)?.height}P` : 'HQ')}
+                      {(() => {
+                        const activeHeight = currentLevel >= 0
+                          ? levels.find(l => l.id === currentLevel)?.height
+                          : undefined;
+                        if (currentLevel === -1) return activeHeight ? `AUTO · ${activeHeight}p` : 'AUTO';
+                        return activeHeight ? `${activeHeight}P` : 'HQ';
+                      })()}
                     </button>
                   </div>
                 )}

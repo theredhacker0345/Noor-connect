@@ -53,6 +53,14 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - Fixed a data-loss race where backgrounding mid-restore could overwrite your backup with half-restored data
 - Restore failures now show an error in the dialog instead of failing silently
 
+### 📺 Live Transmission
+- **Crash fixed**: the Live page threw `Cannot access 'K' before initialization` on every render (state used before declaration) — the ErrorBoundary swallowed the whole page
+- **Weak-internet hardening**: a stall watchdog revives a data-starved stream, auto-reconnect is more patient (5 attempts, up to 30 s apart), and retries pause while the device is offline instead of burning out
+- **Better UX**: a "Reconnecting…" overlay with Try-now replaces the dead error screen, the quality button shows the active rendition ("AUTO · 384p"), and volume/mute persist across sessions
+
+### 🎨 Icon Restored
+- The original navy "NOOR CONNECT" icon set (favicon + all PWA sizes) was restored after an automated regeneration had replaced it with a green text-free mark
+
 ---
 
 ## 🗂️ Feature Index

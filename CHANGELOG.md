@@ -59,6 +59,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **F-Droid listing rewritten**: the description no longer advertises removed features (native widgets), claims accurate numbers (26 tafsir editions, ~52,000 hadiths across 16 collections, 8 languages), and uses proper formatting — in English plus all 7 translated locales, with per-release changelog notes
 - **3 unused Android permissions removed**: `ACTIVITY_RECOGNITION`, `FOREGROUND_SERVICE_SPECIAL_USE`, `CHANGE_NETWORK_STATE` (plus unused step-sensor declarations). `SCHEDULE_EXACT_ALARM` is kept — Capacitor's prayer notifications need it on Android 12+
 
+### 📺 Live Transmission: Crash Fix & Weak-Network Hardening
+
+- **Live page crash fixed**: the whole Live Transmission page crashed with `ReferenceError: Cannot access 'K' before initialization` — the player's `streamsRef` mirror read the `streams` state before it was declared (a temporal-dead-zone violation that TypeScript catches but the build's transpile-only pipeline let ship). Every render threw; the ErrorBoundary swallowed the page. The state is now declared first, and the project typechecks clean (`tsc --noEmit`).
+- **Weak-internet stability**: a stall watchdog detects when the video sits data-starved for 10 s (drained buffer on a slow connection), nudges hls.js to resume loading, and escalates to the fallback stream if another 8 s gets nowhere. Auto-reconnect is more patient — 5 attempts up to 30 s apart instead of 3 × 8 s that gave up while the network was still recovering.
+- **Offline-aware retries**: auto-retry attempts no longer burn while the device is offline — the backoff pauses on `offline` and reconnects immediately (with a fresh attempt budget) when connectivity returns.
+- **"Reconnecting…" state**: while the auto-reconnect backoff runs, the error overlay shows a live "Reconnecting…" panel with a "Try now" button instead of a dead-looking error screen.
+- **Quality picker label**: the Auto button now shows the rendition actually being delivered ("AUTO · 384p") instead of a static "AUTO"; the initial ABR bandwidth estimate starts low so weak connections begin playing quickly and ramp up instead of stalling at a high rendition.
+- **Volume & mute persist** across sessions; the buffering pill is driven by the video element's real `waiting`/`playing` events, so it reflects actual playback state.
+
+### 🎨 Icon Restored
+
+- **Original navy "NOOR CONNECT" icon set restored** (favicon, apple-touch-icon, all PWA sizes): an automated regeneration had replaced the whole set with a green text-free mark. The Android launcher icons were never affected.
+
 ### ✅ Verification
 
 - Locale parity: all 8 locales at exactly the same 1,244 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5, a full 8-language resolution sweep over every key, and a 5-scenario tafsir download/delete simulation).
