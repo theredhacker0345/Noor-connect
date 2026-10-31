@@ -4,88 +4,21 @@
     <string name="app_name">누르 커넥트</string>
     <string name="title_activity_main">누르 커넥트</string>
 
-    <!-- Widget labels (shown in widget picker) -->
-    <string name="widget_next_prayer_label">다음 예배</string>
-    <string name="widget_daily_ayah_label">일일 아야</string>
-    <string name="widget_daily_hadith_label">일일 하디스</string>
-    <string name="widget_quran_progress_label">꾸르안 진행 상황</string>
-    <string name="widget_tasbeeh_label">타스비흐 계수기</string>
-
-    <!-- Widget descriptions (shown under label in picker) -->
-    <string name="widget_next_prayer_desc">다음 살라트까지 남은 시간을 실시간으로 카운트다운하고 진행률 링을 확인하세요.</string>
-    <string name="widget_daily_ayah_desc">매일 다른 꾸르안 구절을 번역과 함께 확인하세요.</string>
-    <string name="widget_daily_hadith_desc">매일 순나의 하디스 하나를 전승자와 등급과 함께 소개합니다.</string>
-    <string name="widget_quran_progress_desc">매일 꾸르안 읽기 진행 상황과 연속 기록을 확인하세요.</string>
-    <string name="widget_tasbeeh_desc">진동 반응과 함께 화면 어디든 눌러 디크르 횟수를 기록하세요.</string>
-
     <!-- Empty states -->
-    <string name="widget_empty_title">누르 커넥트</string>
-    <string name="widget_empty_subtitle">데이터를 동기화하려면 앱을 여세요</string>
-    <string name="widget_empty_message">눌러서 예배 시간을 설정하고 영적 여정을 기록하기 시작하세요</string>
-    <string name="widget_empty_action">앱 열기</string>
 
     <!-- Next Prayer -->
-    <string name="widget_next_prayer_section">다음 예배</string>
-    <string name="widget_hijri_default">히즈리 날짜</string>
-    <string name="widget_location_default">위치</string>
-    <string name="widget_countdown_default">— 후</string>
-    <string name="widget_countdown_now">지금</string>
-    <string name="widget_updated_format">%1$s에 최신화됨</string>
-    <string name="widget_time_default">--:--</string>
 
     <!-- Daily Ayah -->
-    <string name="widget_daily_ayah_section">일일 아야</string>
-    <string name="widget_quran_ref_default">—</string>
-    <string name="widget_quran_arabic_default">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
-    <string name="widget_quran_translation_default">자비롭고 자애로우신 하나님의 이름으로</string>
 
     <!-- Daily Hadith -->
-    <string name="widget_daily_hadith_section">일일 하디스</string>
-    <string name="widget_hadith_source_default">—</string>
-    <string name="widget_hadith_grade_default">사히흐</string>
-    <string name="widget_hadith_narrator_format">— %1$s 전승</string>
-    <string name="widget_hadith_arabic_default">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</string>
-    <string name="widget_hadith_translation_default">행동은 의도에 따라 판단됩니다.</string>
-    <string name="widget_hadith_narrator_default">전승자 미상</string>
 
     <!-- Quran Progress -->
-    <string name="widget_quran_progress_section">꾸르안 읽기</string>
-    <string name="widget_quran_progress_streak_format">%1$d\u00A0일 연속</string>
-    <string name="widget_quran_progress_streak_default">—\u00A0일 연속</string>
-    <string name="widget_quran_progress_last_read_format">최근 읽은 시간: %1$s</string>
-    <string name="widget_quran_progress_last_read_default">최근 읽은 시간: —</string>
-    <string name="widget_quran_progress_juz_format">30 중 %1$d 주으즈</string>
-    <string name="widget_quran_progress_juz_default">30 중 — 주으즈</string>
-    <string name="widget_quran_progress_pages_format">%1$d / 604 페이지</string>
-    <string name="widget_quran_progress_pages_default">— / 604 페이지</string>
-    <string name="widget_quran_progress_goal_format">라마단 목표: %1$d%%</string>
-    <string name="widget_quran_progress_goal_default">라마단 목표: —%</string>
-    <string name="widget_quran_progress_percent_format">%1$d%%</string>
 
     <!-- Tasbeeh -->
-    <string name="widget_tasbeeh_subhanallah">수브하날라</string>
-    <string name="widget_tasbeeh_alhamdulillah">알함두릴라</string>
-    <string name="widget_tasbeeh_allahuakbar">알라후 아크바르</string>
-    <string name="widget_tasbeeh_lailaha">라 일라하 일라 알라</string>
-    <string name="widget_tasbeeh_target_format">/ %1$d</string>
-    <string name="widget_tasbeeh_target_default">/ 33</string>
-    <string name="widget_tasbeeh_total_today_format">오늘 합계: %1$d</string>
-    <string name="widget_tasbeeh_total_today_default">오늘 합계: 0</string>
-    <string name="widget_tasbeeh_reset_desc">타스비흐 계수기 초기화</string>
-    <string name="widget_tasbeeh_open_app_desc">누르 커넥트 앱 열기</string>
 
     <!-- Stale data badge -->
-    <string name="widget_stale_badge_text">오래됨</string>
 
     <!-- Accessibility content descriptions -->
-    <string name="widget_a11y_next_prayer">다음 예배는 %1$s, %2$s입니다</string>
-    <string name="widget_a11y_daily_ayah">일일 아야: %1$s</string>
-    <string name="widget_a11y_daily_ayah_default">일일 아야 로드되지 않음</string>
-    <string name="widget_a11y_quran_progress">꾸르안 진행 상황: %1$d 퍼센트 완료</string>
-    <string name="widget_a11y_quran_progress_empty">꾸르안 진행 상황 동기화되지 않음</string>
-    <string name="widget_a11y_daily_hadith">%1$s에서의 일일 하디스</string>
-    <string name="widget_a11y_daily_hadith_default">일일 하디스 사용 불가</string>
-    <string name="widget_a11y_tasbeeh">타스비흐 계수기, %1$s, 카운트 %2$d</string>
 
     <!-- Deep-link paths (must match React Router) -->
     <string name="deeplink_prayers">/prayers</string>
@@ -102,24 +35,6 @@
     <string name="notif_channel_widget_sync">위젯 동기화</string>
     <string name="notif_channel_widget_sync_desc">홈 화면 위젯을 조용히 갱신합니다.</string>
     <string name="notif_widget_sync_text">위젯 최신화 중…</string>
-
-    <!-- Widget Foreground Service -->
-    <string name="widget_monitor_channel_name">위젯 감시</string>
-    <string name="widget_monitor_channel_desc">위젯을 정확하게 갱신하기 위해 걸음 수와 위치를 감시합니다.</string>
-    <string name="widget_monitor_notif_title">위젯 감시 중</string>
-    <string name="widget_monitor_notif_text">정확한 예배 시간을 위해 이동을 추적하는 중</string>
-
-    <!-- Widget Configuration Activity -->
-    <string name="widget_configure_title">위젯 설정</string>
-    <string name="widget_configure_size_label">위젯 크기</string>
-    <string name="widget_configure_theme_label">테마</string>
-    <string name="widget_theme_system">시스템</string>
-    <string name="widget_theme_light">라이트</string>
-    <string name="widget_theme_dark">다크</string>
-    <string name="widget_configure_density_label">데이터 밀도: 보통</string>
-    <string name="widget_configure_accent_label">강조 색상</string>
-    <string name="widget_configure_cancel">취소</string>
-    <string name="widget_configure_save">저장</string>
 
     <!-- Prayer names (kept for legacy compat, will be removed in future cleanup) -->
     <string name="prayer_fajr">파즈르</string>

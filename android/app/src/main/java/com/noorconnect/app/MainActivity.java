@@ -97,7 +97,7 @@ public class MainActivity extends BridgeActivity {
 
     /**
      * Request SCHEDULE_EXACT_ALARM permission on Android 12+ (API 31+).
-     * This is required for exact alarm scheduling used by widget prayer-time alarms.
+     * This is required for exact adhan alarm scheduling (NativeAdhanScheduler).
      */
     private void requestExactAlarmPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -112,8 +112,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * Request battery optimization whitelist to prevent widget foreground service from being killed.
-     * Critical for step detection and location monitoring on Android 6+.
+     * Request battery optimization whitelist so background adhan alarms are not deferred or killed.
      */
     private void requestBatteryOptimizationWhitelist() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -152,9 +151,10 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * Forward widget deep-link intents (noorconnect://app/...) to the JS layer
-     * via the App plugin's appUrlOpen event. With launchMode="singleTask", taps
-     * on a widget while the app is already running arrive here instead of onCreate.
+     * Forward deep-link intents (noorconnect://app/...) to the JS layer
+     * via the App plugin's appUrlOpen event. With launchMode="singleTask",
+     * taps on a notification or external link while the app is already
+     * running arrive here instead of onCreate.
      */
     @Override
     public void onNewIntent(Intent intent) {

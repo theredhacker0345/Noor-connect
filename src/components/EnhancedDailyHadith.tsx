@@ -201,14 +201,12 @@ export function EnhancedDailyHadith() {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('widget-refresh', handleRefresh);
 
     return () => {
       if (idleId !== null) {
         window.cancelIdleCallback(idleId);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('widget-refresh', handleRefresh);
     };
   }, [loadHadith]);
 

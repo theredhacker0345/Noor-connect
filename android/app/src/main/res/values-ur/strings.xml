@@ -3,56 +3,13 @@
     <string name="app_name">نور کنیکٹ</string>
     <string name="title_activity_main">نور کنیکٹ</string>
 
-    <string name="widget_next_prayer_label">اگلی نماز</string>
-    <string name="widget_daily_ayah_label">آج کی آیت</string>
-    <string name="widget_daily_hadith_label">آج کی حدیث</string>
-    <string name="widget_quran_progress_label">قرآن پیش رفت</string>
-    <string name="widget_tasbeeh_label">تسبیح کاؤنٹر</string>
 
-    <string name="widget_next_prayer_desc">اگلی نماز تک براہ راست گنتی۔</string>
-    <string name="widget_daily_ayah_desc">ہر روز قرآن کی ایک نئی آیت ترجمے کے ساتھ۔</string>
-    <string name="widget_daily_hadith_desc">ہر روز سنت سے ایک حدیث راوی اور درجے کے ساتھ۔</string>
-    <string name="widget_quran_progress_desc">اپنی روزانہ قرآن پڑھنے کی پیش رفت ٹریک کریں۔</string>
-    <string name="widget_tasbeeh_desc">تسبیح گننے کے لیے کہیں بھی ٹیپ کریں۔</string>
 
-    <string name="widget_empty_title">نور کنیکٹ</string>
-    <string name="widget_empty_subtitle">ڈیٹا ہموار کرنے کے لیے ایپ کھولیں</string>
 
-    <string name="widget_next_prayer_section">اگلی نماز</string>
-    <string name="widget_hijri_default">ہجری تاریخ</string>
-    <string name="widget_location_default">مقام</string>
-    <string name="widget_countdown_default">بعد میں —</string>
-    <string name="widget_countdown_now">ابھی</string>
-    <string name="widget_updated_format">اپ ڈیٹڈ %1$s</string>
-    <string name="widget_time_default">--:--</string>
 
-    <string name="widget_daily_ayah_section">آج کی آیت</string>
-    <string name="widget_quran_ref_default">—</string>
-    <string name="widget_quran_arabic_default">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
-    <string name="widget_quran_translation_default">بسم الله الرحمن الرحیم۔</string>
 
-    <string name="widget_daily_hadith_section">آج کی حدیث</string>
-    <string name="widget_hadith_source_default">—</string>
-    <string name="widget_hadith_grade_default">صحیح</string>
-    <string name="widget_hadith_narrator_format">— راوی: %1$s</string>
-    <string name="widget_hadith_arabic_default">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</string>
-    <string name="widget_hadith_translation_default">اعمال کا دارومدار نیتوں پر ہے۔</string>
-    <string name="widget_hadith_narrator_default">نامعلوم راوی</string>
 
-    <string name="widget_quran_progress_section">قرآن پڑھنا</string>
-    <string name="widget_quran_progress_streak_format">%1$d دن کا تسلسل</string>
-    <string name="widget_quran_progress_last_read_format">آخری پڑھائی: %1$s</string>
-    <string name="widget_quran_progress_juz_format">پارہ %1$d از 30</string>
-    <string name="widget_quran_progress_pages_format">%1$d / 604 صفحات</string>
-    <string name="widget_quran_progress_goal_format">رمضان کا ہدف: %1$d%%</string>
-    <string name="widget_quran_progress_percent_format">%1$d%%</string>
 
-    <string name="widget_tasbeeh_subhanallah">سبحان الله</string>
-    <string name="widget_tasbeeh_alhamdulillah">الحمد لله</string>
-    <string name="widget_tasbeeh_allahuakbar">الله أكبر</string>
-    <string name="widget_tasbeeh_lailaha">لا إله إلا الله</string>
-    <string name="widget_tasbeeh_target_format">/ %1$d</string>
-    <string name="widget_tasbeeh_total_today_format">آج کا کل: %1$d</string>
 
     <string name="deeplink_prayers">/prayers</string>
     <string name="deeplink_quran">/quran</string>
@@ -75,52 +32,14 @@
     <string name="prayer_isha">عشاء</string>
 
     <!-- Stale data badge -->
-    <string name="widget_stale_badge_text">غیر اپ ڈیٹڈ</string>
 
     <!-- Accessibility content descriptions -->
-    <string name="widget_a11y_next_prayer">اگلی نماز %1$s، %2$s ہے</string>
-    <string name="widget_a11y_daily_ayah">آج کی آیت: %1$s</string>
-    <string name="widget_a11y_daily_ayah_default">آج کی آیت لوڈ نہیں ہوئی</string>
-    <string name="widget_a11y_quran_progress">قرآن پیش رفت: %1$d فیصد مکمل</string>
-    <string name="widget_a11y_quran_progress_empty">قرآن پیش رفت ہموار نہیں ہوئی</string>
-    <string name="widget_a11y_daily_hadith">آج کی حدیث %1$s سے</string>
-    <string name="widget_a11y_daily_hadith_default">آج کی حدیث دستیاب نہیں</string>
-    <string name="widget_a11y_tasbeeh">تسبیح کاؤنٹر، %1$s، گنتی %2$d</string>
-
-    <!-- Widget Foreground Service -->
-    <string name="widget_monitor_channel_name">وڈجٹ مانیٹر</string>
-    <string name="widget_monitor_channel_desc">درست وڈجٹ اپ ڈیٹس کے لیے قدموں اور مقام کی نگرانی۔</string>
-    <string name="widget_monitor_notif_title">وڈجٹ مانیٹر فعال</string>
-    <string name="widget_monitor_notif_text">نماز کے اوقات کی درستگی کے لیے حرکت کی نگرانی</string>
-
-    <!-- Widget Configuration Activity -->
-    <string name="widget_configure_title">وڈجٹ ترتیبات</string>
-    <string name="widget_configure_size_label">وڈجٹ کا سائز</string>
-    <string name="widget_configure_theme_label">تھیم</string>
-    <string name="widget_theme_system">سسٹم</string>
-    <string name="widget_theme_light">روشن</string>
-    <string name="widget_theme_dark">تاریک</string>
-    <string name="widget_configure_density_label">ڈیٹا کی کثافت: درمیانہ</string>
-    <string name="widget_configure_accent_label">معاون رنگ</string>
-    <string name="widget_configure_cancel">منسوخ کریں</string>
-    <string name="widget_configure_save">محفوظ کریں</string>
 
     <!-- Empty states (completion) -->
-    <string name="widget_empty_message">نماز کے اوقات ترتیب دینے اور اپنے روحانی سفر کا ٹریک شروع کرنے کے لیے ٹیپ کریں</string>
-    <string name="widget_empty_action">ایپ کھولیں</string>
 
     <!-- Quran Progress defaults (completion) -->
-    <string name="widget_quran_progress_streak_default">— دن کا تسلسل</string>
-    <string name="widget_quran_progress_last_read_default">آخری پڑھائی: —</string>
-    <string name="widget_quran_progress_juz_default">پارہ — از 30</string>
-    <string name="widget_quran_progress_pages_default">— / 604 صفحات</string>
-    <string name="widget_quran_progress_goal_default">رمضان کا ہدف: —%</string>
 
     <!-- Tasbeeh defaults and actions (completion) -->
-    <string name="widget_tasbeeh_target_default">/ 33</string>
-    <string name="widget_tasbeeh_total_today_default">آج کا کل: 0</string>
-    <string name="widget_tasbeeh_reset_desc">تسبیح کاؤنٹر ری سیٹ کریں</string>
-    <string name="widget_tasbeeh_open_app_desc">نور کنیکٹ ایپ کھولیں</string>
 
     <!-- Boot / app events (technical identifier — kept identical to base) -->
     <string name="boot_reschedule_action">com.noorconnect.app.BOOT_REschedule</string>

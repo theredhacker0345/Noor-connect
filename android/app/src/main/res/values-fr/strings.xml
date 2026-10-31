@@ -4,88 +4,21 @@
     <string name="app_name">Noor Connect</string>
     <string name="title_activity_main">Noor Connect</string>
 
-    <!-- Widget labels (shown in widget picker) -->
-    <string name="widget_next_prayer_label">Prochaine prière</string>
-    <string name="widget_daily_ayah_label">Ayah du jour</string>
-    <string name="widget_daily_hadith_label">Hadith du jour</string>
-    <string name="widget_quran_progress_label">Progression du Coran</string>
-    <string name="widget_tasbeeh_label">Compteur de Tasbeeh</string>
-
-    <!-- Widget descriptions (shown under label in picker) -->
-    <string name="widget_next_prayer_desc">Compte à rebours en direct jusqu\'à la prochaine prière avec anneau de progression.</string>
-    <string name="widget_daily_ayah_desc">Un verset différent du Coran chaque jour avec sa traduction.</string>
-    <string name="widget_daily_hadith_desc">Un hadith de la Sunna chaque jour avec narrateur et degré.</string>
-    <string name="widget_quran_progress_desc">Suivez votre progression quotidienne de lecture du Coran et votre série.</string>
-    <string name="widget_tasbeeh_desc">Touchez n\'importe où pour compter votre dhikr, avec retour haptique.</string>
-
     <!-- Empty states -->
-    <string name="widget_empty_title">Noor Connect</string>
-    <string name="widget_empty_subtitle">Ouvrez l\'application pour synchroniser vos données</string>
-    <string name="widget_empty_message">Touchez pour configurer les horaires de prière et commencer à suivre votre parcours spirituel</string>
-    <string name="widget_empty_action">Ouvrir l\'application</string>
 
     <!-- Next Prayer -->
-    <string name="widget_next_prayer_section">PROCHAINE PRIÈRE</string>
-    <string name="widget_hijri_default">Date hégirienne</string>
-    <string name="widget_location_default">Localisation</string>
-    <string name="widget_countdown_default">dans —</string>
-    <string name="widget_countdown_now">Maintenant</string>
-    <string name="widget_updated_format">Mis à jour %1$s</string>
-    <string name="widget_time_default">--:--</string>
 
     <!-- Daily Ayah -->
-    <string name="widget_daily_ayah_section">AYAH DU JOUR</string>
-    <string name="widget_quran_ref_default">—</string>
-    <string name="widget_quran_arabic_default">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
-    <string name="widget_quran_translation_default">Au nom d\'Allah, le Tout Miséricordieux, le Très Miséricordieux.</string>
 
     <!-- Daily Hadith -->
-    <string name="widget_daily_hadith_section">HADITH DU JOUR</string>
-    <string name="widget_hadith_source_default">—</string>
-    <string name="widget_hadith_grade_default">Sahih</string>
-    <string name="widget_hadith_narrator_format">— Narré par %1$s</string>
-    <string name="widget_hadith_arabic_default">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</string>
-    <string name="widget_hadith_translation_default">Les actions ne valent que par les intentions.</string>
-    <string name="widget_hadith_narrator_default">Narrateur inconnu</string>
 
     <!-- Quran Progress -->
-    <string name="widget_quran_progress_section">LECTURE DU CORAN</string>
-    <string name="widget_quran_progress_streak_format">Série de %1$d jours</string>
-    <string name="widget_quran_progress_streak_default">Série de — jours</string>
-    <string name="widget_quran_progress_last_read_format">Dernière lecture : %1$s</string>
-    <string name="widget_quran_progress_last_read_default">Dernière lecture : —</string>
-    <string name="widget_quran_progress_juz_format">Juz %1$d sur 30</string>
-    <string name="widget_quran_progress_juz_default">Juz — sur 30</string>
-    <string name="widget_quran_progress_pages_format">%1$d / 604 pages</string>
-    <string name="widget_quran_progress_pages_default">— / 604 pages</string>
-    <string name="widget_quran_progress_goal_format">Objectif Ramadan : %1$d%%</string>
-    <string name="widget_quran_progress_goal_default">Objectif Ramadan : —%</string>
-    <string name="widget_quran_progress_percent_format">%1$d%%</string>
 
     <!-- Tasbeeh -->
-    <string name="widget_tasbeeh_subhanallah">SubhanAllah</string>
-    <string name="widget_tasbeeh_alhamdulillah">Alhamdulillah</string>
-    <string name="widget_tasbeeh_allahuakbar">Allahu Akbar</string>
-    <string name="widget_tasbeeh_lailaha">La ilaha illa Allah</string>
-    <string name="widget_tasbeeh_target_format">/ %1$d</string>
-    <string name="widget_tasbeeh_target_default">/ 33</string>
-    <string name="widget_tasbeeh_total_today_format">Total du jour : %1$d</string>
-    <string name="widget_tasbeeh_total_today_default">Total du jour : 0</string>
-    <string name="widget_tasbeeh_reset_desc">Réinitialiser le compteur de Tasbeeh</string>
-    <string name="widget_tasbeeh_open_app_desc">Ouvrir l\'application Noor Connect</string>
 
     <!-- Stale data badge -->
-    <string name="widget_stale_badge_text">Obsolète</string>
 
     <!-- Accessibility content descriptions -->
-    <string name="widget_a11y_next_prayer">La prochaine prière est %1$s, %2$s</string>
-    <string name="widget_a11y_daily_ayah">Ayah du jour : %1$s</string>
-    <string name="widget_a11y_daily_ayah_default">Ayah du jour non chargée</string>
-    <string name="widget_a11y_quran_progress">Progression du Coran : %1$d pour cent terminés</string>
-    <string name="widget_a11y_quran_progress_empty">Progression du Coran non synchronisée</string>
-    <string name="widget_a11y_daily_hadith">Hadith du jour de %1$s</string>
-    <string name="widget_a11y_daily_hadith_default">Hadith du jour indisponible</string>
-    <string name="widget_a11y_tasbeeh">Compteur de Tasbeeh, %1$s, comptage %2$d</string>
 
     <!-- Deep-link paths (must match React Router) -->
     <string name="deeplink_prayers">/prayers</string>
@@ -102,24 +35,6 @@
     <string name="notif_channel_widget_sync">Synchronisation des widgets</string>
     <string name="notif_channel_widget_sync_desc">Mises à jour silencieuses des widgets de l\'écran d\'accueil.</string>
     <string name="notif_widget_sync_text">Mise à jour des widgets…</string>
-
-    <!-- Widget Foreground Service -->
-    <string name="widget_monitor_channel_name">Surveillance des widgets</string>
-    <string name="widget_monitor_channel_desc">Surveille les pas et la localisation pour des mises à jour précises des widgets.</string>
-    <string name="widget_monitor_notif_title">Surveillance des widgets active</string>
-    <string name="widget_monitor_notif_text">Suivi des mouvements pour des horaires de prière précis</string>
-
-    <!-- Widget Configuration Activity -->
-    <string name="widget_configure_title">Paramètres du widget</string>
-    <string name="widget_configure_size_label">Taille du widget</string>
-    <string name="widget_configure_theme_label">Thème</string>
-    <string name="widget_theme_system">Système</string>
-    <string name="widget_theme_light">Clair</string>
-    <string name="widget_theme_dark">Sombre</string>
-    <string name="widget_configure_density_label">Densité de données : moyenne</string>
-    <string name="widget_configure_accent_label">Couleur d\'accentuation</string>
-    <string name="widget_configure_cancel">Annuler</string>
-    <string name="widget_configure_save">Enregistrer</string>
 
     <!-- Prayer names (kept for legacy compat, will be removed in future cleanup) -->
     <string name="prayer_fajr">Fajr</string>

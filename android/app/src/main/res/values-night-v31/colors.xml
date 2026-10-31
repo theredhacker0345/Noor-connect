@@ -5,42 +5,15 @@
          System colors extracted from wallpaper.
     ══════════════════════════════════════════════════ -->
 
-    <color name="widget_bg_primary">@android:color/system_neutral1_900</color>
-    <color name="widget_bg_surface">@android:color/system_neutral1_800</color>
-    <color name="widget_bg_elevated">@android:color/system_neutral1_700</color>
-    <color name="widget_glow_layer">#0A10B981</color>
 
-    <color name="widget_border">@android:color/system_accent1_700</color>
-    <color name="widget_divider">@android:color/system_neutral1_600</color>
 
-    <color name="widget_accent_emerald">@android:color/system_accent1_300</color>
-    <color name="widget_accent_emerald_dim">@android:color/system_accent1_600</color>
-    <color name="widget_accent_gold">@android:color/system_accent2_300</color>
-    <color name="widget_accent_gold_dim">@android:color/system_accent2_600</color>
 
-    <color name="widget_text_primary">@android:color/system_neutral1_50</color>
-    <color name="widget_text_secondary">@android:color/system_neutral1_300</color>
-    <color name="widget_text_on_accent">@android:color/system_neutral1_900</color>
 
-    <color name="widget_chip_gold_bg">#1AFFFFFF</color>
-    <color name="widget_chip_gold_border">@android:color/system_accent2_500</color>
-    <color name="widget_chip_emerald_bg">#1AFFFFFF</color>
-    <color name="widget_chip_emerald_border">@android:color/system_accent1_500</color>
 
-    <color name="widget_ring_track">@android:color/system_neutral1_600</color>
 
-    <color name="widget_dot_active_fill">@android:color/system_accent1_300</color>
-    <color name="widget_dot_passed_fill">@android:color/system_neutral1_500</color>
-    <color name="widget_dot_upcoming_stroke">@android:color/system_neutral1_400</color>
 
-    <color name="widget_tasbeeh_ring">#1AFFFFFF</color>
-    <color name="widget_tasbeeh_ring_complete">@android:color/system_accent1_300</color>
 
-    <color name="widget_grade_sahih">@android:color/system_accent1_300</color>
-    <color name="widget_grade_hasan">@android:color/system_accent2_300</color>
-    <color name="widget_grade_daif">#FFEF4444</color>
 
-    <color name="widget_pattern_overlay">#1AFFFFFF</color>
 
     <color name="splash_background">#FF0D0D0D</color>
 </resources>

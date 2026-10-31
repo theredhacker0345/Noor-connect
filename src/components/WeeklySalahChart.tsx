@@ -102,10 +102,8 @@ export function WeeklySalahChart() {
 
     // Listen for real-time updates
     window.addEventListener('salah-updated', refreshData);
-    window.addEventListener('widget-refresh', refreshData);
     return () => {
       window.removeEventListener('salah-updated', refreshData);
-      window.removeEventListener('widget-refresh', refreshData);
     };
   }, [refreshData]);
 

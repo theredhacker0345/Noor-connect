@@ -52,16 +52,13 @@ export function QuranProgressWidget({ className }: QuranProgressWidgetProps) {
   useEffect(() => {
     loadProgress();
 
-    // Listen for widget refresh events
     const handleRefresh = () => {
       loadProgress();
     };
 
-    window.addEventListener('widget-refresh', handleRefresh);
     window.addEventListener('noorconnect:quran-progress-changed', handleRefresh);
 
     return () => {
-      window.removeEventListener('widget-refresh', handleRefresh);
       window.removeEventListener('noorconnect:quran-progress-changed', handleRefresh);
     };
   }, []);

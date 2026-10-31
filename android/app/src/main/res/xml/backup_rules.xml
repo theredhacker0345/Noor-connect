@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <!-- All app data lives in WebView storage (app_webview/) + Capacitor
-         Preferences (CapacitorStorage.xml) + widget SharedPreferences.
+         Preferences (CapacitorStorage.xml).
          Large regenerable caches (IndexedDB audio/PDFs, Service Worker
          caches, cache dir) are excluded to stay under the 25 MB cloud
          backup limit. -->

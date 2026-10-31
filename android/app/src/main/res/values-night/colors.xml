@@ -5,57 +5,24 @@
     ══════════════════════════════════════════════════ -->
 
     <!-- Deep space backgrounds — near-black with blue-teal undertone -->
-    <color name="widget_bg_primary">#FF090D12</color>
-    <color name="widget_bg_surface">#FF0E1520</color>
-    <color name="widget_bg_elevated">#FF16202E</color>
-    <color name="widget_glow_layer">#0A10B981</color><!-- faint emerald glow -->
 
     <!-- Border — glassy rim with emerald tint -->
-    <color name="widget_border">#2510B981</color>
-    <color name="widget_divider">#1AFFFFFF</color>
 
     <!-- Accents — vivid on dark -->
-    <color name="widget_accent_emerald">#FF10B981</color>
-    <color name="widget_accent_emerald_dim">#FF065F46</color>
-    <color name="widget_accent_gold">#FFF59E0B</color>
-    <color name="widget_accent_gold_dim">#FF92400E</color>
-    <!-- Selectable accents (WidgetConfigureActivity) — brighter for dark bg -->
-    <color name="widget_accent_amber">#FFFBBF24</color>
-    <color name="widget_accent_blue">#FF60A5FA</color>
-    <color name="widget_accent_purple">#FFA78BFA</color>
-    <color name="widget_accent_teal">#FF2DD4BF</color>
-    <color name="widget_accent_red">#FFF87171</color>
 
     <!-- Text -->
-    <color name="widget_text_primary">#FFF0F4F8</color>
-    <color name="widget_text_secondary">#FF8A95A3</color>
-    <color name="widget_text_on_accent">#FF060D14</color>
 
     <!-- Chip colors — translucent on dark -->
-    <color name="widget_chip_gold_bg">#1AF59E0B</color>
-    <color name="widget_chip_gold_border">#40F59E0B</color>
-    <color name="widget_chip_emerald_bg">#1A10B981</color>
-    <color name="widget_chip_emerald_border">#4010B981</color>
 
     <!-- Ring track — barely visible against dark bg -->
-    <color name="widget_ring_track">#2210B981</color>
 
     <!-- Status dots -->
-    <color name="widget_dot_active_fill">#FF10B981</color>
-    <color name="widget_dot_passed_fill">#FF3B4556</color>
-    <color name="widget_dot_upcoming_stroke">#FF556070</color>
 
     <!-- Tasbeeh -->
-    <color name="widget_tasbeeh_ring">#1C10B981</color>
-    <color name="widget_tasbeeh_ring_complete">#FF10B981</color>
 
     <!-- Hadith grade badges -->
-    <color name="widget_grade_sahih">#FF10B981</color>
-    <color name="widget_grade_hasan">#FFF59E0B</color>
-    <color name="widget_grade_daif">#FFEF4444</color>
 
     <!-- Pattern overlay -->
-    <color name="widget_pattern_overlay">#1210B981</color>
 
     <!-- Splash retained -->
     <color name="splash_background">#FF0D0D0D</color>

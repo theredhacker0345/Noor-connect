@@ -3,29 +3,9 @@
     <!-- Material You LIGHT dynamic color overrides (API 31+, light theme).
          Dark dynamic overrides live in values-night-v31/colors.xml. -->
 
-    <color name="widget_bg_primary">@android:color/system_neutral1_100</color>
-    <color name="widget_bg_surface">@android:color/system_neutral1_50</color>
-    <color name="widget_bg_elevated">@android:color/system_neutral1_200</color>
 
-    <color name="widget_accent_emerald">@android:color/system_accent1_600</color>
-    <color name="widget_accent_emerald_dim">@android:color/system_accent1_800</color>
-    <color name="widget_accent_gold">@android:color/system_accent2_600</color>
-    <color name="widget_accent_gold_dim">@android:color/system_accent2_800</color>
 
-    <color name="widget_text_primary">@android:color/system_neutral1_900</color>
-    <color name="widget_text_secondary">@android:color/system_neutral1_600</color>
-    <color name="widget_text_on_accent">@android:color/system_neutral1_900</color>
 
-    <color name="widget_divider">@android:color/system_neutral1_200</color>
-    <color name="widget_pattern_overlay">#1410B981</color>
 
-    <color name="widget_dot_active_fill">@android:color/system_accent1_600</color>
-    <color name="widget_dot_passed_fill">@android:color/system_neutral1_300</color>
-    <color name="widget_dot_upcoming_stroke">@android:color/system_neutral1_400</color>
 
-    <color name="widget_tasbeeh_ring">#1410B981</color>
-    <color name="widget_tasbeeh_ring_complete">@android:color/system_accent1_600</color>
-    <color name="widget_grade_sahih">@android:color/system_accent1_600</color>
-    <color name="widget_grade_hasan">@android:color/system_accent2_600</color>
-    <color name="widget_grade_daif">#FFBA1A1A</color>
 </resources>

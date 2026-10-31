@@ -11,9 +11,6 @@
 -keep class com.noorconnect.app.BootReceiver { *; }
 -keep class com.noorconnect.app.MainActivity { *; }
 
-# Widget providers (new unified widget suite)
--keep class com.noorconnect.app.widgets.** { *; }
-
 # ── Capacitor Framework ──────────────────────────────────────────
 -keep class com.getcapacitor.** { *; }
 -keep class com.getcapacitor.annotation.** { *; }
@@ -38,9 +35,6 @@
 -keepattributes InnerClasses
 
 # --- Noor Connect Custom Rules ---
-
-# Keep new Kotlin widget classes
--keep class com.noorconnect.app.widgets.** { *; }
 
 # Keep WorkManager (prevents minification issues with workers)
 -keep class androidx.work.** { *; }

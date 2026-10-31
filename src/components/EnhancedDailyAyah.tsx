@@ -153,11 +153,9 @@ export function EnhancedDailyAyah() {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('widget-refresh', handleRefresh);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('widget-refresh', handleRefresh);
     };
   }, [loadAyah]);
 

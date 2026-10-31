@@ -1,8 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tier 1 (WS-2): use the system-provided corner radius on API 31+.
-         These dimen values are explicitly provided by the platform so widgets
-         visually match the launcher/OEM surfaces instead of a custom radius. -->
-    <dimen name="widget_corner_radius">@android:dimen/system_app_widget_background_radius</dimen>
-    <dimen name="widget_corner_radius_inner">@android:dimen/system_app_widget_inner_radius</dimen>
 </resources>

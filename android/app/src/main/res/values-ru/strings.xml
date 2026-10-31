@@ -4,88 +4,21 @@
     <string name="app_name">Noor Connect</string>
     <string name="title_activity_main">Noor Connect</string>
 
-    <!-- Widget labels (shown in widget picker) -->
-    <string name="widget_next_prayer_label">Следующая молитва</string>
-    <string name="widget_daily_ayah_label">Аят дня</string>
-    <string name="widget_daily_hadith_label">Хадис дня</string>
-    <string name="widget_quran_progress_label">Прогресс чтения Корана</string>
-    <string name="widget_tasbeeh_label">Счётчик тасбиха</string>
-
-    <!-- Widget descriptions (shown under label in picker) -->
-    <string name="widget_next_prayer_desc">Обратный отсчёт до следующей молитвы с кольцом прогресса.</string>
-    <string name="widget_daily_ayah_desc">Новый аят Корана каждый день с переводом.</string>
-    <string name="widget_daily_hadith_desc">Хадис из Сунны каждый день с передатчиком и степенью достоверности.</string>
-    <string name="widget_quran_progress_desc">Отслеживайте ежедневное чтение Корана и свою серию.</string>
-    <string name="widget_tasbeeh_desc">Коснитесь в любом месте, чтобы считать зикр, с тактильным откликом.</string>
-
     <!-- Empty states -->
-    <string name="widget_empty_title">Noor Connect</string>
-    <string name="widget_empty_subtitle">Откройте приложение, чтобы синхронизировать данные</string>
-    <string name="widget_empty_message">Коснитесь, чтобы настроить время молитв и начать отслеживать свой духовный путь</string>
-    <string name="widget_empty_action">Открыть приложение</string>
 
     <!-- Next Prayer -->
-    <string name="widget_next_prayer_section">СЛЕДУЮЩАЯ МОЛИТВА</string>
-    <string name="widget_hijri_default">Дата по хиджре</string>
-    <string name="widget_location_default">Местоположение</string>
-    <string name="widget_countdown_default">через —</string>
-    <string name="widget_countdown_now">Сейчас</string>
-    <string name="widget_updated_format">Обновлено %1$s</string>
-    <string name="widget_time_default">--:--</string>
 
     <!-- Daily Ayah -->
-    <string name="widget_daily_ayah_section">АЯТ ДНЯ</string>
-    <string name="widget_quran_ref_default">—</string>
-    <string name="widget_quran_arabic_default">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
-    <string name="widget_quran_translation_default">Во имя Аллаха, Милостивого, Милосердного.</string>
 
     <!-- Daily Hadith -->
-    <string name="widget_daily_hadith_section">ХАДИС ДНЯ</string>
-    <string name="widget_hadith_source_default">—</string>
-    <string name="widget_hadith_grade_default">Сахих</string>
-    <string name="widget_hadith_narrator_format">— Передал %1$s</string>
-    <string name="widget_hadith_arabic_default">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</string>
-    <string name="widget_hadith_translation_default">Дела оцениваются по намерениям.</string>
-    <string name="widget_hadith_narrator_default">Передатчик неизвестен</string>
 
     <!-- Quran Progress -->
-    <string name="widget_quran_progress_section">ЧТЕНИЕ КОРАНА</string>
-    <string name="widget_quran_progress_streak_format">%1$d дней подряд</string>
-    <string name="widget_quran_progress_streak_default">— дней подряд</string>
-    <string name="widget_quran_progress_last_read_format">Последнее чтение: %1$s</string>
-    <string name="widget_quran_progress_last_read_default">Последнее чтение: —</string>
-    <string name="widget_quran_progress_juz_format">Джуз %1$d из 30</string>
-    <string name="widget_quran_progress_juz_default">Джуз — из 30</string>
-    <string name="widget_quran_progress_pages_format">%1$d / 604 страниц</string>
-    <string name="widget_quran_progress_pages_default">— / 604 страниц</string>
-    <string name="widget_quran_progress_goal_format">Цель Рамадана: %1$d%%</string>
-    <string name="widget_quran_progress_goal_default">Цель Рамадана: —%</string>
-    <string name="widget_quran_progress_percent_format">%1$d%%</string>
 
     <!-- Tasbeeh -->
-    <string name="widget_tasbeeh_subhanallah">СубханАллах</string>
-    <string name="widget_tasbeeh_alhamdulillah">Альхамдулиллях</string>
-    <string name="widget_tasbeeh_allahuakbar">Аллаху Акбар</string>
-    <string name="widget_tasbeeh_lailaha">Ля иляха илля Аллах</string>
-    <string name="widget_tasbeeh_target_format">/ %1$d</string>
-    <string name="widget_tasbeeh_target_default">/ 33</string>
-    <string name="widget_tasbeeh_total_today_format">Всего за сегодня: %1$d</string>
-    <string name="widget_tasbeeh_total_today_default">Всего за сегодня: 0</string>
-    <string name="widget_tasbeeh_reset_desc">Сбросить счётчик тасбиха</string>
-    <string name="widget_tasbeeh_open_app_desc">Открыть приложение Noor Connect</string>
 
     <!-- Stale data badge -->
-    <string name="widget_stale_badge_text">Устарело</string>
 
     <!-- Accessibility content descriptions -->
-    <string name="widget_a11y_next_prayer">Следующая молитва: %1$s, %2$s</string>
-    <string name="widget_a11y_daily_ayah">Аят дня: %1$s</string>
-    <string name="widget_a11y_daily_ayah_default">Аят дня не загружен</string>
-    <string name="widget_a11y_quran_progress">Прогресс чтения Корана: %1$d процентов</string>
-    <string name="widget_a11y_quran_progress_empty">Прогресс чтения Корана не синхронизирован</string>
-    <string name="widget_a11y_daily_hadith">Хадис дня от %1$s</string>
-    <string name="widget_a11y_daily_hadith_default">Хадис дня недоступен</string>
-    <string name="widget_a11y_tasbeeh">Счётчик тасбиха, %1$s, счёт %2$d</string>
 
     <!-- Deep-link paths (must match React Router) -->
     <string name="deeplink_prayers">/prayers</string>
@@ -102,24 +35,6 @@
     <string name="notif_channel_widget_sync">Синхронизация виджетов</string>
     <string name="notif_channel_widget_sync_desc">Тихие обновления виджетов на главном экране.</string>
     <string name="notif_widget_sync_text">Обновление виджетов…</string>
-
-    <!-- Widget Foreground Service -->
-    <string name="widget_monitor_channel_name">Мониторинг виджетов</string>
-    <string name="widget_monitor_channel_desc">Отслеживает шаги и местоположение для точного обновления виджетов.</string>
-    <string name="widget_monitor_notif_title">Мониторинг виджетов активен</string>
-    <string name="widget_monitor_notif_text">Отслеживание движения для точного времени молитв</string>
-
-    <!-- Widget Configuration Activity -->
-    <string name="widget_configure_title">Настройки виджета</string>
-    <string name="widget_configure_size_label">Размер виджета</string>
-    <string name="widget_configure_theme_label">Тема</string>
-    <string name="widget_theme_system">Системная</string>
-    <string name="widget_theme_light">Светлая</string>
-    <string name="widget_theme_dark">Тёмная</string>
-    <string name="widget_configure_density_label">Плотность данных: средняя</string>
-    <string name="widget_configure_accent_label">Акцентный цвет</string>
-    <string name="widget_configure_cancel">Отмена</string>
-    <string name="widget_configure_save">Сохранить</string>
 
     <!-- Prayer names (kept for legacy compat, will be removed in future cleanup) -->
     <string name="prayer_fajr">Фаджр</string>

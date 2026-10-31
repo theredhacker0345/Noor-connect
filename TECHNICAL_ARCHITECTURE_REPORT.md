@@ -8,7 +8,7 @@
 
 ### Application Type: **Hybrid PWA + Capacitor Native**
 - **Web**: React + TypeScript + Vite PWA with Service Worker
-- **Mobile**: Capacitor 6.x with native Android widgets
+- **Mobile**: Capacitor 6.x (native Android widgets were removed in v2.3.0)
 - **Cross-Platform**: Single codebase with platform-specific compilation
 
 ### Architecture: **Privacy-First, Offline-First**
@@ -48,7 +48,7 @@
 
 **Android Native**
 - `android/app/src/main/java/` - Native Android code
-- Widget system with 9 native widget implementations
+- ~~Widget system~~ removed in v2.3.0
 - Capacitor plugin bridge for communication
 
 **Build & Configuration**
@@ -66,8 +66,7 @@
 
 2. **Capacitor Native Mobile**
    - Capacitor 6.x with native APIs
-   - Android widgets support
-   - Native notifications, storage, sensors
+    - Native notifications, storage, sensors
 
 3. **F-Droid Compatible Distribution**
    - Zero Google Play Services
@@ -83,7 +82,6 @@
 6. **Spiritual Tools** - Tasbeeh counter, Ramadan mode, menstrual tracking
 7. **Media** - Quran radio, live streams, audio recitation
 8. **Education** - Islamic quiz, tafsir, asma-ul-husna
-9. **Widgets** - 5 native Android widgets with rich functionality
 
 ## Dependencies Analysis
 
@@ -132,7 +130,7 @@
 ### 2. State Management Patterns
 - **React Context**: Theme, Settings, Language contexts
 - **React Query**: Server state with caching
-- **Custom Hooks**: usePrayerTimes, useWidgetSync, useAuth
+- **Custom Hooks**: usePrayerTimes, useI18n, usePrayerAlarm
 
 ### 3. Service Layer Architecture
 ```
@@ -141,11 +139,9 @@ Business Logic:
 ├── Quran Services (caching, search)
 ├── Hadith Services (87K entries)
 ├── Storage Services (localForage, Preferences)
-└── Widget Services (sync, refresh, validation)
 ```
 
 ### 4. Event-Driven Architecture
-- **Widget Bridge**: Native ↔ Web communication
 - **Notification System**: Local notifications with scheduling
 - **Event Bus**: Custom events for component communication
 
@@ -164,7 +160,7 @@ npm run dev
 
 # Production Build
 npm run build
-npm run version:sync && npm run build:widget-assets && vite build
+npm run version:sync && vite build
 
 # Android Build
 npm run android:build
@@ -180,7 +176,6 @@ npm run build && node scripts/clean-dist-data.js && cap sync android && cd andro
 2. **Native Integration**
    - Capacitor sync for Android
    - Mushaf image moving to native assets
-   - Widget data bundling
 
 3. **PWA Configuration**
    - Service Worker injection
@@ -189,7 +184,6 @@ npm run build && node scripts/clean-dist-data.js && cap sync android && cd andro
 
 ### Build Scripts
 - `version:sync` - Version synchronization
-- `build:widget-assets` - Widget hadith data bundling
 - `clean:dist` - F-Droid specific cleaning
 - `optimize:all` - Comprehensive optimization
 
@@ -225,7 +219,7 @@ Performance:
 - **Prayer Calculation**: Adhan 4.4.3 + offline fallback
 - **Quran API**: spacy API for tafsir (no database)
 - **Hadith API**: Local storage (87K entries)
-- **Real-time**: WebSocket connections for widgets
+- **Real-time**: window CustomEvent bridges for in-app dashboard cards
 
 ### Native Layer
 - **Android**: Kotlin 1.7.3, Gradle 8.14.3
@@ -253,15 +247,9 @@ Performance:
 - **Offline-First**: All core features work offline
 - **F-Droid First**: Strict FOSS compliance
 
-### 3. Widget System
-```
-Widget Architecture:
-├── 5 Native Android widgets
-├── WidgetBridge Capacitor plugin
-├── Real-time sync via SharedPreferences
-├── Predictive updates based on user behavior
-└── Rich data payloads (6 prayers, Quran progress)
-```
+### 3. Widget System (removed in v2.3.0)
+
+The native home-screen widget suite was removed. In-app dashboard cards remain.
 
 ### 4. Internationalization
 - **5 Languages**: English, Arabic, Urdu, Bengali, Russian
@@ -325,7 +313,6 @@ Noor Connect represents a sophisticated hybrid application architecture that suc
 
 **Key Achievements**:
 - ✅ Complete offline capability
-- ✅ Native widget integration
 - ✅ F-Droid compliance
 - ✅ Low-end device optimization
 - ✅ Privacy-first architecture

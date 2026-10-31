@@ -127,33 +127,6 @@ task moveMushafImages {
 // Run the move task before preBuild
 preBuild.dependsOn moveMushafImages
 
-// Task to (re)generate the bundled widget hadiths JSON from public/data/hadith-collections
-task buildWidgetHadiths {
-    def script = file("${project.projectDir}/../../scripts/build-widget-hadiths.cjs")
-    def collectionsDir = file("${project.projectDir}/../../public/data/hadith-collections")
-    def outDir = file("${project.projectDir}/src/main/assets")
-    def outFile = new File(outDir, "widget_hadiths.json")
-
-    inputs.dir collectionsDir
-    inputs.file script
-    outputs.file outFile
-
-    doLast {
-        if (script.exists()) {
-            println "Building widget hadiths bundle..."
-            outDir.mkdirs()
-            exec {
-                executable "node"
-                args script.absolutePath
-            }
-        } else {
-            println "WARN: build-widget-hadiths.cjs not found at ${script.absolutePath}, skipping"
-        }
-    }
-}
-
-// Run the hadiths build before preBuild (only if assets dir is missing or stale)
-preBuild.dependsOn buildWidgetHadiths
 
 // Task to strip .gz / .br compressed variants from the synced web assets.
 // vite-plugin-compression produces these for the browser, but AAPT2 rejects
@@ -210,10 +183,10 @@ dependencies {
     // Material Components for Material3 styles (Widget.Material3.Button, etc.)
     implementation "com.google.android.material:material:1.12.0"
 
-    // WorkManager for periodic widget refresh
+    // WorkManager (transitive dependency of capacitor-android)
     implementation "androidx.work:work-runtime-ktx:2.9.0"
 
-    // Coroutines for async widget operations
+    // Coroutines (Kotlin async)
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 }
 

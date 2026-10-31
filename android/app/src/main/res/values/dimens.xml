@@ -1,38 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="widget_corner_radius">24dp</dimen>
-    <dimen name="widget_corner_radius_inner">16dp</dimen>
-    <dimen name="widget_padding_outer">16dp</dimen>
-    <dimen name="widget_padding_inner">14dp</dimen>
-    <dimen name="widget_ornament_size">28dp</dimen>
-    <dimen name="widget_ornament_alpha">38</dimen> <!-- 0-255 -->
 
-    <dimen name="widget_progress_ring_size">96dp</dimen>
-    <dimen name="widget_progress_ring_size_small">72dp</dimen>
-    <dimen name="widget_progress_ring_stroke">6dp</dimen>
 
-    <dimen name="widget_dot_size">8dp</dimen>
-    <dimen name="widget_chip_radius">10dp</dimen>
 
-    <dimen name="widget_text_headline">28sp</dimen>
-    <dimen name="widget_text_title">18sp</dimen>
-    <dimen name="widget_text_body">14sp</dimen>
-    <dimen name="widget_text_caption">11sp</dimen>
-    <dimen name="widget_text_micro">9sp</dimen>
-    <dimen name="widget_text_countdown">56sp</dimen>
-    <dimen name="widget_text_tasbeeh_count">48sp</dimen>
-    <dimen name="widget_text_arabic_verse">22sp</dimen>
-    <dimen name="widget_text_arabic_headline">20sp</dimen>
 
-    <dimen name="widget_min_width_2x2">160dp</dimen>
-    <dimen name="widget_min_height_2x2">160dp</dimen>
-    <dimen name="widget_min_width_4x1">320dp</dimen>
-    <dimen name="widget_min_height_4x1">80dp</dimen>
-    <dimen name="widget_min_width_4x2">320dp</dimen>
-    <dimen name="widget_min_height_4x2">160dp</dimen>
-    <dimen name="widget_min_width_4x3">320dp</dimen>
-    <dimen name="widget_min_height_4x3">240dp</dimen>
 
-    <dimen name="widget_max_width_4x3">520dp</dimen>
-    <dimen name="widget_max_height_4x3">400dp</dimen>
 </resources>

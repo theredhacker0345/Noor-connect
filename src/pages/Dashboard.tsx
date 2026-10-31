@@ -91,8 +91,6 @@ export default function Dashboard() {
 
 
   const prayerTimesHook = usePrayerTimes();
-  // Note: useWidgetSync is registered globally in App.tsx (AppShell) — a
-  // second registration here would double-fire widget bridge pushes.
 
   const prayerLocation = prayerTimesHook.location;
 

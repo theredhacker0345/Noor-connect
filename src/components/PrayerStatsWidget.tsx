@@ -70,11 +70,9 @@ export function PrayerStatsWidget() {
 
     // Listen for prayer tracking updates
     window.addEventListener('salah-updated', loadStats);
-    window.addEventListener('widget-refresh', loadStats);
 
     return () => {
       window.removeEventListener('salah-updated', loadStats);
-      window.removeEventListener('widget-refresh', loadStats);
     };
   }, [loadStats]);
 

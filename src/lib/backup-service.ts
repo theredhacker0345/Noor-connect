@@ -170,8 +170,6 @@ const KNOWN_STORAGE_KEYS: readonly string[] = [
   'eid-checklist-data', 'eid-prayer', 'eid-checklist-notification-shown',
   'eid-checklist-notification-dismissed', 'eid-greeting',
   'fitrana-calculator-notification-dismissed',
-  // Widgets
-  'widget-customization', 'widget-config-changed', 'widget-update-requested', 'widget-refresh',
   // Misc
   'mystery-box-last-claim', 'mystery-box-history',
   'offline-sync-config', 'background-sync-config', 'background-sync-task',

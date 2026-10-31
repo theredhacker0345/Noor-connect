@@ -3,7 +3,7 @@
     <cloud-backup>
         <!-- Keep user data small enough for the 25 MB cloud quota:
              localStorage (all app state + in-app auto-backup snapshot),
-             Capacitor Preferences and widget prefs. Exclude large
+             Capacitor Preferences. Exclude large
              re-downloadable caches. -->
         <include domain="sharedpref" path="." />
         <include domain="database" path="." />

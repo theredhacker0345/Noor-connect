@@ -55,7 +55,7 @@ function DeepLinkListener() {
       routeFromUrl(url);
     });
 
-    // Cold start: if app was launched from a widget tap, get the launch URL
+    // Cold start: if the app was launched from a notification or external deep link
     CapacitorApp.getLaunchUrl()
       .then(({ url }) => routeFromUrl(url))
       .catch(() => {});
@@ -198,7 +198,7 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard-widgets" element={<Navigate to="/dashboard" replace />} />
-        {/* Widget deep-link targets (WidgetDeeplink.kt) that have no dedicated page */}
+        {/* Legacy deep-link targets that have no dedicated page */}
         <Route path="/prayers" element={<Navigate to="/dashboard" replace />} />
         <Route path="/quran/reading" element={<Navigate to="/quran-progress" replace />} />
         <Route path="/quran" element={<SurahList />} />
