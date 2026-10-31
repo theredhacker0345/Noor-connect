@@ -6,7 +6,7 @@
 #   ->  ./gradlew assembleFossRelease
 #
 # The `foss` flavor is the F-Droid variant (fdroid.gradle excludes all GMS).
-# The gradle preBuild tasks (moveMushafImages, buildWidgetHadiths,
+# The gradle preBuild tasks (moveMushafImages,
 # stripCompressedAssets) run automatically and handle the mushaf webp dedup,
 # exactly like the F-Droid build.
 #
