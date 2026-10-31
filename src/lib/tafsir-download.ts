@@ -36,7 +36,7 @@ interface TafsirDownloadMeta {
   updatedAt: number;
 }
 
-export interface TafsirDownloadSummary extends TafsirDownloadMeta {}
+export type TafsirDownloadSummary = TafsirDownloadMeta;
 
 export interface TafsirDownloadProgress {
   editionId: string;
