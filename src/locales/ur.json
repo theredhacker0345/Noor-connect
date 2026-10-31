@@ -578,8 +578,6 @@
   "dirSW": "جنوب مغرب",
   "dirW": "مغرب",
   "dirNW": "شمال مغرب",
-  "qiblaTurnRightRich": "دائیں طرف <deg>{{degrees}}°</deg> گھومیں",
-  "qiblaTurnLeftRich": "بائیں طرف <deg>{{degrees}}°</deg> گھومیں",
   "tapEnableBelow": "نیچے «کمپاس فعال کریں» پر ٹیپ کریں",
   "enableForLive": "لائیو رہنمائی کے لیے کمپاس فعال کریں",
   "noSensorDetected": "کوئی سینسر نہیں ملا",
@@ -1244,5 +1242,9 @@
     "cancel": "منسوخ",
     "delete": "حذف",
     "confirmDelete": "یہ تفسیر اپنے ڈیوائس سے حذف کریں؟ آپ کبھی بھی دوبارہ ڈاؤن لوڈ کر سکتے ہیں۔"
-  }
+  },
+  "pdfViewer": "پی ڈی ایف ناظر",
+  "pdfViewerDesc": "اس دستاویز کو آڈیو بیانیے کے ساتھ سنیں",
+  "pdfViewerPlaceholder": "آڈیو پلیئر استعمال کرنے کے لیے ایک PDF منتخب کریں",
+  "history": "ہسٹری"
 }

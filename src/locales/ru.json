@@ -578,8 +578,6 @@
   "dirSW": "ЮЗ",
   "dirW": "З",
   "dirNW": "СЗ",
-  "qiblaTurnRightRich": "Поверните на <deg>{{degrees}}°</deg> вправо",
-  "qiblaTurnLeftRich": "Поверните на <deg>{{degrees}}°</deg> влево",
   "tapEnableBelow": "Нажмите «Включить компас» ниже",
   "enableForLive": "Включите компас для навигации в реальном времени",
   "noSensorDetected": "Датчик не обнаружен",
@@ -1244,5 +1242,9 @@
     "cancel": "Отмена",
     "delete": "Удалить",
     "confirmDelete": "Удалить этот тафсир с устройства? Можно скачать снова в любой момент."
-  }
+  },
+  "pdfViewer": "PDF-просмотрщик",
+  "pdfViewerDesc": "Слушайте этот документ в аудио-изложении",
+  "pdfViewerPlaceholder": "Выберите PDF для использования аудиоплеера",
+  "history": "История"
 }

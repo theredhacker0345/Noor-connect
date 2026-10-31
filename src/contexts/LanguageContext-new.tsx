@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/lib/i18n-new';
 import {
@@ -115,6 +115,9 @@ async function loadSavedLanguageCode(): Promise<LanguageCode | null> {
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const { t } = useTranslation(undefined, { i18n });
   const [language, setLanguageState] = useState<LanguageCode>(DEFAULT_LANGUAGE);
+  // Set when the user picks a language before the async bootstrap resolves,
+  // so bootstrap can't overwrite their choice with the stale saved value.
+  const userSelectedRef = useRef(false);
 
   const isLanguageRTL = checkRTL(language);
 
@@ -130,6 +133,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         // Persist so we don't re-detect every launch
         await persistLanguage(lang);
       }
+
+      if (userSelectedRef.current) return; // user chose during bootstrap — keep theirs
 
       setLanguageState(lang);
       i18n.changeLanguage(lang);
@@ -148,6 +153,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   // ── Public setter ──
   const setLanguage = useCallback(
     (lang: LanguageCode) => {
+      userSelectedRef.current = true;
       setLanguageState(lang);
       i18n.changeLanguage(lang);
       applyLanguageSideEffects(lang);

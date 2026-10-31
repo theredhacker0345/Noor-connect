@@ -40,6 +40,9 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 ### 🌐 i18n Fixes
 - Update-dialog placeholders ({version}, {time}) now render real values in every language
 - No more English flash on launch — the app opens directly in your language
+- User text (search queries, custom adhan names) no longer shows as &#39;/&amp; entities
+- 4 missing translations added (PDF audio player, Tafsir history tab) + dead keys removed
+- Full audit: every string in all 8 languages verified to render correctly
 
 ---
 

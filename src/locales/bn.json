@@ -578,8 +578,6 @@
   "dirSW": "দক্ষিণ-পশ্চিম",
   "dirW": "পশ্চিম",
   "dirNW": "উত্তর-পশ্চিম",
-  "qiblaTurnRightRich": "<deg>{{degrees}}°</deg> ডানে ঘুরুন",
-  "qiblaTurnLeftRich": "<deg>{{degrees}}°</deg> বামে ঘুরুন",
   "tapEnableBelow": "নিচের «কম্পাস চালু করুন» ট্যাপ করুন",
   "enableForLive": "সরাসরি গাইডের জন্য কম্পাস চালু করুন",
   "noSensorDetected": "কোনো সেন্সার পাওয়া যায়নি",
@@ -1244,5 +1242,9 @@
     "cancel": "বাতিল",
     "delete": "মুছুন",
     "confirmDelete": "এই তাফসির ডিভাইস থেকে মুছে ফেলবেন? যেকোনো সময় আবার ডাউনলোড করতে পারবেন।"
-  }
+  },
+  "pdfViewer": "পিডিএফ ভিউয়ার",
+  "pdfViewerDesc": "অডিও বর্ণনার সাথে এই ডকুমেন্টটি শুনুন",
+  "pdfViewerPlaceholder": "অডিও প্লেয়ার ব্যবহার করতে একটি PDF নির্বাচন করুন",
+  "history": "ইতিহাস"
 }

@@ -578,8 +578,6 @@
   "dirSW": "SW",
   "dirW": "W",
   "dirNW": "NW",
-  "qiblaTurnRightRich": "Turn <deg>{{degrees}}°</deg> right",
-  "qiblaTurnLeftRich": "Turn <deg>{{degrees}}°</deg> left",
   "tapEnableBelow": "Tap Enable Compass below",
   "enableForLive": "Enable compass for live guidance",
   "noSensorDetected": "No Sensor Detected",
@@ -1244,5 +1242,9 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "confirmDelete": "Delete this tafsir from your device? You can download it again anytime."
-  }
+  },
+  "pdfViewer": "PDF Viewer",
+  "pdfViewerDesc": "Listen to this document with audio narration",
+  "pdfViewerPlaceholder": "Select a PDF to use the audio player",
+  "history": "History"
 }

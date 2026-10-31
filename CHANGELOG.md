@@ -35,10 +35,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Update Dialog Placeholders Fixed**: `{version}`/`{time}` single-brace placeholders never interpolated (i18next uses `{{double}}`); all locales standardized — users no longer see literal placeholders in any language.
 - **No Language Flash on Launch**: The app language now resolves synchronously on first paint via a localStorage mirror (Capacitor Preferences stay the source of truth).
 - **Dead i18next LanguageDetector Removed**: `lng` was hardcoded in the init, so the detector never ran and its cache diverged from the app's language storage.
+- **User Text No Longer Double-Escaped**: i18next's own HTML escaping turned interpolated user content (search queries, custom adhan names) into literal `&#39;`/`&amp;` entities on screen — a search for "mercy it's" displayed as "it&#39;s". React already escapes rendered output, so the double layer was removed.
+- **4 Missing Translation Keys Added**: the PDF audio player's title/description/placeholder and the Tafsir "History" tab rendered raw key names (`pdfViewer`, `history`) in every language; all four are now translated in all 8 languages.
+- **Full-Language Audit**: every key in all 8 locales (1,244 strings each) verified to resolve; dead keys orphaned by the Qibla rewrite removed; French Islamic-term transliterations corrected (Tasbih, Dhouhr, Madhhab, Hanafite, Sîra, Ayates…); a race where the async language bootstrap could override a user's immediate language choice is fixed.
 
 ### ✅ Verification
 
-- Locale parity: all 8 locales at exactly the same 1,242 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5).
+- Locale parity: all 8 locales at exactly the same 1,244 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5, and a full 8-language resolution sweep over every key).
 
 ## [2.4.0] - 2026-10-23
 

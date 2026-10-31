@@ -578,8 +578,6 @@
   "dirSW": "GB",
   "dirW": "B",
   "dirNW": "KB",
-  "qiblaTurnRightRich": "<deg>{{degrees}}°</deg> sağa dönün",
-  "qiblaTurnLeftRich": "<deg>{{degrees}}°</deg> sola dönün",
   "tapEnableBelow": "Aşağıdaki Pusulayı Etkinleştir'e dokunun",
   "enableForLive": "Canlı rehberlik için pusulayı etkinleştirin",
   "noSensorDetected": "Sensör Algılanmadı",
@@ -1244,5 +1242,9 @@
     "cancel": "İptal",
     "delete": "Sil",
     "confirmDelete": "Bu tefsir cihazınızdan silinsin mi? İstediğiniz zaman yeniden indirebilirsiniz."
-  }
+  },
+  "pdfViewer": "PDF Görüntüleyici",
+  "pdfViewerDesc": "Bu belgeyi sesli anlatımla dinleyin",
+  "pdfViewerPlaceholder": "Ses oynatıcıyı kullanmak için bir PDF seçin",
+  "history": "Geçmiş"
 }

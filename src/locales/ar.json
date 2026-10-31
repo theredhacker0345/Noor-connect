@@ -578,8 +578,6 @@
   "dirSW": "جنوب غربي",
   "dirW": "غرب",
   "dirNW": "شمال غربي",
-  "qiblaTurnRightRich": "استدر <deg>{{degrees}}°</deg> إلى اليمين",
-  "qiblaTurnLeftRich": "استدر <deg>{{degrees}}°</deg> إلى اليسار",
   "tapEnableBelow": "اضغط «تشغيل البوصلة» بالأسفل",
   "enableForLive": "فعّل البوصلة للحصول على إرشاد مباشر",
   "noSensorDetected": "لم يتم العثور على مستشعر",
@@ -1244,5 +1242,9 @@
     "cancel": "إلغاء",
     "delete": "حذف",
     "confirmDelete": "حذف هذا التفسير من جهازك؟ يمكنك تنزيله مرة أخرى في أي وقت."
-  }
+  },
+  "pdfViewer": "عارض PDF",
+  "pdfViewerDesc": "استمع إلى هذا المستند بسرد صوتي",
+  "pdfViewerPlaceholder": "اختر ملف PDF لاستخدام مشغل الصوت",
+  "history": "السجل"
 }

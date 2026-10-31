@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import { DEFAULT_LANGUAGE } from '@/lib/language-config';
+import { DEFAULT_LANGUAGE, SUPPORTED_CODES } from '@/lib/language-config';
 
 // Import all locale JSON files (bundled by Vite — no HTTP backend needed)
 import enTranslations from '../locales/en.json';
@@ -54,11 +54,14 @@ i18n
     resources,
     lng: initialLanguage(),
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'ar', 'ur', 'bn', 'ru', 'fr', 'ko', 'tr'],
+    // Keep in lockstep with language-config.ts (single source of truth)
+    supportedLngs: SUPPORTED_CODES,
     debug: false,
 
     interpolation: {
-      escapeValue: true, // Enable escaping for security
+      // React already escapes rendered output; i18next escaping double-encodes
+      // user-interpolated text (search queries, adhan names) into &#39;/&amp;.
+      escapeValue: false,
     },
 
     react: {
