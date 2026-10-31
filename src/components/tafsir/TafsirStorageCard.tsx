@@ -61,6 +61,15 @@ export function TafsirStorageCard() {
   useEffect(() => {
     mountedRef.current = true;
     refresh();
+    // Self-heal: an app kill mid-download can leave an ongoing notification
+    // behind — clear it for editions that are not actually downloading.
+    void (async () => {
+      const { hideTafsirNotification } = await import("@/lib/tafsir-download");
+      const list = await listTafsirDownloads();
+      for (const d of list) {
+        if (!isTafsirDownloading(d.editionId)) void hideTafsirNotification(d.editionId);
+      }
+    })();
     const unsub = subscribeTafsirDownloadEvents((p) => {
       if (!mountedRef.current) return;
       if (p.finished || p.cancelled) {

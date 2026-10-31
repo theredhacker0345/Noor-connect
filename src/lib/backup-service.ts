@@ -23,6 +23,7 @@ import { Preferences } from '@capacitor/preferences';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { clearAllBooks, getDownloadedBooks, type DownloadedBook } from './ebooks-storage';
+import { CURRENT_APP_VERSION } from './constants';
 
 // ─── Format & retention ───────────────────────────────────────────────────────
 
@@ -292,7 +293,7 @@ export const buildBackup = async (
 
     const payload: BackupData = {
       version: BACKUP_VERSION,
-      appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.2.1',
+      appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : CURRENT_APP_VERSION,
       exportedAt: new Date().toISOString(),
       storage,
       preferences: prefs,
@@ -398,6 +399,9 @@ export const getLastAutoBackupTime = async (): Promise<string | null> => {
  */
 export const takeSnapshot = async (): Promise<BackupResult<SnapshotInfo | null>> => {
   if (snapshotQueue) return snapshotQueue;
+  // Never snapshot while a restore is writing keys (half-restored state
+  // would overwrite the backup being restored).
+  if (restoreInProgress) return { success: true, data: await readLatestSnapshot() };
   snapshotQueue = (async () => {
     try {
       const now = Date.now();
@@ -479,7 +483,7 @@ async function migrateLegacyBackups(): Promise<void> {
         };
         const payload: BackupData = {
           version: BACKUP_VERSION,
-          appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2.2.1',
+          appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : CURRENT_APP_VERSION,
           exportedAt: parsed.metadata?.created ?? new Date().toISOString(),
           storage: parsed.localStorage ?? {},
           preferences: parsed.preferences ?? {},
@@ -564,7 +568,21 @@ function applyTheme(themeValue: string | null | undefined): void {
   }
 }
 
+// True while a restore is writing keys. The visibilitychange snapshot must
+// never capture a half-restored state — it would overwrite the very backup
+// being restored with corrupt data.
+let restoreInProgress = false;
+
 async function applyBackupPayload(payload: BackupData): Promise<RestoreSummary> {
+  restoreInProgress = true;
+  try {
+    return await applyBackupPayloadInner(payload);
+  } finally {
+    restoreInProgress = false;
+  }
+}
+
+async function applyBackupPayloadInner(payload: BackupData): Promise<RestoreSummary> {
   const summary: RestoreSummary = {
     restoredKeys: 0,
     failedKeys: 0,

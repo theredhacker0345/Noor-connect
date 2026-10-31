@@ -51,6 +51,68 @@ type ProgressListener = (p: TafsirDownloadProgress) => void;
 const listeners = new Set<ProgressListener>();
 const active = new Map<string, AbortController>();
 
+// ─── Android progress notification (appear → update → disappear) ────────
+// Capacitor LocalNotifications v6 has no progressBar, so progress is rendered
+// in the body of an ongoing, silent notification. Updates are throttled; the
+// notification is cancelled when the download ends, so it never outlives it.
+
+const TAFSIR_NOTIF_CHANNEL = "tafsir-download-channel";
+let channelCreated = false;
+const notifLastUpdate = new Map<number, number>();
+
+function tafsirNotifId(editionId: string): number {
+  let h = 0;
+  for (let i = 0; i < editionId.length; i++) h = (h * 31 + editionId.charCodeAt(i)) % 10000;
+  return 91000 + h; // int32-safe, stable per edition
+}
+
+function fmtBytesShort(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let i = 0, v = n;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v >= 100 || i === 0 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
+}
+
+async function showTafsirNotification(editionId: string, name: string, done: number, bytes: number, force = false): Promise<void> {
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) return;
+    const id = tafsirNotifId(editionId);
+    const now = Date.now();
+    if (!force && now - (notifLastUpdate.get(id) || 0) < 4000) return; // throttle
+    notifLastUpdate.set(id, now);
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
+    if (!channelCreated) {
+      // importance 3 (default) = no sound for frequent progress updates
+      await LocalNotifications.createChannel({ id: TAFSIR_NOTIF_CHANNEL, name: "Tafsir downloads", importance: 3 } as never);
+      channelCreated = true;
+    }
+    await LocalNotifications.schedule({
+      notifications: [{
+        id,
+        title: name,
+        body: `${done}/${TOTAL_SURAHS} · ${fmtBytesShort(bytes)}`,
+        ongoing: true,
+        channelId: TAFSIR_NOTIF_CHANNEL,
+        smallIcon: "ic_notification",
+        iconColor: "#1a4a4a",
+        schedule: { at: new Date() },
+      } as never],
+    });
+  } catch { /* best-effort: notifications may be disabled */ }
+}
+
+export async function hideTafsirNotification(editionId: string): Promise<void> {
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) return;
+    const { LocalNotifications } = await import("@capacitor/local-notifications");
+    notifLastUpdate.delete(tafsirNotifId(editionId));
+    await LocalNotifications.cancel({ notifications: [{ id: tafsirNotifId(editionId) }] });
+  } catch { /* best-effort */ }
+}
+
 function emit(p: TafsirDownloadProgress) {
   for (const l of listeners) {
     try { l(p); } catch { /* listener errors must not break downloads */ }
@@ -145,6 +207,11 @@ export async function downloadWholeTafsir(
       // Emit EVERY event, not just the final one — the UI can unmount/remount
       // mid-download and must be able to re-attach to live progress.
       emit(p);
+      if (finished || cancelled) {
+        void hideTafsirNotification(editionId);
+      } else {
+        void showTafsirNotification(editionId, edition.name, done, bytesSoFar, done === prev.surahsStored);
+      }
     };
     report();
 
@@ -230,6 +297,7 @@ export async function deleteTafsirDownload(editionId: string): Promise<void> {
   for (let i = 0; i < 30 && active.has(editionId); i++) {
     await new Promise(r => setTimeout(r, 100));
   }
+  void hideTafsirNotification(editionId);
   const keys = await STORE.keys();
   const prefix = `${editionId}::s`;
   await Promise.all(keys.filter(k => k.startsWith(prefix)).map(k => STORE.removeItem(k)));

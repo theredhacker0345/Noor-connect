@@ -39,9 +39,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **4 Missing Translation Keys Added**: the PDF audio player's title/description/placeholder and the Tafsir "History" tab rendered raw key names (`pdfViewer`, `history`) in every language; all four are now translated in all 8 languages.
 - **Full-Language Audit**: every key in all 8 locales (1,244 strings each) verified to resolve; dead keys orphaned by the Qibla rewrite removed; French Islamic-term transliterations corrected (Tasbih, Dhouhr, Madhhab, Hanafite, Sîra, Ayates…); a race where the async language bootstrap could override a user's immediate language choice is fixed.
 
+### 📥 Tafsir Download Notifications & Storage Fixes
+
+- **Android Download Notification**: Tafsir downloads now show an ongoing, silent Android notification with live progress ("37/114 · 12 MB"). It appears when the download starts, updates as surahs land, and disappears the moment it finishes, is cancelled, or deleted — and self-heals if the app was killed mid-download.
+- **Delete-While-Downloading Race Fixed**: deleting a tafsir during an active download used to resurrect a ghost entry (the in-flight surah's write re-created it after the purge). The download loop now re-checks cancellation before every write, and delete waits for the loop to exit first.
+- **Progress Survives Navigation**: leaving the Storage page mid-download and returning no longer shows "Downloaded · X MB" for a partial download — progress events now stream continuously and the card re-attaches to the running download.
+- **Confirm-Delete Made Discoverable**: the trash icon used to toggle a panel at the bottom of the card (a second click silently closed it). Confirm/Cancel now appear inline in the row.
+- **Honest Partial Downloads**: editions with failed surahs show an amber partial bar with "n/114" instead of appearing fully downloaded; Download resumes from where it stopped.
+- **Reader Cache Purged on Delete**: previously-read surahs cached by the Tafsir reader are removed when the edition is deleted, so deletion takes effect immediately.
+- **Offline Badges Refresh**: the Tafsir page's "Offline" badges now update on window focus instead of only on mount.
+
+### 🛡️ Backup & Restore Hardening
+
+- **Data-Loss Race Fixed**: backgrounding the app mid-restore used to let the 20-minute auto-snapshot capture the half-restored state and overwrite the very backup being restored. Snapshotting is now suppressed while a restore is in progress.
+- **Restore Failures Now Visible**: the first-launch restore dialog only logged failures to the console — the user saw the button stop with no feedback. Errors are now shown in the dialog.
+
 ### ✅ Verification
 
-- Locale parity: all 8 locales at exactly the same 1,244 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5, and a full 8-language resolution sweep over every key).
+- Locale parity: all 8 locales at exactly the same 1,244 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5, a full 8-language resolution sweep over every key, and a 5-scenario tafsir download/delete simulation).
 
 ## [2.4.0] - 2026-10-23
 

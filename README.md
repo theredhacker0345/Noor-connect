@@ -44,6 +44,15 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - 4 missing translations added (PDF audio player, Tafsir history tab) + dead keys removed
 - Full audit: every string in all 8 languages verified to render correctly
 
+### 📥 Tafsir Downloads
+- **Android progress notification**: appears when a tafsir download starts, updates live ("37/114 · 12 MB"), disappears when done, cancelled or deleted
+- Deleting a tafsir now actually deletes it — even mid-download, even in the reader
+- Progress survives leaving the Storage page; partial downloads show honestly (n/114) and resume
+
+### 🛡️ Backup & Restore
+- Fixed a data-loss race where backgrounding mid-restore could overwrite your backup with half-restored data
+- Restore failures now show an error in the dialog instead of failing silently
+
 ---
 
 ## 🆕 What's New in v2.4.0

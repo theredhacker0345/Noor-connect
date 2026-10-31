@@ -24,6 +24,7 @@ export function AutoBackupRestoreDialog() {
   const [opportunity, setOpportunity] = useState<RestoreOpportunity | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +38,7 @@ export function AutoBackupRestoreDialog() {
 
   const handleRestore = async () => {
     setIsRestoring(true);
+    setRestoreError(null);
     try {
       const result = await restoreFromAutoBackup();
       if (result.success && result.data) {
@@ -46,10 +48,11 @@ export function AutoBackupRestoreDialog() {
         setOpportunity(null);
         window.location.reload();
       } else {
-        console.error('Restore failed:', result.error);
+        setRestoreError(result.error || 'The backup could not be restored.');
       }
     } catch (error) {
       console.error('Restore error:', error);
+      setRestoreError('The backup could not be restored.');
     } finally {
       setIsRestoring(false);
     }
@@ -96,6 +99,10 @@ export function AutoBackupRestoreDialog() {
               export or restore a backup file later from the Settings page.
             </p>
           </div>
+        )}
+
+        {restoreError && (
+          <p className="text-sm text-destructive" role="alert">{restoreError}</p>
         )}
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
