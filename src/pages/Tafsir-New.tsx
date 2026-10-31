@@ -92,12 +92,19 @@ interface SurahTafsir {
 
 
 const Tafsir = () => {
-  // Editions the user downloaded via Settings — detected from download state, not hardcoded
+  // Editions the user downloaded via Settings — detected from download state, not hardcoded.
+  // Re-checked on focus so downloading an edition in Settings and returning here
+  // updates the badges instead of showing stale state.
   const [offlineEditions, setOfflineEditions] = useState<string[]>([]);
   useEffect(() => {
-    TAFSIR_EDITIONS.forEach(async ({ id }) => {
-      if (await isTafsirDownloaded(id)) setOfflineEditions((prev) => [...prev, id]);
-    });
+    const refresh = () => {
+      TAFSIR_EDITIONS.forEach(async ({ id }) => {
+        if (await isTafsirDownloaded(id)) setOfflineEditions((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
   }, []);
   const navigate = useNavigate();
   const { t } = useLanguage();

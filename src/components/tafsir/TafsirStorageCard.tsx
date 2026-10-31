@@ -44,6 +44,18 @@ export function TafsirStorageCard() {
     const map: Record<string, TafsirDownloadSummary> = {};
     for (const d of list) map[d.editionId] = d;
     setDownloads(map);
+    // A download may be running from a previous mount (user navigated away and
+    // back). Seed progress from stored meta so the row shows busy immediately —
+    // without this it briefly renders as "Downloaded" mid-download.
+    setProgress(prev => {
+      const next = { ...prev };
+      for (const d of list) {
+        if (isTafsirDownloading(d.editionId) && !next[d.editionId]) {
+          next[d.editionId] = { done: d.surahsStored, bytes: d.sizeBytes };
+        }
+      }
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -71,10 +83,18 @@ export function TafsirStorageCard() {
     refresh();
   };
 
+  const [deleting, setDeleting] = useState<string | null>(null);
   const remove = async (editionId: string) => {
-    await deleteTafsirDownload(editionId);
-    setConfirmDelete(null);
-    refresh();
+    if (deleting) return;
+    setDeleting(editionId);
+    try {
+      await deleteTafsirDownload(editionId);
+      setProgress(prev => { const n = { ...prev }; delete n[editionId]; return n; });
+      setConfirmDelete(null);
+      await refresh();
+    } finally {
+      setDeleting(null);
+    }
   };
 
   return (
@@ -91,15 +111,19 @@ export function TafsirStorageCard() {
         {TAFSIR_EDITIONS.map((e) => {
           const dl = downloads[e.id];
           const pg = progress[e.id];
-          const busy = isTafsirDownloading(e.id) && Boolean(pg);
-          const pct = pg ? Math.round((pg.done / TOTAL_SURAHS) * 100) : 0;
+          // Busy is a property of the download manager, not local state — it
+          // must survive unmount/remount mid-download.
+          const busy = isTafsirDownloading(e.id);
+          const shown = busy && pg ? pg : dl ? { done: dl.surahsStored, bytes: dl.sizeBytes } : null;
+          const partial = Boolean(dl && dl.surahsStored < TOTAL_SURAHS);
+          const pct = shown ? Math.round((shown.done / TOTAL_SURAHS) * 100) : 0;
           return (
             <div key={e.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/70 bg-muted/20">
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] font-bold text-foreground truncate" dir="auto">{e.name}</p>
                 <p className="text-[11px] text-muted-foreground truncate" dir="auto">
                   {e.author || e.name} · {e.language}
-                  {dl ? ` · ${t("tafsirDl.downloaded")} ${fmtBytes(dl.sizeBytes)}` : ""}
+                  {shown ? ` · ${t("tafsirDl.downloaded")} ${fmtBytes(shown.bytes)}${partial && !busy ? ` · ${shown.done}/${TOTAL_SURAHS}` : ""}` : ""}
                 </p>
                 {busy && (
                   <div className="mt-1.5">
@@ -107,8 +131,15 @@ export function TafsirStorageCard() {
                       <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1 tabular-nums" dir="auto">
-                      {t("tafsirDl.progress", { done: String(pg.done), total: String(TOTAL_SURAHS), size: fmtBytes(pg.bytes) })}
+                      {t("tafsirDl.progress", { done: String(shown?.done ?? 0), total: String(TOTAL_SURAHS), size: fmtBytes(shown?.bytes ?? 0) })}
                     </p>
+                  </div>
+                )}
+                {!busy && partial && (
+                  <div className="mt-1.5">
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -120,25 +151,46 @@ export function TafsirStorageCard() {
                 >
                   {t("tafsirDl.cancel")}
                 </button>
+              ) : confirmDelete === e.id ? (
+                <div className="shrink-0 flex items-center gap-1.5">
+                  {deleting === e.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => remove(e.id)}
+                        className="h-8 px-3 rounded-full text-[11px] font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
+                      >
+                        {t("tafsirDl.delete")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(null)}
+                        className="h-8 px-3 rounded-full text-[11px] font-bold border border-border text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {t("tafsirDl.cancel")}
+                      </button>
+                    </>
+                  )}
+                </div>
               ) : dl ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(confirmDelete === e.id ? null : e.id)}
-                    aria-label={`${t("tafsirDl.delete")} ${e.name}`}
-                    className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500/10 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(e.id)}
+                  title={t("tafsirDl.confirmDelete")}
+                  aria-label={`${t("tafsirDl.delete")} ${e.name}`}
+                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => start(e.id)}
-                  disabled={Boolean(pg)}
-                  className="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-50"
+                  className="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all"
                 >
-                  {pg ? <Loader2 className="w-3 h-3 animate-spin" /> : <HardDriveDownload className="w-3 h-3" />}
+                  <HardDriveDownload className="w-3 h-3" />
                   {t("tafsirDl.download")}
                 </button>
               )}
@@ -146,28 +198,6 @@ export function TafsirStorageCard() {
           );
         })}
       </div>
-
-      {confirmDelete && (
-        <div className="p-3 rounded-xl border border-red-500/30 bg-red-500/5 text-xs text-foreground/80">
-          <p className="mb-2">{t("tafsirDl.confirmDelete")}</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => remove(confirmDelete)}
-              className="h-8 px-3 rounded-full text-[11px] font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
-            >
-              {t("tafsirDl.delete")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(null)}
-              className="h-8 px-3 rounded-full text-[11px] font-bold border border-border text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("tafsirDl.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

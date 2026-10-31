@@ -142,7 +142,9 @@ export async function downloadWholeTafsir(
     const report = (finished = false, cancelled = false) => {
       const p: TafsirDownloadProgress = { editionId, done, total: TOTAL_SURAHS, bytesSoFar, finished, cancelled };
       onProgress?.(p);
-      if (finished || cancelled) emit(p);
+      // Emit EVERY event, not just the final one — the UI can unmount/remount
+      // mid-download and must be able to re-attach to live progress.
+      emit(p);
     };
     report();
 
@@ -151,6 +153,9 @@ export async function downloadWholeTafsir(
       if (existing[surah]) continue; // resume: skip stored surahs
       try {
         const ayahs = await fetchSurahTafsir(surah, editionId);
+        // Re-check after the await: a delete/cancel that happened mid-request
+        // must not write this surah (it would resurrect the deleted entry).
+        if (ac.signal.aborted) { report(false, true); return null; }
         const text = (ayahs || [])
           .map(a => (typeof (a as { text?: unknown })?.text === "string" ? (a as { text: string }).text : ""))
           .filter(Boolean)
@@ -218,15 +223,30 @@ export async function listTafsirDownloads(): Promise<TafsirDownloadSummary[]> {
 }
 
 export async function deleteTafsirDownload(editionId: string): Promise<void> {
-  // Stop an in-flight download first; its finally-block won't resurrect meta
-  // because every meta write goes through the same key we remove last.
+  // Stop an in-flight download first, then WAIT for its loop to actually exit.
+  // Purging while the loop is between fetch-resolve and its abort check would
+  // let the current surah's meta write resurrect the deleted entry (ghost).
   cancelTafsirDownload(editionId);
+  for (let i = 0; i < 30 && active.has(editionId); i++) {
+    await new Promise(r => setTimeout(r, 100));
+  }
   const keys = await STORE.keys();
   const prefix = `${editionId}::s`;
   await Promise.all(keys.filter(k => k.startsWith(prefix)).map(k => STORE.removeItem(k)));
   const meta = await readMeta();
   delete meta[editionId];
   await writeMeta(meta);
+  // Tafsir-New also caches read surahs in localStorage — without purging those,
+  // previously-read surahs keep rendering after a delete and deletion looks broken.
+  try {
+    const lsPrefix = `tafsir-surah-${editionId}-`;
+    const stale: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(lsPrefix)) stale.push(k);
+    }
+    stale.forEach(k => localStorage.removeItem(k));
+  } catch { /* localStorage unavailable — nothing to purge */ }
 }
 
 /** Stored tafsir text for a surah (offline reads). Null if not downloaded. */
