@@ -54,6 +54,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Data-Loss Race Fixed**: backgrounding the app mid-restore used to let the 20-minute auto-snapshot capture the half-restored state and overwrite the very backup being restored. Snapshotting is now suppressed while a restore is in progress.
 - **Restore Failures Now Visible**: the first-launch restore dialog only logged failures to the console — the user saw the button stop with no feedback. Errors are now shown in the dialog.
 
+### 🏪 Store Listing & Permissions
+
+- **F-Droid listing rewritten**: the description no longer advertises removed features (native widgets), claims accurate numbers (26 tafsir editions, ~52,000 hadiths across 16 collections, 8 languages), and uses proper formatting — in English plus all 7 translated locales, with per-release changelog notes
+- **3 unused Android permissions removed**: `ACTIVITY_RECOGNITION`, `FOREGROUND_SERVICE_SPECIAL_USE`, `CHANGE_NETWORK_STATE` (plus unused step-sensor declarations). `SCHEDULE_EXACT_ALARM` is kept — Capacitor's prayer notifications need it on Android 12+
+
 ### ✅ Verification
 
 - Locale parity: all 8 locales at exactly the same 1,244 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5, a full 8-language resolution sweep over every key, and a 5-scenario tafsir download/delete simulation).

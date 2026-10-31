@@ -1,0 +1,7 @@
+• Turkish (Türkçe) added — 8 languages total
+• ~190 MB smaller APK: tafsir now streams online, download editions for offline
+• Adhan alarms survive reboot; correct times for remote cities
+• Gulf Region & Morocco calculation methods fixed
+• Android progress notification for tafsir downloads
+• Backup: data-loss race during restore fixed
+• Full language-system audit; many small fixes

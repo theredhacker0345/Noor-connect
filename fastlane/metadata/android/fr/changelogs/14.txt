@@ -1,0 +1,6 @@
+• Ajout du turc — 8 langues au total
+• APK ~190 Mo plus léger : tafsir en ligne, téléchargeable hors ligne
+• Les alarmes d'adhan survivent au redémarrage ; horaires corrects pour les autres villes
+• Méthodes Golfe et Maroc corrigées
+• Notification de progression du téléchargement du tafsir sur Android
+• Course de perte de données pendant la restauration corrigée
