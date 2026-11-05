@@ -30,58 +30,14 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - **Ramadan Mode off-season**: a "Ramadan begins in N days" hero with a get-ready list in the final 30 days
 - Fixed the Eid popup's "View Prayer Times" opening a 404, and the Eid-prep toast now lands on the checklist itself
 
+### 🛡️ Privacy & Permissions Page Rework
+- **Location permission fixed on Android**: a new native bridge reads the real Android runtime permission (the browser APIs couldn't see it — stuck status, silent request failures in the APK), with a "denied forever" vs "not asked yet" distinction
+- **Status refreshes itself** when you return from the OS settings; redesigned with rounded cards and full dark-mode support
+
 ### 🚨 Critical Android Fixes (found & reported by Daniel)
 - **Crash loop fixed**: with all reminders on, up to 750 simultaneous alarms vs Android's 500 cap — reminders now use a 7-day window with a hard batch cap
 - **Status-bar overlap fixed** on Pixel / Android 15+
 - **Hadith/Seerah/Qisas loading fixed** on servers that auto-decompress `.gz` files
-
----
-
-## 🆕 What's New in v2.5.0
-
-### 🇹🇷 Turkish Language
-- **Full Turkish (Türkçe) translation for all 1,242 app strings**, with native Turkish prayer names (İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı) — 8 languages total
-
-### 📦 ~190 MB Smaller APK
-- **Tafsir no longer bundled (−175 MB)**: all editions stream from CDN; per-edition offline downloads from 2.4.0 still available in Settings → Storage
-- Dead data removed: a corrupted duplicate hadith dataset (137 MB in the repo) and an orphaned 16 MB legacy file
-
-### 🕌 Prayer Accuracy Fixes
-- Adhan alarms survive reboot (the boot receiver was unregistered since 2.3.0)
-- Correct times for remote cities — no more timezone-shifted alarms and countdowns
-- Gulf Region & Morocco methods use their declared angles (verified to the minute vs the Aladhan API)
-- Web adhan notifications fire reliably for all five prayers (was ~3/5)
-- Custom adhan audio now works in native background alarms
-- Release signing config fixed for the signed-APK CI workflow
-
-### 🌐 i18n Fixes
-- Update-dialog placeholders ({version}, {time}) now render real values in every language
-- No more English flash on launch — the app opens directly in your language
-- User text (search queries, custom adhan names) no longer shows as &#39;/&amp; entities
-- 4 missing translations added (PDF audio player, Tafsir history tab) + dead keys removed
-- Full audit: every string in all 8 languages verified to render correctly
-
-### 📥 Tafsir Downloads
-- **Android progress notification**: appears when a tafsir download starts, updates live ("37/114 · 12 MB"), disappears when done, cancelled or deleted
-- Deleting a tafsir now actually deletes it — even mid-download, even in the reader
-- Progress survives leaving the Storage page; partial downloads show honestly (n/114) and resume
-
-### 🛡️ Backup & Restore
-- Fixed a data-loss race where backgrounding mid-restore could overwrite your backup with half-restored data
-- Restore failures now show an error in the dialog instead of failing silently
-
-### 📺 Live Transmission
-- **Crash fixed**: the Live page threw `Cannot access 'K' before initialization` on every render (state used before declaration) — the ErrorBoundary swallowed the whole page
-- **Weak-internet hardening**: a stall watchdog revives a data-starved stream, auto-reconnect is more patient (5 attempts, up to 30 s apart), and retries pause while the device is offline instead of burning out
-- **Better UX**: a "Reconnecting…" overlay with Try-now replaces the dead error screen, the quality button shows the active rendition ("AUTO · 384p"), and volume/mute persist across sessions
-
-### 🎨 Icon Restored
-- The original navy "NOOR CONNECT" icon set (favicon + all PWA sizes) was restored after an automated regeneration had replaced it with a green text-free mark
-
-### 🚨 Critical Android Fixes
-- **Crash loop fixed**: with all reminders on, the prayer scheduler requested up to 750 simultaneous alarms vs Android's 500 cap — the app crashed on every launch. Reminders now use a 7-day window with a hard batch cap (worst case ~470)
-- **Status-bar overlap fixed**: on Pixel/Android 15+ the app drew under the system status bar; the WebView is now inset below it
-- **Hadith/Seerah/Qisas loading fixed** on servers that auto-decompress `.gz` files (was failing with a cryptic fetch error)
 
 ---
 

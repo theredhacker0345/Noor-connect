@@ -1,9 +1,30 @@
 /**
  * Geolocation Service
- * Handles location detection using standard browser API for F-Droid compliance
+ * Handles location detection: standard browser API on the web, and on
+ * Android a tiny in-app native bridge (LocationPermissionPlugin — pure
+ * Android framework APIs, no Google services, F-Droid compliant) for
+ * permission check/request. The browser APIs cannot see the Android runtime
+ * permission state inside the WebView: navigator.permissions.query with
+ * name 'geolocation' always throws there (so the status was stuck on
+ * 'prompt') and navigator.geolocation re-requests silently fail on many
+ * devices. The actual position fetch keeps using the WebView (Capacitor's
+ * WebChromeClient forwards it once the Android permission is granted).
  */
 
 import { Capacitor } from '@capacitor/core';
+import { registerPlugin } from '@capacitor/core';
+
+interface LocationPermissionResult {
+  location: 'granted' | 'denied' | 'prompt';
+  coarseLocation: 'granted' | 'denied' | 'prompt';
+}
+
+const LocationPermission = registerPlugin<LocationPermissionPluginInterface>('LocationPermission');
+
+interface LocationPermissionPluginInterface {
+  check(): Promise<LocationPermissionResult>;
+  request(): Promise<LocationPermissionResult>;
+}
 
 export interface LocationCoordinates {
   latitude: number;
@@ -30,6 +51,20 @@ export class GeolocationService {
    * Check current permission status
    */
   static async checkPermissions(): Promise<PermissionStatus> {
+    // Native: ask Android about the REAL app permission (live — reflects
+    // changes made in the OS settings immediately).
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const status = await LocationPermission.check();
+        return {
+          location: status.location as PermissionStatus['location'],
+          coarseLocation: status.coarseLocation as PermissionStatus['coarseLocation'],
+        };
+      } catch {
+        return { location: 'prompt', coarseLocation: 'prompt' };
+      }
+    }
+
     if ('permissions' in navigator) {
       try {
         const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
@@ -51,6 +86,19 @@ export class GeolocationService {
   }
 
   static async requestPermissions(): Promise<boolean> {
+    // Native: run the real Android runtime-permission dialog via the
+    // LocationPermission plugin (no Play services involved).
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const result = await LocationPermission.request();
+        if (result.location === 'granted' || result.coarseLocation === 'granted') return true;
+        // Re-check live: some OEM dialogs resolve with a stale value.
+        const after = await LocationPermission.check();
+        return after.location === 'granted' || after.coarseLocation === 'granted';
+      } catch {
+        return false;
+      }
+    }
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
         resolve(false);

@@ -35,6 +35,7 @@ public class MainActivity extends BridgeActivity {
 
         registerPlugin(NativeAdhanPlugin.class);
         registerPlugin(BatteryOptimizationPlugin.class);
+        registerPlugin(LocationPermissionPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Create default notification channel for Capacitor LocalNotifications

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Shield, ShieldCheck, ShieldOff, MapPin, Bell, BellOff, Smartphone, Globe, AlertTriangle, RefreshCw, Settings as SettingsIcon, Info } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, MapPin, Bell, Smartphone, Globe, AlertTriangle, RefreshCw, Settings as SettingsIcon, Info } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,10 +37,21 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', loadPermissions);
 
+    // Android: the user grants/revokes permissions in the OS settings, where
+    // no web focus/visibility event fires — appStateChange is the only signal
+    // that the app returned to the foreground (e.g. after "Open settings").
+    let appStateHandle: PluginListenerHandle | null = null;
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.addListener('appStateChange', (state) => {
+        if (state.isActive) loadPermissions();
+      }).then(handle => { appStateHandle = handle; }).catch(() => { /* listener optional */ });
+    }
+
     return () => {
       unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', loadPermissions);
+      appStateHandle?.remove();
     };
   }, []);
 
@@ -134,7 +147,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
   const notificationPermission = permissions.get('notifications');
 
   return (
-    <Card className={`p-4 space-y-6 ${className}`}>
+    <Card className={`p-5 space-y-5 rounded-2xl ${className}`}>
       <div className="flex items-center gap-2 mb-2">
         <Shield className="w-5 h-5 text-primary" />
         <h3 className="text-lg font-semibold">{t('privacyPermissionsTitle')}</h3>
@@ -145,9 +158,9 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       </p>
 
       {/* Location Permission */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50">
+      <div className="space-y-3 p-4 rounded-2xl border border-border/50 bg-card/50">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center shrink-0">
             <MapPin className="w-4 h-4 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
@@ -165,14 +178,14 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
             </div>
 
             {locationPermission?.status === 'granted' && (
-              <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
+              <div className="bg-green-500/10 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-md">
                 {t('locationEnabledNote')}
               </div>
             )}
 
             {locationPermission?.status === 'denied' && (
               <div className="space-y-2">
-                <div className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-md">
+                <div className="bg-red-500/10 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded-md">
                   {t('locationAccessDenied')}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -188,7 +201,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {locationPermission?.status === 'prompt' && (
               <div className="space-y-2">
-                <div className="bg-amber-50 text-amber-700 text-xs px-2 py-1 rounded-md">
+                <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs px-2 py-1 rounded-md">
                   {t('locationNeeded')}
                 </div>
                 <Button
@@ -217,7 +230,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
         {/* Platform-specific instructions */}
         {locationPermission?.status === 'denied' && (
-          <div className="mt-3 p-3 bg-muted/50 rounded-md border border-border/50">
+          <div className="mt-3 p-3 bg-muted/50 rounded-xl border border-border/50">
             <div className="flex items-start gap-2 mb-2">
               {platform === 'mobile' ? (
                 <Smartphone className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -230,7 +243,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 </p>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
+            <div className="text-xs text-muted-foreground bg-background p-2.5 rounded-xl border">
               <strong>{t('howToFix')}</strong> {t(locationPermission?.instructions?.[platform] || 'checkDeviceSettings')}
             </div>
             <div className="flex flex-col gap-2 mt-2">
@@ -286,9 +299,9 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       </div>
 
       {/* Notification Permission */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50">
+      <div className="space-y-3 p-4 rounded-2xl border border-border/50 bg-card/50">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-purple-500/15 flex items-center justify-center shrink-0">
             <Bell className="w-4 h-4 text-purple-600" />
           </div>
           <div className="flex-1 min-w-0">
@@ -306,14 +319,14 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
             </div>
 
             {notificationPermission?.status === 'granted' && (
-              <div className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
+              <div className="bg-green-500/10 text-green-700 dark:text-green-400 text-xs px-2 py-1 rounded-md">
                 {t('notificationsEnabledNote')}
               </div>
             )}
 
             {notificationPermission?.status === 'denied' && (
               <div className="space-y-2">
-                <div className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-md">
+                <div className="bg-red-500/10 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded-md">
                   {t('notificationsDeniedNote')}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -329,7 +342,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
             {notificationPermission?.status === 'prompt' && (
               <div className="space-y-2">
-                <div className="bg-amber-50 text-amber-700 text-xs px-2 py-1 rounded-md">
+                <div className="bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs px-2 py-1 rounded-md">
                   {t('notificationsNeeded')}
                 </div>
                 <Button
@@ -355,7 +368,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
             )}
 
             {notificationPermission?.status === 'not-supported' && (
-              <div className="bg-gray-50 text-gray-700 text-xs px-2 py-1 rounded-md">
+              <div className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded-md">
                 {t('notificationsNotSupportedNote')}
               </div>
             )}
@@ -364,7 +377,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
 
         {/* Platform-specific instructions */}
         {notificationPermission?.status === 'denied' && (
-          <div className="mt-3 p-3 bg-muted/50 rounded-md border border-border/50">
+          <div className="mt-3 p-3 bg-muted/50 rounded-xl border border-border/50">
             <div className="flex items-start gap-2 mb-2">
               {platform === 'mobile' ? (
                 <Smartphone className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -377,7 +390,7 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
                 </p>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground bg-background p-2 rounded border">
+            <div className="text-xs text-muted-foreground bg-background p-2.5 rounded-xl border">
               <strong>{t('howToFix')}</strong> {t(notificationPermission?.instructions?.[platform] || 'checkDeviceSettings')}
             </div>
             <div className="space-y-2 mt-2">
@@ -465,17 +478,17 @@ const PermissionManager = ({ className }: PermissionManagerProps) => {
       </div>
 
       {/* Overall Status */}
-      <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+      <div className="mt-4 p-3 bg-muted/30 rounded-2xl">
         <div className="flex items-center gap-2 mb-2">
           <Info className="w-4 h-4 text-muted-foreground" />
           <h4 className="font-medium text-sm">{t('permissionSummary')}</h4>
         </div>
         <div className="grid grid-cols-1 gap-2 text-xs">
-          <div className="flex items-center justify-between p-2 bg-background rounded border">
+          <div className="flex items-center justify-between p-2 bg-background rounded-xl border">
             <span>{t('platformLabel')}</span>
             <span className="font-medium">{platform === 'mobile' ? t('mobileApp') : t('webApp')}</span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-background rounded border">
+          <div className="flex items-center justify-between p-2 bg-background rounded-xl border">
             <span>{t('overallStatusLabel')}</span>
             <span className={`font-medium ${
               Array.from(permissions.values()).every(p => p.status === 'granted') 

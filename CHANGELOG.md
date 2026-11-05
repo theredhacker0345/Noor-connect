@@ -25,6 +25,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Ramadan Mode off-season state**: outside Ramadan the page now shows a proper "Ramadan begins in N days" hero with a short get-ready list (sleep for suhoor, Quran goal, Fitrana charity) in the last 30 days, and an "Eid al-Adha is around the corner" note during Dhul Hijjah.
 - **"Islamic API key not configured" console spam on the Ramadan page** reduced from 3+ warnings per visit to one per session.
 
+### 🛡️ Privacy & Permissions Page Rework
+
+- **Location permission now actually works on Android**: the page used the browser's geolocation/permissions APIs, which cannot see the Android runtime permission inside the WebView — the status was stuck on "Action needed" even after granting in the OS settings, and "Enable location" silently failed on many devices. Native now uses a tiny in-app Android bridge (`LocationPermissionPlugin` — pure framework APIs, no Google services, still F-Droid compliant) for the live permission check (it can even tell "denied forever" apart from "not asked yet"), the runtime request dialog, and a live re-check after it (some OEM dialogs resolve stale).
+- **The page updates itself**: permission status now refreshes automatically when you return from the OS settings (via the Android app-state signal) — previously it stayed stale until a full reload.
+- **Redesigned to match the app**: `rounded-2xl` cards, tinted status notes and full dark-mode support (the old light-only color chips washed out in the dark theme).
+
 ### 🔔 Reliable Islamic-Event Notifications
 
 - **Eid and Ramadan notifications no longer depend on the service worker waking up** (which Android rarely does): 1 Ramadan, Eid al-Fitr, the Day of Arafah and Eid al-Adha are now **scheduled days in advance as native Android alarms**, firing even when the app is closed. Four fixed alarms that re-schedule in place — inside the alarm budget.

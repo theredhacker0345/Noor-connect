@@ -73,7 +73,7 @@ class PermissionManager {
 
   subscribe(callback: () => void): () => void {
     this.subscribers.add(callback);
-    return () => this.subscribers.delete(callback);
+    return () => { this.subscribers.delete(callback); };
   }
 
   getPlatform(): PlatformType {
