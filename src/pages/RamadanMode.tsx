@@ -4,7 +4,7 @@ import { goBackOrFallback } from "@/lib/navigation";
 import { AppBar } from "@/components/AppBar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Moon, Sun, CheckCircle, TrendingUp, AlertCircle, ArrowLeft, MapPin, Clock, RefreshCw, Flame, Check, BookOpen, Minus, Plus, Star, Heart, Gift, Trophy, Droplet } from "lucide-react";
+import { Calendar, Moon, Sun, CheckCircle, TrendingUp, AlertCircle, ArrowLeft, MapPin, Clock, RefreshCw, Flame, Check, BookOpen, Minus, Plus, Star, Heart, Gift, Trophy, Droplet, Sparkles } from "lucide-react";
 import { LayoutManager } from "@/components/LayoutManager";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
@@ -525,7 +525,7 @@ export default function RamadanMode() {
           {/* Ramadan Status */}
           {!islamicLoading && (
             <>
-              <Card className={`p-4 ${isRamadan ? 'bg-gradient-to-br from-green-500/20 to-green-600/5 border-green-500/20' : 'bg-muted/30'}`}>
+              <Card className={`p-4 ${isRamadan || (!isRamadan && daysUntilRamadan >= 1 && daysUntilRamadan <= 30) ? 'bg-gradient-to-br from-green-500/20 to-green-600/5 border-green-500/20' : 'bg-muted/30'}`}>
                 <div className="text-center space-y-2">
                                     
                   {isRamadan ? (
@@ -541,6 +541,35 @@ export default function RamadanMode() {
                         {islamicInfo?.currentDate.hijri.day} {islamicInfo?.currentDate.hijri.month.en} {islamicInfo?.currentDate.hijri.year}
                       </p>
                     </>
+                  ) : daysUntilRamadan >= 1 && daysUntilRamadan <= 30 ? (
+                    <>
+                      <div className="flex items-center justify-center gap-2">
+                        <Moon className="w-5 h-5 text-green-500" />
+                        <p className="font-semibold text-green-600 dark:text-green-400">
+                          Ramadan begins in {daysUntilRamadan} {daysUntilRamadan === 1 ? 'day' : 'days'}
+                        </p>
+                      </div>
+                      {islamicInfo && (
+                        <p className="text-xs text-muted-foreground">
+                          Current: {islamicInfo.currentDate.hijri.day} {islamicInfo.currentDate.hijri.month.en}
+                        </p>
+                      )}
+                      <div className="pt-2 space-y-1.5 text-left">
+                        <p className="text-xs font-medium text-muted-foreground">Get ready</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Moon className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                          <span>Start adjusting your sleep for suhoor</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <BookOpen className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                          <span>Set a Quran goal ({data.dailyQuranGoal} pages/day)</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Heart className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                          <span>Put aside charity for Fitrana</span>
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <>
                       <div className="flex items-center justify-center gap-2">
@@ -554,6 +583,12 @@ export default function RamadanMode() {
                         <p className="text-xs text-muted-foreground">
                           Current: {islamicInfo.currentDate.hijri.day} {islamicInfo.currentDate.hijri.month.en}
                         </p>
+                      )}
+                      {islamicInfo?.hijriMonth === 12 && (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+                          <p className="text-xs text-yellow-600 dark:text-yellow-400">Eid al-Adha is around the corner</p>
+                        </div>
                       )}
                     </>
                   )}

@@ -23,6 +23,12 @@ void initUpdateSafety();
 // with the initial paint / Capacitor bridge startup (reduces startup jank).
 whenIdle(() => { void localNotifications.initialize(); });
 
+// Keep the service worker's Islamic-event engine in sync with the user's
+// Hijri adjustment (the SW has no localStorage — see sw-settings.ts).
+import { writeSwSetting } from "@/lib/sw-settings";
+import { getHijriDateOffset } from "@/lib/hijri-tabular";
+whenIdle(() => { void writeSwSetting('hijriOffset', getHijriDateOffset()); });
+
 import { LanguageProvider } from "@/contexts/LanguageContext-new";
 
 const rootElement = document.getElementById("root");

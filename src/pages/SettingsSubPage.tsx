@@ -41,6 +41,7 @@ import { LANGUAGES, SUPPORTED_CODES } from '@/lib/language-config';
 
 import { getMadhab, setMadhab, type MadhabType } from '@/lib/storage';
 import { AladhanAPI } from '@/lib/aladhan-api';
+import { writeSwSetting } from '@/lib/sw-settings';
 import { getStorageStats, clearAllBooks, formatFileSize } from '@/lib/ebooks-storage';
 import { downloadManager } from '@/lib/download-manager';
 import { clearCache } from '@/lib/backup';
@@ -476,6 +477,9 @@ const SettingsSubPage: React.FC = () => {
                   setHijriOffset(val);
                   localStorage.setItem('hijri-date-offset', val);
                   AladhanAPI.clearCachedData();
+                  // Keep the service worker's Islamic-event engine in sync
+                  // (it has no localStorage — see sw-settings.ts).
+                  writeSwSetting('hijriOffset', parseInt(val, 10) || 0);
                   window.dispatchEvent(new Event('hijri-date-offset-changed'));
                   toast({ title: t('hijriOffsetUpdated') });
                 }}

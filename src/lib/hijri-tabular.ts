@@ -102,3 +102,42 @@ export function getDaysUntilHijriDate(date: Date, targetMonth: number, targetDay
   }
   return -1;
 }
+
+/**
+ * The next Gregorian date on which the given Hijri month/day occurs (today
+ * itself if it matches, null if not found within ~1 Hijri year). Used to
+ * schedule Islamic-event notifications days in advance.
+ */
+export function findNextHijriDate(date: Date, targetMonth: number, targetDay: number): Date | null {
+  const today = toHijri(date);
+  if (today.month === targetMonth && today.day === targetDay) return new Date(date);
+
+  for (let i = 1; i <= 370; i++) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + i);
+    const h = toHijri(d);
+    if (h.month === targetMonth && h.day === targetDay) return d;
+  }
+  return null;
+}
+
+/**
+ * The user's moon-sighting adjustment (Settings → Prayer Calculation,
+ * −2..+2 days). localStorage does not exist inside a service worker, so the
+ * worker must get this value via the IDB settings bridge
+ * (see writeSwSetting in sw-settings.ts) instead of calling this.
+ */
+export function getHijriDateOffset(): number {
+  if (typeof localStorage === 'undefined') return 0;
+  const raw = parseInt(localStorage.getItem('hijri-date-offset') || '0', 10);
+  return Number.isFinite(raw) ? Math.max(-2, Math.min(2, raw)) : 0;
+}
+
+/** Convenience: date shifted by the user's Hijri adjustment. */
+export function hijriAdjustedDate(date: Date): Date {
+  const offset = getHijriDateOffset();
+  if (offset === 0) return date;
+  const d = new Date(date);
+  d.setDate(d.getDate() + offset);
+  return d;
+}

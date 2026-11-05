@@ -8,6 +8,7 @@ import { importantIslamicDates, IslamicDate, isRamadanCountdownPeriod, getDaysUn
 import { getRandomContent, getContentByType, getContentByCategory, IslamicContent } from '@/data/expanded-islamic-content';
 import { isLowEndDevice } from '@/lib/performance-optimizations';
 import i18n from '@/lib/i18n-new';
+import { scheduleIslamicEventNotifications } from '@/lib/islamic-event-notifications';
 
 export interface NotificationPreferences {
   ramadanCountdowns: boolean;
@@ -901,6 +902,14 @@ export class NotificationManager {
     if (!this.areNotificationsEnabled()) {
       return;
     }
+
+    // Schedule the year's fixed Islamic events (Ramadan start, both Eids,
+    // Arafah) as native alarms — reliable even when the app is closed. Runs
+    // once per day; ids are deterministic so re-runs replace, never accumulate.
+    scheduleIslamicEventNotifications({
+      eidGreetings: this.preferences.eidGreetings,
+      ramadanCountdowns: this.preferences.ramadanCountdowns,
+    }).catch(() => { /* best-effort */ });
 
     await Promise.all([
       this.checkRamadanCountdown(),

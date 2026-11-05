@@ -24,7 +24,10 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ### 🌙 Ramadan & Eid Calendar Overhaul
 - **One shared Hijri calendar**: the service worker and the app's offline fallback now use the same tabular Hijri math (verified exact on the known 1447 dates) — the old SW estimate fired Eid al-Adha a month early and went dead after 2026
+- **Reliable event notifications**: 1 Ramadan, both Eids and Arafah are scheduled days ahead as native Android alarms — no more depending on the service worker waking up
+- **Hijri adjustment everywhere**: the ±2-day moon-sighting setting now drives Eid detection, the offline fallback, the event engine and the scheduled notifications
 - **Eid al-Adha prep added**: preparation notification on Dhul Hijjah 8–9 (incl. Arafah) + the checklist opens directly — previously only Eid al-Fitr had one; now translated in all 8 languages
+- **Ramadan Mode off-season**: a "Ramadan begins in N days" hero with a get-ready list in the final 30 days
 - Fixed the Eid popup's "View Prayer Times" opening a 404, and the Eid-prep toast now lands on the checklist itself
 
 ### 🚨 Critical Android Fixes (found & reported by Daniel)

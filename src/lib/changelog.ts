@@ -41,6 +41,8 @@ export const CHANGELOG_DATA: VersionChangelog[] = [
       { type: 'improvement', description: 'Eid al-Adha now has a preparation notification (Dhul Hijjah 8\u20139, incl. the Day of Arafah) and the checklist opens directly \u2014 previously only Eid al-Fitr had one. Now fully translated in all 8 languages.' },
       { type: 'fix', description: 'The Eid popup\u2019s \u201cView Prayer Times\u201d button opened a non-existent page (404); it now opens the prayers screen.' },
       { type: 'fix', description: 'Hadith, Seerah and Qisas libraries load reliably on all servers: the gzip loader no longer double-decompresses on CDNs that decode .gz files automatically.' },
+      { type: 'improvement', description: 'Reliable Islamic-event notifications: 1 Ramadan, both Eids and the Day of Arafah are now scheduled days ahead as native alarms that fire even when the app is closed — and your Hijri date adjustment (Settings → Prayer Calculation) is finally honoured by Eid detection and the event engine, not just the calendar view.' },
+      { type: 'improvement', description: 'Ramadan Mode off-season: a "Ramadan begins in N days" hero with a short get-ready list in the final 30 days, and an Eid al-Adha note during Dhul Hijjah.' },
     ],
   },
   {

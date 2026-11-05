@@ -104,6 +104,10 @@ let lastCheckDate = '';
 // day from the app and broke entirely outside 2026; the tabular math is
 // exact on known dates and works for every year.
 import { toHijri, getDaysUntilHijriDate } from './lib/hijri-tabular';
+// Settings the app writes into IndexedDB (this worker has no localStorage):
+// the user's Hijri adjustment and a flag telling us Android handles Islamic
+// event notifications natively (scheduled by islamic-event-notifications.ts).
+import { readSwSetting } from './lib/sw-settings';
 
 function getFridayKahfConfig() {
   return { day: 5, time: '10:00' };
@@ -256,14 +260,28 @@ async function checkIslamicEvents() {
   try {
     console.log('Service Worker: Checking Islamic events...');
 
+    // On Android the events are scheduled natively days in advance
+    // (islamic-event-notifications.ts) — don't double-fire here.
+    const viaNative = await readSwSetting('islamicEventsViaNative');
+    if (viaNative === true) return;
+
     const now = new Date();
-    const hijri = toHijri(now);
+
+    // Honour the user's moon-sighting adjustment (Settings → Prayer
+    // Calculation). The SW has no localStorage, so the app syncs the offset
+    // into IndexedDB (sw-settings.ts) on boot and whenever it changes.
+    const offset = await readSwSetting('hijriOffset');
+    const adjusted = typeof offset === 'number' && offset !== 0
+      ? new Date(now.getTime() + offset * 86400000)
+      : now;
+
+    const hijri = toHijri(adjusted);
 
     // Ramadan countdown: only within the 30-day window before 1 Ramadan
-    const daysUntilRamadan = getDaysUntilHijriDate(now, 9, 1);
+    const daysUntilRamadan = getDaysUntilHijriDate(adjusted, 9, 1);
     if (daysUntilRamadan > 0 && daysUntilRamadan <= 30) {
-      const ramadanStart = new Date(now);
-      ramadanStart.setDate(now.getDate() + daysUntilRamadan);
+      const ramadanStart = new Date(adjusted);
+      ramadanStart.setDate(adjusted.getDate() + daysUntilRamadan);
       const hijriYear = toHijri(ramadanStart).year;
       await sendRamadanCountdownNotification(daysUntilRamadan, hijriYear);
     }

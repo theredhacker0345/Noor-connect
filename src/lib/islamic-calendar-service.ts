@@ -5,7 +5,7 @@
  */
 
 import { gToHApiResponseSchema, safeParseApiResponse } from '@/lib/api-schemas';
-import { toHijri } from '@/lib/hijri-tabular';
+import { hijriAdjustedDate, toHijri } from '@/lib/hijri-tabular';
 
 export interface IslamicDate {
   hijri: {
@@ -72,10 +72,15 @@ class IslamicCalendarService {
   }
 
   /**
-   * Get Islamic date for a specific Gregorian date
+   * Get Islamic date for a specific Gregorian date.
+   * Honours the user's moon-sighting adjustment (Settings → Prayer
+   * Calculation, ±2 days) by shifting the Gregorian date before conversion —
+   * this is the single shared path, so Eid detection via isEidDay() and the
+   * offline fallback both respect the setting.
    */
   async getIslamicDate(date: Date = new Date()): Promise<IslamicDate> {
-    const cacheKey = date.toDateString();
+    const shifted = hijriAdjustedDate(date);
+    const cacheKey = shifted.toDateString();
     const cached = this.cache.get(cacheKey);
 
     // Return cached data if still valid
@@ -84,8 +89,8 @@ class IslamicCalendarService {
     }
 
     try {
-      const formattedDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-      
+      const formattedDate = `${shifted.getDate()}-${shifted.getMonth() + 1}-${shifted.getFullYear()}`;
+
       const response = await fetch(`https://api.aladhan.com/v1/gToH/${formattedDate}`);
       const rawData = await response.json();
 
@@ -106,9 +111,9 @@ class IslamicCalendarService {
       }
     } catch (error) {
       console.error('Error fetching Islamic date:', error);
-      
-      // Fallback to calculation if API fails
-      return this.calculateIslamicDate(date);
+
+      // Fallback to calculation if API fails (same shifted date)
+      return this.calculateIslamicDate(shifted);
     }
   }
 

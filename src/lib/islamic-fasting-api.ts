@@ -5,6 +5,9 @@
 
 import { METAL_PRICE_CONSTANTS } from './constants';
 
+// Warn once per session about the unconfigured Islamic API (see getRamadanData).
+let islamicApiFallbackWarned = false;
+
 export interface RamadanFastingTime {
   date: string;
   day: string;
@@ -95,7 +98,12 @@ export class IslamicRamadanAPI {
       this.cachedRamadanData = apiData;
       return apiData;
     } catch (error) {
-      console.warn('Failed to fetch Ramadan data from Islamic API, using fallback:', error);
+      // The API key is a build-time constant — when absent this fails on
+      // every mount of the Ramadan page. Warn once per session, not per call.
+      if (!islamicApiFallbackWarned) {
+        islamicApiFallbackWarned = true;
+        console.warn('Failed to fetch Ramadan data from Islamic API, using fallback:', error);
+      }
       return this.getFallbackRamadanData(latitude, longitude, method);
     }
   }

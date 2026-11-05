@@ -22,6 +22,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **"View Prayer Times" in the Eid popup opened a 404**: it targeted `/prayer-times`, which is not a registered route — it now opens `/prayers`.
 - **The Eid-prep toast sent users to the Services hub** while saying "prepare with our Eid checklist" — it now opens `/eid-checklist` directly.
+- **Ramadan Mode off-season state**: outside Ramadan the page now shows a proper "Ramadan begins in N days" hero with a short get-ready list (sleep for suhoor, Quran goal, Fitrana charity) in the last 30 days, and an "Eid al-Adha is around the corner" note during Dhul Hijjah.
+- **"Islamic API key not configured" console spam on the Ramadan page** reduced from 3+ warnings per visit to one per session.
+
+### 🔔 Reliable Islamic-Event Notifications
+
+- **Eid and Ramadan notifications no longer depend on the service worker waking up** (which Android rarely does): 1 Ramadan, Eid al-Fitr, the Day of Arafah and Eid al-Adha are now **scheduled days in advance as native Android alarms**, firing even when the app is closed. Four fixed alarms that re-schedule in place — inside the alarm budget.
+- **The Hijri date adjustment (Settings → Prayer Calculation) is now honoured everywhere**: Eid detection, the offline calendar fallback, the service worker's event engine and the new scheduled notifications all shift by the user's moon-sighting setting (previously only the main calendar view did). The app syncs the setting to the service worker via IndexedDB; the service worker skips its own greetings on Android so events never double-fire.
 
 ### 🚨 Critical Android Fixes (found & reported by Daniel)
 
