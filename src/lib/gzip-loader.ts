@@ -112,9 +112,41 @@ async function loadGzippedJsonInline<T>(url: string): Promise<T> {
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
   }
-  const blob = await response.blob();
-  const ds = new DecompressionStream("gzip");
-  const stream = blob.stream().pipeThrough(ds);
-  const text = await new Response(stream).text();
+  const text = await decodeResponseBody(response, true);
   return JSON.parse(text) as T;
+}
+
+/**
+ * Read a (possibly gzipped) JSON payload out of a fetch Response.
+ *
+ * Some static servers (sirv — used by vite preview — and several CDNs) serve
+ * pre-compressed .json.gz files with `Content-Encoding: gzip`, which makes the
+ * BROWSER transparently decompress the body. Piping that already-decoded body
+ * through DecompressionStream again errors, and Chromium surfaces the dead
+ * body stream as the cryptic "TypeError: Failed to fetch" — which used to kill
+ * the whole hadith/seerah/qisas load chain on those servers.
+ *
+ * Strategy: read the body ONCE into a buffer, then — if the payload might be
+ * gzip (the response advertises an encoding, or the caller asked for gzip
+ * because of the .gz URL) — try manual inflation and fall back to treating the
+ * buffer as plain text. This is correct for every server behaviour:
+ *   - header + auto-decoded body  → inflate attempt fails → plain text ✓
+ *   - no header + raw gzip bytes  → inflate attempt succeeds ✓
+ *   - plain JSON (no gzip at all) → inflate attempt fails → plain text ✓
+ */
+export async function decodeResponseBody(response: Response, maybeGzipped: boolean): Promise<string> {
+  const encoding = response.headers.get("content-encoding");
+  const buffer = await response.arrayBuffer();
+  if ((encoding && encoding !== "identity" && encoding !== "") || maybeGzipped) {
+    if (typeof DecompressionStream !== "undefined" && buffer.byteLength > 1) {
+      try {
+        const stream = new Response(buffer).body!.pipeThrough(new DecompressionStream("gzip"));
+        return await new Response(stream).text();
+      } catch {
+        // Body was already decoded by the server, or the payload isn't gzip —
+        // fall through and read it as plain text.
+      }
+    }
+  }
+  return new TextDecoder().decode(buffer);
 }

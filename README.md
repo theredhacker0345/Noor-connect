@@ -61,6 +61,11 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 ### 🎨 Icon Restored
 - The original navy "NOOR CONNECT" icon set (favicon + all PWA sizes) was restored after an automated regeneration had replaced it with a green text-free mark
 
+### 🚨 Critical Android Fixes
+- **Crash loop fixed**: with all reminders on, the prayer scheduler requested up to 750 simultaneous alarms vs Android's 500 cap — the app crashed on every launch. Reminders now use a 7-day window with a hard batch cap (worst case ~470)
+- **Status-bar overlap fixed**: on Pixel/Android 15+ the app drew under the system status bar; the WebView is now inset below it
+- **Hadith/Seerah/Qisas loading fixed** on servers that auto-decompress `.gz` files (was failing with a cryptic fetch error)
+
 ---
 
 ## 🗂️ Feature Index

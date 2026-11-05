@@ -36,14 +36,27 @@ workerScope.onmessage = async (event: MessageEvent<ParseRequest>) => {
       throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
     }
 
+    // Content-encoding aware decode — see decodeResponseBody in gzip-loader.ts.
+    // Servers that auto-decompress pre-compressed .gz files (Content-Encoding:
+    // gzip) make a second manual DecompressionStream pass fail with the cryptic
+    // "TypeError: Failed to fetch" body-stream error.
+    const buffer = await response.arrayBuffer();
+    const encoding = response.headers.get("content-encoding");
     let text: string;
-    if (gzipped && typeof DecompressionStream !== "undefined") {
-      const blob = await response.blob();
-      const ds = new DecompressionStream("gzip");
-      const stream = blob.stream().pipeThrough(ds);
-      text = await new Response(stream).text();
+    if (
+      (gzipped || (encoding && encoding !== "identity" && encoding !== "")) &&
+      typeof DecompressionStream !== "undefined" &&
+      buffer.byteLength > 1
+    ) {
+      try {
+        const stream = new Response(buffer).body!.pipeThrough(new DecompressionStream("gzip"));
+        text = await new Response(stream).text();
+      } catch {
+        // Already decoded by the server, or not actually gzip — plain text.
+        text = new TextDecoder().decode(buffer);
+      }
     } else {
-      text = await response.text();
+      text = new TextDecoder().decode(buffer);
     }
 
     const data = JSON.parse(text);

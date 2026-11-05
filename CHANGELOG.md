@@ -72,6 +72,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **Original navy "NOOR CONNECT" icon set restored** (favicon, apple-touch-icon, all PWA sizes): an automated regeneration had replaced the whole set with a green text-free mark. The Android launcher icons were never affected.
 
+### 🚨 Critical Android Fixes (from a Pixel crash log)
+
+- **Crash loop fixed — "Maximum limit of concurrent alarms 500 reached"**: with all reminders enabled, the prayer scheduler requested up to **600 simultaneous Android alarms in one batch** (30 days × 5 prayers × at-time + pre + post + end reminders) plus 150 native adhan alarms — Android caps an app at 500 concurrent alarms and throws a fatal, uncaught exception, so the app crashed on every launch (10 crashes in the submitted log). Pre/post/end reminders now use a 7-day window (the daily reschedule regenerates them), and the batch is hard-capped at 300 with the least-urgent distant reminders trimmed first — worst case ~470 of 500.
+- **Content no longer hides under the status bar on Pixel/Android 15+**: apps targeting SDK 35+ are forced edge-to-edge, so the app drew underneath the system status bar ("Settings" behind the clock). The WebView is now shifted down by the real system-bar/cutout inset in `MainActivity` (and the inset is consumed so CSS safe-area padding can never double-apply). No effect on pre-Android-11 devices, which never draw edge-to-edge.
+
+### 📖 Data Loading Fix (hadith / seerah / qisas)
+
+- **Pre-compressed JSON now loads on every server**: the gzip loader always ran `DecompressionStream` manually, but some servers (vite preview/sirv, several CDNs) auto-decompress `.gz` files and advertise `Content-Encoding: gzip` — the second decompression failed with a cryptic `TypeError: Failed to fetch`, the fallback then fetched the deleted plain `.json` and got the SPA's index.html ("Unexpected token '<'"), so hadith/seerah/qisas data could fail to load entirely. The loader (worker and inline paths) now honours `Content-Encoding` and falls back to plain-text decoding, working on every serving style. Verified in-browser: Bukhari, Seerah chapters and Qisas all load with a clean console.
+
 ### ✅ Verification
 
 - Locale parity: all 8 locales at exactly the same 1,244 leaf keys (CI translation-sync passes). TypeScript: 0 new errors; ESLint clean on changed files; production build passes. Bug fixes verified with red/green harnesses (timezone simulation, Gulf method vs live API, SW notification day-simulation 3/5 → 5/5, a full 8-language resolution sweep over every key, and a 5-scenario tafsir download/delete simulation).

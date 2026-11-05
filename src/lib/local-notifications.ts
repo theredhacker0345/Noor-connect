@@ -39,6 +39,22 @@ const PRAYER_ALARM_ENABLED_KEY = 'prayer-alarm-enabled';
 const LAST_SCHEDULE_SIGNATURE_KEY = 'last-prayer-notification-signature';
 const SCHEDULE_WINDOW_DAYS = 30;
 
+// NC-9/21-d: pre/post/end reminders don't need the full 30-day window. Android
+// caps an app at 500 CONCURRENT AlarmManager alarms per uid and throws
+// IllegalStateException (fatal, uncaught in the Capacitor plugin bridge → app
+// crash) the moment a schedule call crosses it. The prayer batch shares that
+// budget with 150 native adhan alarms (setAlarmClock) plus Ramadan/sleep/event
+// schedulers, so: at-time 30d (≤150) + reminders 7d (≤105) ≈ 255 Capacitor
+// alarms, capped hard at 300 → 300 + 150 native + ~20 others < 500. The daily
+// signature reschedule regenerates the reminder window whenever the app opens.
+const REMINDER_WINDOW_DAYS = 7;
+const MAX_NOTIFICATIONS_PER_BATCH = 300;
+
+// Trimming order when the hard cap is somehow exceeded: drop the least urgent
+// reminder types first, farthest-in-the-future first. The essential at-time
+// notifications (extra.type 'prayer_reminder') are never trimmed.
+const REMINDER_TYPE_DROP_ORDER = ['post_prayer_reminder', 'prayer_end_reminder', 'pre_prayer_reminder'];
+
 // Task 21-d: pre/post prayer reminders are derived from each prayer notification ID.
 // Base IDs are dateNumber * 10 + prayerIndex (prayerIndex 1-5, see getNotificationId).
 // +10000 shifts the embedded date by exactly +1000 days and +20000 by +2000 days.
@@ -644,7 +660,8 @@ export class LocalNotificationManager {
 
           // Task 21-d: schedule the PRE reminder (prayerDate - prePrayerMinutes).
           // Follows the same per-prayer toggle filtering as the at-time notification.
-          if (prePostSettings.preEnabled) {
+          // Reminders use a shorter window than at-time alarms — see REMINDER_WINDOW_DAYS.
+          if (prePostSettings.preEnabled && dayOffset < REMINDER_WINDOW_DAYS) {
             const preDate = new Date(prayerDate.getTime() - prePostSettings.preMinutes * 60000);
             if (preDate > now) {
               const preNotificationId = notificationId + PRE_PRAYER_ID_OFFSET;
@@ -687,7 +704,7 @@ export class LocalNotificationManager {
           }
 
           // Task 21-d: schedule the POST reminder (prayerDate + postPrayerMinutes).
-          if (prePostSettings.postEnabled) {
+          if (prePostSettings.postEnabled && dayOffset < REMINDER_WINDOW_DAYS) {
             const postDate = new Date(prayerDate.getTime() + prePostSettings.postMinutes * 60000);
             if (postDate > now) {
               const postNotificationId = notificationId + POST_PRAYER_ID_OFFSET;
@@ -732,7 +749,7 @@ export class LocalNotificationManager {
           // "Asr ends in 15 minutes" - fired before the prayer time expires so
           // the user can still pray within the window. Only when the end Date
           // is valid, lies after the prayer start, and is still in the future.
-          if (prePostSettings.endEnabled) {
+          if (prePostSettings.endEnabled && dayOffset < REMINDER_WINDOW_DAYS) {
             const endDate = getPrayerEndDate(prayerName, dayData.timings, targetDate);
             if (endDate && endDate.getTime() > prayerDate.getTime()) {
               const remindDate = new Date(endDate.getTime() - prePostSettings.endMinutes * 60000);
@@ -799,6 +816,10 @@ export class LocalNotificationManager {
       }
 
       if (notifications.length > 0) {
+        // Hard safety net: Android throws IllegalStateException (fatal — the
+        // plugin bridge doesn't catch it) once the app's total concurrent
+        // alarms hit 500, so never send more than MAX_NOTIFICATIONS_PER_BATCH.
+        this.trimToAlarmBudget(notifications, MAX_NOTIFICATIONS_PER_BATCH);
         await LocalNotifications.schedule({
           notifications
         });
@@ -1048,6 +1069,31 @@ export class LocalNotificationManager {
   /**
    * Clear all prayer notifications
    */
+  /**
+   * Keep a schedule batch under the OS's 500-concurrent-alarms-per-uid cap.
+   * Only reminder types (pre/post/end) are ever removed — farthest in the
+   * future first, in REMINDER_TYPE_DROP_ORDER — so at-time prayer alarms and
+   * the native adhan alarms always survive. The daily signature reschedule
+   * regenerates whatever was trimmed the next time the app opens.
+   */
+  private trimToAlarmBudget(notifications: LocalNotificationSchema[], cap: number): void {
+    if (notifications.length <= cap) return;
+    console.warn(
+      `Prayer batch has ${notifications.length} alarms (cap ${cap}) — trimming distant reminders to avoid the OS 500-alarm crash`
+    );
+    for (const type of REMINDER_TYPE_DROP_ORDER) {
+      const removable = notifications
+        .filter(n => n.extra?.type === type)
+        .sort((a, b) => ((b.schedule?.at as Date)?.getTime() ?? 0) - ((a.schedule?.at as Date)?.getTime() ?? 0));
+      for (const n of removable) {
+        if (notifications.length <= cap) return;
+        const idx = notifications.indexOf(n);
+        if (idx >= 0) notifications.splice(idx, 1);
+        this.scheduledNotifications.delete(n.id as number);
+      }
+    }
+  }
+
   async clearPrayerNotifications(): Promise<void> {
     try {
       const pending = await LocalNotifications.getPending();

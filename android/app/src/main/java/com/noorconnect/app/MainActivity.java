@@ -12,6 +12,9 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 
@@ -48,12 +51,53 @@ public class MainActivity extends BridgeActivity {
         if (webView != null) {
             webView.setMotionEventSplittingEnabled(true);
             installRenderProcessCrashHandler(webView);
+            applyTopInsetToWebView(webView);
         }
 
         // No persistent foreground service needed.
         // Adhan alarms use setAlarmClock() which is Doze-immune.
         // Adhan playback uses a short-lived foreground service started
         // by AdhanAlarmReceiver only when it's time to play.
+    }
+
+    /**
+     * Push the WebView below the status bar on edge-to-edge devices.
+     *
+     * Android 15+ (API 35) enforces edge-to-edge for apps targeting SDK 35+,
+     * so the WebView is laid out underneath the status bar and app headers end
+     * up behind the clock/status icons (reported on Pixel). The Android
+     * WebView does not reliably expose env(safe-area-inset-top) to CSS, so we
+     * shift the WebView down by the real system-bar/cutout inset instead.
+     *
+     * The top inset is consumed before it reaches the WebView, so CSS
+     * env(safe-area-inset-top) resolves to 0 — the native margin is the single
+     * source of truth and padding can never be applied twice.
+     *
+     * Only the top edge is adjusted: the bottom safe area is already handled
+     * per-component in CSS (BottomNav, pb-safe, ...) and touching it would
+     * interact with keyboard (ime) insets. The margin strip shows the window
+     * background (dark #0D0D0D), which matches the app's dark background.
+     * Devices below Android 11 never draw edge-to-edge here, so no adjustment
+     * is needed for them (their systemBars().top is 0 anyway).
+     */
+    private void applyTopInsetToWebView(View webView) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return;
+        try {
+            webView.setOnApplyWindowInsetsListener((v, insets) -> {
+                android.graphics.Insets bars = insets.getInsets(
+                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                int top = bars.top;
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                if (lp != null && lp.topMargin != top) {
+                    lp.topMargin = top;
+                    v.setLayoutParams(lp);
+                }
+                return insets.inset(0, top, 0, 0);
+            });
+            webView.requestApplyInsets();
+        } catch (Throwable t) {
+            Log.w("MainActivity", "Could not apply top inset to WebView", t);
+        }
     }
 
     /**
