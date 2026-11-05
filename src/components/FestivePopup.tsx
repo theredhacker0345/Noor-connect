@@ -133,8 +133,9 @@ export function FestivePopup() {
                 variant="outline"
                 className="flex-1 border-primary/30 hover:bg-primary/10"
                 onClick={() => {
-                  // Navigate to prayers or special Eid section
-                  window.location.href = '/prayer-times';
+                  // Navigate to the prayers page (the old '/prayer-times'
+                  // target is not a registered route — it landed on 404)
+                  window.location.href = '/prayers';
                 }}
               >
                 View Prayer Times

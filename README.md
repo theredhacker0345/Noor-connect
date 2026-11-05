@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.5.0 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.5.1 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -17,6 +17,20 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - ✅ **Official License Grant**: Free perpetual license to integrate the nasheed catalog under the NCN Community License
 - ✅ **Official Feature**: Noor Connect is featured on the [No Copyright Nasheed website](https://nocopyrightnasheed.com/) as a trusted partner
 - 🎵 **400-track curated library** with a highly optimized audio player
+
+---
+
+## 🆕 What's New in v2.5.1
+
+### 🌙 Ramadan & Eid Calendar Overhaul
+- **One shared Hijri calendar**: the service worker and the app's offline fallback now use the same tabular Hijri math (verified exact on the known 1447 dates) — the old SW estimate fired Eid al-Adha a month early and went dead after 2026
+- **Eid al-Adha prep added**: preparation notification on Dhul Hijjah 8–9 (incl. Arafah) + the checklist opens directly — previously only Eid al-Fitr had one; now translated in all 8 languages
+- Fixed the Eid popup's "View Prayer Times" opening a 404, and the Eid-prep toast now lands on the checklist itself
+
+### 🚨 Critical Android Fixes (found & reported by Daniel)
+- **Crash loop fixed**: with all reminders on, up to 750 simultaneous alarms vs Android's 500 cap — reminders now use a 7-day window with a hard batch cap
+- **Status-bar overlap fixed** on Pixel / Android 15+
+- **Hadith/Seerah/Qisas loading fixed** on servers that auto-decompress `.gz` files
 
 ---
 

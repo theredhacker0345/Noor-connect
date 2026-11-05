@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function EidChecklistNotification() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { islamicInfo, isLoading } = useIslamicCalendar();
   const [dismissed, setDismissed] = useState(false);
 
@@ -37,10 +39,10 @@ export function EidChecklistNotification() {
       if (lastShown !== today) {
         // Show toast notification
         toast({
-          title: "🌙 Eid Preparation Time!",
+          title: t('eidPrepToastTitle'),
           description: eidEve === 'fitr'
-            ? "Eid al-Fitr is tomorrow! Prepare with our Eid checklist."
-            : "Eid al-Adha is almost here! Prepare with our Eid checklist.",
+            ? t('eidPrepFitrBody')
+            : t('eidPrepAdhaBody'),
           duration: 8000,
         });
 
@@ -56,7 +58,9 @@ export function EidChecklistNotification() {
   };
 
   const handleNavigate = () => {
-    window.location.href = '/services';
+    // The toast says "prepare with our Eid checklist" — land on it directly
+    // (was '/services', which made users hunt for the checklist themselves).
+    window.location.href = '/eid-checklist';
   };
 
   if (!shouldShow || dismissed) {

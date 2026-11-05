@@ -31,6 +31,19 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
+    version: '2.5.1',
+    date: '2026-11-05',
+    title: 'Ramadan & Eid Calendar Overhaul + Critical Android Fixes',
+    changes: [
+      { type: 'fix', description: 'Crash loop fixed: with every reminder enabled the app requested up to 750 simultaneous alarms vs Android\u2019s 500 limit and crashed on launch. Reminders now use a 7-day window with a hard batch cap. Found & reported by Daniel.' },
+      { type: 'fix', description: 'Status-bar overlap fixed: on Pixel / Android 15+ the app drew under the system status bar; content is now correctly inset below it. Found & reported by Daniel.' },
+      { type: 'fix', description: 'Ramadan & Eid dates unified: the service worker now uses the same tabular Hijri calendar as the app. The old estimate fired Eid al-Adha a month early and went dead after 2026.' },
+      { type: 'improvement', description: 'Eid al-Adha now has a preparation notification (Dhul Hijjah 8\u20139, incl. the Day of Arafah) and the checklist opens directly \u2014 previously only Eid al-Fitr had one. Now fully translated in all 8 languages.' },
+      { type: 'fix', description: 'The Eid popup\u2019s \u201cView Prayer Times\u201d button opened a non-existent page (404); it now opens the prayers screen.' },
+      { type: 'fix', description: 'Hadith, Seerah and Qisas libraries load reliably on all servers: the gzip loader no longer double-decompresses on CDNs that decode .gz files automatically.' },
+    ],
+  },
+  {
     version: '2.5.0',
     date: '2026-10-31',
     title: 'Turkish Language, ~190 MB Slimmer APK & Prayer Accuracy Fixes',

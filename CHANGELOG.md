@@ -8,20 +8,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### 🌙 Ramadan & Eid Calendar Fixes
+## [2.5.1] - 2026-11-05
 
-The service worker's Islamic-event engine had three date bugs that made it silently wrong or dead outside 2026 — found during a full audit of the before-Ramadan → Ramadan → Eid al-Fitr → Eid al-Adha lifecycle (audit prompted by a bug report suspicion; the app-side Hijri-API logic checked out clean):
+### 🌙 Ramadan & Eid Calendar Overhaul
 
-- **Eid al-Adha fired a month early**: the estimate added only 70 days to the Ramadan start, which lands in Dhul Qadah — 10 Dhul Hijjah is ~97 days after 1 Ramadan. In 2026 the service worker greeted users with "Eid-ul-Adha" on **April 29** instead of ~May 27.
-- **Ramadan countdown & Eid greetings silently died after 2026**: the year-estimation applied the Hijri drift (−11 days/year) to a *fixed 2026 base date* without ever advancing the year, so "Ramadan 2027" resolved to a date in early 2026 that is always in the past. The base date is now moved into the target year first.
-- **Hardcoded "1447 AH"** in the Ramadan countdown body — the Hijri year is now computed per year (1448 for 2027, …).
-- **Eid al-Adha had no prep surface**: the Eid-prep notification only ever fired on the last night of Ramadan (for Eid al-Fitr); the Eid al-Adha checklist was unreachable until the day itself. The prep notification now also fires on Dhul Hijjah 8–9 (including the Day of Arafah), and the checklist page accepts Arafah as its prep day — mirroring the Ramadan-eve behaviour.
+- **One shared Hijri calendar for everything**: the service worker and the app's offline fallback now use the same tabular Hijri math (`src/lib/hijri-tabular.ts`, verified exact against known 1447 dates: 1 Ramadan = Feb 18, 1 Shawwal = Mar 20, 10 Dhul Hijjah = May 27 2026). This replaces the service worker's linear year-estimate entirely and makes the two systems incapable of disagreeing again.
+- **Eid al-Adha fired a month early** *(fixed in the previous commit, carried into this release)*: the estimate added only 70 days to the Ramadan start (lands in Dhul Qadah) instead of ~97 (10 Dhul Hijjah) — in 2026 the service worker greeted users with "Eid-ul-Adha" on **April 29** instead of ~May 27.
+- **Ramadan countdown & Eid greetings silently died after 2026** *(fixed, carried)*: the year-estimate applied the Hijri drift to a *fixed 2026 base date* without advancing the year. The tabular calendar has no base year to break.
+- **Hardcoded "1447 AH"** in the countdown body — the Hijri year is now derived from the actual target date.
+- **Eid al-Adha prep surface added**: the Eid-prep notification previously only fired on the last night of Ramadan (Eid al-Fitr). It now also fires on **Dhul Hijjah 8–9 (including the Day of Arafah)**, the checklist page accepts Arafah as its prep day, and the toast is fully translated in all 8 languages (was hardcoded English).
 
-Verified per state: before Ramadan (30-day countdown window), during Ramadan (fasting/tarawih tracking gated on the real Hijri month), after Ramadan (Fitrana pay-window through Eid +3, late window to Shawwal 10, then clean "unavailable" state), Eid al-Fitr (day + eve) and Eid al-Adha (day + Arafah eve).
+### 🐛 Eid & Popup UX Fixes
+
+- **"View Prayer Times" in the Eid popup opened a 404**: it targeted `/prayer-times`, which is not a registered route — it now opens `/prayers`.
+- **The Eid-prep toast sent users to the Services hub** while saying "prepare with our Eid checklist" — it now opens `/eid-checklist` directly.
+
+### 🚨 Critical Android Fixes (found & reported by Daniel)
+
+- **Crash loop fixed — "Maximum limit of concurrent alarms 500 reached"**: with all reminders enabled, the prayer scheduler requested up to **600 simultaneous Android alarms in one batch** (30 days × 5 prayers × at-time + pre + post + end reminders) plus 150 native adhan alarms — Android caps an app at 500 concurrent alarms and throws a fatal, uncaught exception, so the app crashed on every launch (10 crashes in the submitted log). Pre/post/end reminders now use a 7-day window (the daily reschedule regenerates them), and the batch is hard-capped at 300 with the least-urgent distant reminders trimmed first — worst case ~470 of 500.
+- **Content no longer hides under the status bar on Pixel/Android 15+**: apps targeting SDK 35+ are forced edge-to-edge, so the app drew underneath the system status bar ("Settings" behind the clock). The WebView is now shifted down by the real system-bar/cutout inset in `MainActivity` (and the inset is consumed so CSS safe-area padding can never double-apply). No effect on pre-Android-11 devices, which never draw edge-to-edge.
+
+### 📖 Data Loading Fix (hadith / seerah / qisas)
+
+- **Pre-compressed JSON now loads on every server**: the gzip loader always ran `DecompressionStream` manually, but some servers (vite preview/sirv, several CDNs) auto-decompress `.gz` files and advertise `Content-Encoding: gzip` — the second decompression failed with a cryptic `TypeError: Failed to fetch`, the fallback then fetched the deleted plain `.json` and got the SPA's index.html ("Unexpected token '<'"), so hadith/seerah/qisas data could fail to load entirely. The loader (worker and inline paths) now honours `Content-Encoding` and falls back to plain-text decoding, working on every serving style. Verified in-browser: Bukhari, Seerah chapters and Qisas all load with a clean console.
 
 ### 🙏 Credits
 
-- **Daniel** joined as a feedback contributor — both critical Android bugs in 2.5.0's hotfix line (the alarm-cap crash loop and the status-bar overlap) were found and reported by him. Credited in Settings → About and in the README.
+- **Daniel** joined as a feedback contributor — both critical Android bugs above were found and reported by him. Credited in Settings → About and in the README.
 
 ## [2.5.0] - 2026-10-31
 

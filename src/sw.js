@@ -97,43 +97,13 @@ registerRoute(
 let PRAYER_TIMES = {};
 let lastCheckDate = '';
 
-// Approximate Islamic calendar offsets from Gregorian for event estimation.
-// Ramadan regresses ~11 days/year. Base: Ramadan 1447 ≈ Feb 18, 2026.
-const RAMADAN_BASE_YEAR = 2026;
-const RAMADAN_BASE_DATE = new Date('2026-02-18');
-const DAYS_PER_YEAR = 365.25;
-const HIJRI_YEAR_DAYS = 354.367; // ~10.63 days shorter
-
-function getEstimatedRamadan(year) {
-  const diffYears = year - RAMADAN_BASE_YEAR;
-  const offset = Math.round(diffYears * (DAYS_PER_YEAR - HIJRI_YEAR_DAYS));
-  const start = new Date(RAMADAN_BASE_DATE);
-  // Move the base date into the TARGET year FIRST, then apply the Hijri
-  // drift. Subtracting the drift from the fixed 2026 base never changed the
-  // year, so every call after 2026 returned a date still in 2026 — the
-  // service worker's Ramadan countdown and Eid greetings silently died
-  // after the base year.
-  start.setFullYear(RAMADAN_BASE_YEAR + diffYears);
-  start.setDate(start.getDate() - offset);
-  return start;
-}
-
-function getEidFitrDate(year) {
-  const ramadan = getEstimatedRamadan(year);
-  const eid = new Date(ramadan);
-  eid.setDate(eid.getDate() + 29); // 1 Shawwal — Eid al-Fitr
-  return eid;
-}
-
-function getEidAdhaDate(year) {
-  const ramadan = getEstimatedRamadan(year);
-  const eid = new Date(ramadan);
-  // 10 Dhul Hijjah = 1 Shawwal (+29, Eid al-Fitr) + 30 (Shawwal) + 29
-  // (Dhul Qadah) + 9 (into Dhul Hijjah) ≈ 97 days after 1 Ramadan. The old
-  // +70 landed in Dhul Qadah — a full month before the real Eid.
-  eid.setDate(eid.getDate() + 97);
-  return eid;
-}
+// Islamic event dates now come from the shared tabular Hijri calendar
+// (src/lib/hijri-tabular.ts) — the SAME module the app's offline fallback
+// uses, so the service worker and the app can never disagree again. The
+// previous linear year-estimate (fixed 2026 base − 11 days/year) drifted a
+// day from the app and broke entirely outside 2026; the tabular math is
+// exact on known dates and works for every year.
+import { toHijri, getDaysUntilHijriDate } from './lib/hijri-tabular';
 
 function getFridayKahfConfig() {
   return { day: 5, time: '10:00' };
@@ -287,27 +257,23 @@ async function checkIslamicEvents() {
     console.log('Service Worker: Checking Islamic events...');
 
     const now = new Date();
-    const year = now.getFullYear();
-    const ramadanStart = getEstimatedRamadan(year);
-    const ramadanCountdownStart = new Date(ramadanStart);
-    ramadanCountdownStart.setDate(ramadanStart.getDate() - 30);
+    const hijri = toHijri(now);
 
-    // Check Ramadan countdown only if within the 30-day window before Ramadan
-    if (now >= ramadanCountdownStart && now < ramadanStart) {
-      const daysUntil = Math.ceil((ramadanStart - now) / (1000 * 60 * 60 * 24));
-      const hijriYear = 1447 + (year - RAMADAN_BASE_YEAR);
-      await sendRamadanCountdownNotification(daysUntil, hijriYear);
+    // Ramadan countdown: only within the 30-day window before 1 Ramadan
+    const daysUntilRamadan = getDaysUntilHijriDate(now, 9, 1);
+    if (daysUntilRamadan > 0 && daysUntilRamadan <= 30) {
+      const ramadanStart = new Date(now);
+      ramadanStart.setDate(now.getDate() + daysUntilRamadan);
+      const hijriYear = toHijri(ramadanStart).year;
+      await sendRamadanCountdownNotification(daysUntilRamadan, hijriYear);
     }
 
-    // Check Eid events
-    const eidFitr = getEidFitrDate(year);
-    const eidAdha = getEidAdhaDate(year);
-
-    if (now.toDateString() === eidFitr.toDateString()) {
+    // Eid events: 1 Shawwal (Eid al-Fitr) and 10 Dhul Hijjah (Eid al-Adha)
+    if (hijri.month === 10 && hijri.day === 1) {
       await sendEidNotification('Eid-ul-Fitr');
     }
 
-    if (now.toDateString() === eidAdha.toDateString()) {
+    if (hijri.month === 12 && hijri.day === 10) {
       await sendEidNotification('Eid-ul-Adha');
     }
 

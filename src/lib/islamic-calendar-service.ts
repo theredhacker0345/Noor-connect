@@ -5,6 +5,7 @@
  */
 
 import { gToHApiResponseSchema, safeParseApiResponse } from '@/lib/api-schemas';
+import { toHijri } from '@/lib/hijri-tabular';
 
 export interface IslamicDate {
   hijri: {
@@ -230,45 +231,16 @@ class IslamicCalendarService {
       { en: 'As-Sabt', ar: 'السبت' }
     ];
 
-    // Tabular Islamic calendar
-    // Epoch: Friday, July 16, 622 CE (Julian) = JDN 1948439.5
-    // Verified against api.aladhan.com gToH: matches most dates exactly and
-    // drifts ±1 day in some periods — inherent to tabular calendars vs
-    // moon-sighting. Do not "fix" by switching to the civil-epoch variant
-    // (1948443.5): tested 0/18 matches. Only used when the gToH API is unreachable.
-    const hijriEpoch = 1948439.5;
-    const julianDay = this.getJulianDay(date);
-    const daysSinceEpoch = Math.floor(julianDay - hijriEpoch);
-
-    // Each 30-year cycle contains 10631 days (19 common years × 354 + 11 leap years × 355)
-    const cycleLength = 10631;
-    const yearLength = (y: number) => this.isHijriLeapYear(y) ? 355 : 354;
-
-    // Find the Hijri year by walking forward from epoch
-    let year = 1;
-    let accumulatedDays = 0;
-    while (accumulatedDays + yearLength(year) <= daysSinceEpoch) {
-      accumulatedDays += yearLength(year);
-      year++;
-    }
-
-    const dayOfYear = daysSinceEpoch - accumulatedDays;
-
-    // Find the month within the year
-    let month = 1;
-    let monthStart = 1;
-    for (let m = 1; m <= 12; m++) {
-      const ml = this.getTabularMonthLength(m, year);
-      if (dayOfYear < monthStart + ml - 1) {
-        month = m;
-        break;
-      }
-      monthStart += ml;
-    }
-
-    const hijriDay = dayOfYear - monthStart + 2;
-    const hijriMonth = month;
-    const hijriYear = year;
+    // Tabular Islamic calendar — the shared pure math lives in
+    // hijri-tabular.ts (also used by the service worker, so the app and the
+    // worker can never disagree). Verified against api.aladhan.com gToH:
+    // matches most dates exactly and drifts ±1 day in some periods —
+    // inherent to tabular calendars vs moon-sighting. Only used when the
+    // gToH API is unreachable.
+    const tabular = toHijri(date);
+    const hijriDay = tabular.day;
+    const hijriMonth = tabular.month;
+    const hijriYear = tabular.year;
 
     return {
       hijri: {
@@ -306,33 +278,6 @@ class IslamicCalendarService {
         }
       }
     };
-  }
-
-  /**
-   * Tabular Islamic calendar helpers
-   */
-  private isHijriLeapYear(year: number): boolean {
-    // In the 30-year cycle, years 2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29 are leap
-    const cyclePosition = year % 30;
-    return [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29].includes(cyclePosition);
-  }
-
-  private getTabularMonthLength(month: number, year: number): number {
-    if (month % 2 === 1) return 30; // Odd months: 30 days
-    if (month === 12) return this.isHijriLeapYear(year) ? 30 : 29;
-    return 29; // Even months (except Dhul-Hijjah): 29 days
-  }
-
-  /**
-   * Convert Gregorian date to Julian Day Number
-   */
-  private getJulianDay(date: Date): number {
-    const a = Math.floor((14 - (date.getMonth() + 1)) / 12);
-    const y = date.getFullYear() + 4800 - a;
-    const m = (date.getMonth() + 1) + 12 * a - 3;
-
-    return date.getDate() + Math.floor((153 * m + 2) / 5) + 365 * y + 
-           Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
   }
 
   /**
