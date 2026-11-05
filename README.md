@@ -255,6 +255,8 @@ A Ramadan command center that consolidates the month's acts of worship on one pa
 - **Taraweeh tracker**: check off the nights you prayed.
 - **Charity ledger and daily good-deeds counter**, plus an Eid countdown.
 - **Hydration reminders** after Iftar (toggleable), and Suhoor/Iftar notifications with automatic cleanup once Ramadan ends.
+- **Off-season state**: in the last 30 days before Ramadan the page becomes a "Ramadan begins in N days" hero with a short get-ready list (suhoor sleep, Quran goal, Fitrana charity); during Dhul Hijjah it notes that Eid al-Adha is near.
+- **Reliable Islamic-event notifications**: 1 Ramadan, both Eids and the Day of Arafah are scheduled days ahead as native Android alarms (respecting the Eid greetings / Ramadan countdown toggles), and the ±2-day Hijri adjustment setting applies to every one of them.
 
 ### Spiritual Tracking
 
