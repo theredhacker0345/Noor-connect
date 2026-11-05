@@ -466,10 +466,11 @@ For **signed release APKs via GitHub Actions** (including the F-Droid `fossRelea
 
 ## 💬 Feedback Contributors
 
-| Name | Location |
-|------|----------|
-| **Haris** | Sri Lanka 🇱🇰 |
-| **Ibrahim Bn Tariq** | Egypt 🇪🇬 |
+| Name | Contribution | Location |
+|------|--------------|----------|
+| **Haris** | Feedback | Sri Lanka 🇱🇰 |
+| **Ibrahim Bn Tariq** | Feedback | Egypt 🇪🇬 |
+| **Daniel** | Found & reported the Android alarm-crash loop and the status-bar overlap bugs | — 🐛 |
 
 ## 🤝 Contributing
 

@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### 🌙 Ramadan & Eid Calendar Fixes
+
+The service worker's Islamic-event engine had three date bugs that made it silently wrong or dead outside 2026 — found during a full audit of the before-Ramadan → Ramadan → Eid al-Fitr → Eid al-Adha lifecycle (audit prompted by a bug report suspicion; the app-side Hijri-API logic checked out clean):
+
+- **Eid al-Adha fired a month early**: the estimate added only 70 days to the Ramadan start, which lands in Dhul Qadah — 10 Dhul Hijjah is ~97 days after 1 Ramadan. In 2026 the service worker greeted users with "Eid-ul-Adha" on **April 29** instead of ~May 27.
+- **Ramadan countdown & Eid greetings silently died after 2026**: the year-estimation applied the Hijri drift (−11 days/year) to a *fixed 2026 base date* without ever advancing the year, so "Ramadan 2027" resolved to a date in early 2026 that is always in the past. The base date is now moved into the target year first.
+- **Hardcoded "1447 AH"** in the Ramadan countdown body — the Hijri year is now computed per year (1448 for 2027, …).
+- **Eid al-Adha had no prep surface**: the Eid-prep notification only ever fired on the last night of Ramadan (for Eid al-Fitr); the Eid al-Adha checklist was unreachable until the day itself. The prep notification now also fires on Dhul Hijjah 8–9 (including the Day of Arafah), and the checklist page accepts Arafah as its prep day — mirroring the Ramadan-eve behaviour.
+
+Verified per state: before Ramadan (30-day countdown window), during Ramadan (fasting/tarawih tracking gated on the real Hijri month), after Ramadan (Fitrana pay-window through Eid +3, late window to Shawwal 10, then clean "unavailable" state), Eid al-Fitr (day + eve) and Eid al-Adha (day + Arafah eve).
+
+### 🙏 Credits
+
+- **Daniel** joined as a feedback contributor — both critical Android bugs in 2.5.0's hotfix line (the alarm-cap crash loop and the status-bar overlap) were found and reported by him. Credited in Settings → About and in the README.
+
 ## [2.5.0] - 2026-10-31
 
 ### 🇹🇷 Turkish Language

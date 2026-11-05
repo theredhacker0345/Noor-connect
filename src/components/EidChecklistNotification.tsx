@@ -11,36 +11,44 @@ export function EidChecklistNotification() {
   const { islamicInfo, isLoading } = useIslamicCalendar();
   const [dismissed, setDismissed] = useState(false);
 
-  // Check if tonight is the last night of Ramadan
-  const shouldShow = (() => {
-    if (isLoading || !islamicInfo || dismissed) return false;
-    
+  // Check if tonight is the eve of either Eid: the last night of Ramadan
+  // (29th or 30th) before Eid al-Fitr, or Dhul Hijjah 8–9 (incl. the Day of
+  // Arafah) before Eid al-Adha. Previously only Eid al-Fitr had a prep
+  // notification — the Eid al-Adha checklist was never surfaced anywhere.
+  const eidEve = (() => {
+    if (isLoading || !islamicInfo) return null;
+
     const hijriMonth = islamicInfo.hijriMonth;
     const hijriDay = islamicInfo.hijriDay;
-    
-    // Last night of Ramadan (29th or 30th)
-    return hijriMonth === 9 && (hijriDay === 29 || hijriDay === 30);
+
+    if (hijriMonth === 9 && (hijriDay === 29 || hijriDay === 30)) return 'fitr';
+    if (hijriMonth === 12 && (hijriDay === 8 || hijriDay === 9)) return 'adha';
+    return null;
   })();
+
+  const shouldShow = eidEve !== null && !dismissed;
 
   // Check if notification was already shown today
   useEffect(() => {
-    if (shouldShow) {
+    if (shouldShow && eidEve) {
       const today = new Date().toDateString();
       const lastShown = localStorage.getItem('eid-checklist-notification-shown');
-      
+
       if (lastShown !== today) {
         // Show toast notification
         toast({
           title: "🌙 Eid Preparation Time!",
-          description: "Eid al-Fitr is tomorrow! Prepare with our Eid checklist.",
+          description: eidEve === 'fitr'
+            ? "Eid al-Fitr is tomorrow! Prepare with our Eid checklist."
+            : "Eid al-Adha is almost here! Prepare with our Eid checklist.",
           duration: 8000,
         });
-        
+
         // Mark as shown for today
         localStorage.setItem('eid-checklist-notification-shown', today);
       }
     }
-  }, [shouldShow, toast]);
+  }, [shouldShow, eidEve, toast]);
 
   const handleDismiss = () => {
     setDismissed(true);

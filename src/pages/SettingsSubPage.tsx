@@ -973,6 +973,18 @@ const SettingsSubPage: React.FC = () => {
                   </div>
                   <span className="text-xs font-medium text-teal-600 dark:text-teal-400">{t('feedbackBadge')}</span>
                 </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-500 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-sm">
+                      D
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Daniel</p>
+                      <p className="text-xs text-slate-400">{t('feedbackBugReports')}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">{t('feedbackBadge')}</span>
+                </div>
               </div>
             </Card>
 

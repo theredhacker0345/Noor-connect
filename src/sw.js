@@ -108,6 +108,12 @@ function getEstimatedRamadan(year) {
   const diffYears = year - RAMADAN_BASE_YEAR;
   const offset = Math.round(diffYears * (DAYS_PER_YEAR - HIJRI_YEAR_DAYS));
   const start = new Date(RAMADAN_BASE_DATE);
+  // Move the base date into the TARGET year FIRST, then apply the Hijri
+  // drift. Subtracting the drift from the fixed 2026 base never changed the
+  // year, so every call after 2026 returned a date still in 2026 — the
+  // service worker's Ramadan countdown and Eid greetings silently died
+  // after the base year.
+  start.setFullYear(RAMADAN_BASE_YEAR + diffYears);
   start.setDate(start.getDate() - offset);
   return start;
 }
@@ -115,14 +121,17 @@ function getEstimatedRamadan(year) {
 function getEidFitrDate(year) {
   const ramadan = getEstimatedRamadan(year);
   const eid = new Date(ramadan);
-  eid.setDate(eid.getDate() + 29); // ~29 days after Ramadan start
+  eid.setDate(eid.getDate() + 29); // 1 Shawwal — Eid al-Fitr
   return eid;
 }
 
 function getEidAdhaDate(year) {
   const ramadan = getEstimatedRamadan(year);
   const eid = new Date(ramadan);
-  eid.setDate(eid.getDate() + 70); // ~70 days after Ramadan start (10 Dhul Hijjah)
+  // 10 Dhul Hijjah = 1 Shawwal (+29, Eid al-Fitr) + 30 (Shawwal) + 29
+  // (Dhul Qadah) + 9 (into Dhul Hijjah) ≈ 97 days after 1 Ramadan. The old
+  // +70 landed in Dhul Qadah — a full month before the real Eid.
+  eid.setDate(eid.getDate() + 97);
   return eid;
 }
 
@@ -286,7 +295,8 @@ async function checkIslamicEvents() {
     // Check Ramadan countdown only if within the 30-day window before Ramadan
     if (now >= ramadanCountdownStart && now < ramadanStart) {
       const daysUntil = Math.ceil((ramadanStart - now) / (1000 * 60 * 60 * 24));
-      await sendRamadanCountdownNotification(daysUntil);
+      const hijriYear = 1447 + (year - RAMADAN_BASE_YEAR);
+      await sendRamadanCountdownNotification(daysUntil, hijriYear);
     }
 
     // Check Eid events
@@ -339,9 +349,9 @@ async function sendPrayerNotification(prayer, config) {
 }
 
 // Send Ramadan countdown notification
-async function sendRamadanCountdownNotification(daysUntil) {
+async function sendRamadanCountdownNotification(daysUntil, hijriYear) {
   const title = 'Ramadan Countdown';
-  const body = `${daysUntil} day${daysUntil > 1 ? 's' : ''} until Ramadan 1447 AH`;
+  const body = `${daysUntil} day${daysUntil > 1 ? 's' : ''} until Ramadan ${hijriYear} AH`;
 
   await showNotification({
     title,

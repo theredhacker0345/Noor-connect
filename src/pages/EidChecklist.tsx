@@ -111,6 +111,7 @@ export default function EidChecklist() {
     if (isEidAlFitr) return 'fitr';
     if (isEidAlAdha) return 'adha';
     if (hijriMonth === 9 && (hijriDay === 29 || hijriDay === 30)) return 'fitr'; // Last night of Ramadan
+    if (hijriMonth === 12 && (hijriDay === 8 || hijriDay === 9)) return 'adha'; // Dhul Hijjah 8–9 / Arafah — prep day before Eid al-Adha
     return null;
   }, [isEidAlFitr, isEidAlAdha, islamicInfo]);
 
