@@ -90,7 +90,7 @@
   "languageContentNote": "L'interface est entièrement traduite dans les 8 langues. Les contenus longs (histoires, livres, audio) sont traduits progressivement.",
   "verifyTitle": "Vérification de hadith",
   "verifySubtitle": "Trouvez la grade et la source de tout hadith",
-  "verifyPlaceholder": "Collez un hadith en arabe…",
+  "verifyPlaceholder": "Collez un hadith en arabe ou en anglais…",
   "verifyButton": "Vérifier",
   "verifyScanning": "Analyse de plus de 52 000 hadiths…",
   "verifyIndexLoading": "Chargement de l'index de vérification",

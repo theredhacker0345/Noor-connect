@@ -90,7 +90,7 @@
   "languageContentNote": "Interface fully translated in all 8 languages. Long-form content (stories, books, audio) is progressively being translated.",
   "verifyTitle": "Hadith Verification",
   "verifySubtitle": "Find the grade & source of any hadith",
-  "verifyPlaceholder": "Paste a hadith in Arabic…",
+  "verifyPlaceholder": "Paste a hadith in Arabic or English…",
   "verifyButton": "Verify",
   "verifyScanning": "Scanning 52,000+ hadiths…",
   "verifyIndexLoading": "Loading the verification index",

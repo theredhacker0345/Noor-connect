@@ -32,6 +32,16 @@ export function normalizeArabic(text) {
     .trim();
 }
 
+/** Normalize English (or any latin-script) hadith translation for matching. */
+export function normalizeEnglish(text) {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function fnv1a(str) {
   let h = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) {

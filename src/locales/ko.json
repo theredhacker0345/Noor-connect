@@ -90,7 +90,7 @@
   "languageContentNote": "인터페이스는 8개 언어 모두 완전히 번역되어 있습니다. 긴 형태의 콘텐츠(이야기, 책, 오디오)는 점진적으로 번역되고 있습니다.",
   "verifyTitle": "하디스 검증",
   "verifySubtitle": "모든 하디스의 등급과 출처 찾기",
-  "verifyPlaceholder": "아랍어 하디스 본문을 붙여넣으세요…",
+  "verifyPlaceholder": "아랍어 또는 영어 하디스 본문을 붙여넣으세요…",
   "verifyButton": "검증",
   "verifyScanning": "52,000개 이상의 하디스 검사 중…",
   "verifyIndexLoading": "검증 색인 로드 중",

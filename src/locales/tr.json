@@ -90,7 +90,7 @@
   "languageContentNote": "Arayüz 8 dilin tamamında eksiksiz çevrilmiştir. Uzun biçimli içerikler (hikâyeler, kitaplar, sesler) aşamalı olarak çevrilmektedir.",
   "verifyTitle": "Hadis Doğrulama",
   "verifySubtitle": "Herhangi bir hadisin derecesini ve kaynağını bulun",
-  "verifyPlaceholder": "Arapça hadis metnini yapıştırın…",
+  "verifyPlaceholder": "Arapça veya İngilizce hadis metnini yapıştırın…",
   "verifyButton": "Doğrula",
   "verifyScanning": "52.000+ hadis taranıyor…",
   "verifyIndexLoading": "Doğrulama dizini yükleniyor",
