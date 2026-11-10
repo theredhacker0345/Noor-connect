@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, ChevronRight, Copy, Bookmark } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, ChevronRight, Copy, Bookmark, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { getCollectionByName, HadithBook, HadithCollection, EnhancedHadith } fro
 import { getHadithBookData, getHadithCollectionMetadata } from "@/lib/hadith";
 import { getGradeBadgeClass } from "@/lib/hadith-utils";
 import { useHadithBookmarks } from "@/hooks/useHadithBookmarks";
+import { useI18n } from "@/hooks/useI18n";
+import i18n from "@/lib/i18n-new";
 
 const SHOW_ALL_PAGE_SIZE = 300;
 
@@ -25,6 +27,10 @@ interface HadithCardProps {
 }
 
 const HadithCard = memo(function HadithCard({ hadith, index, collection, book, bookmarked, navigate, toast, toggleBookmark }: HadithCardProps) {
+  // Subscribes this memoized card to language changes
+  useI18n();
+  // Arabic UI: the authentic Arabic matn IS the content — hide the English translation
+  const isArabicUi = i18n.language?.startsWith("ar");
   return (
     <Card
       className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.01] border-border/50 hover:border-primary/30"
@@ -69,8 +75,8 @@ const HadithCard = memo(function HadithCard({ hadith, index, collection, book, b
               </p>
             </div>
 
-            {/* Translation */}
-            {hadith.englishTranslation && (
+            {/* Translation — hidden for Arabic readers (matn is the content) */}
+            {!isArabicUi && hadith.englishTranslation && (
               <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-wrap">
                 {hadith.englishTranslation}
               </p>
@@ -122,8 +128,10 @@ export function HadithBookContent() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [hadithData, setHadithData] = useState<EnhancedHadith[]>([]);
   const [remoteCollectionData, setRemoteCollectionData] = useState<HadithCollection | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const staticCollectionData = useMemo(() => {
     return collection ? getCollectionByName(collection) : null;
@@ -171,15 +179,20 @@ export function HadithBookContent() {
       }
 
       setLoading(true);
+      setLoadError(false);
       try {
         const data = await getHadithBookData(collection, book);
         if (isMounted) {
           setHadithData(Array.isArray(data) ? data : []);
+          // Data resolved empty — treat like a failure so the user gets a
+          // retry instead of a misleading "Book Not Found".
+          setLoadError(!data || data.length === 0);
         }
       } catch (error) {
         console.warn(`Failed to load hadith for ${collection}/${book}:`, error);
         if (isMounted) {
           setHadithData([]);
+          setLoadError(true);
         }
       } finally {
         if (isMounted) {
@@ -193,7 +206,7 @@ export function HadithBookContent() {
     return () => {
       isMounted = false;
     };
-  }, [collection, book]);
+  }, [collection, book, retryCount]);
 
   const bookInfo = useMemo<HadithBook | null>(() => {
     if (!book) {
@@ -299,6 +312,35 @@ export function HadithBookContent() {
           >
             Browse Collections
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError && !loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto">
+          <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">
+            Couldn't load this book
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            Check your connection and try again.
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <Button onClick={() => setRetryCount(c => c + 1)} className="rounded-xl">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/hadith/collections/${collection}`)}
+              className="rounded-xl"
+            >
+              Back to Collection
+            </Button>
+          </div>
         </div>
       </div>
     );

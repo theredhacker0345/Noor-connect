@@ -301,6 +301,7 @@ const SettingsSubPage: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-slate-400 dark:text-slate-400">{t('languageContentNote')}</p>
             </Card>
 
             <Card className="p-4 space-y-4 rounded-2xl">

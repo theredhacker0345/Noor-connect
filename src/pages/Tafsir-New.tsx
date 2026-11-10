@@ -91,6 +91,12 @@ interface SurahTafsir {
 
 
 
+// App language code → edition language name. fr/ko/tr have no tafsir edition,
+// so they fall through to the first (English) edition.
+const TAFSIR_LANG_BY_APP: Record<string, string> = {
+  en: "English", ar: "Arabic", ur: "Urdu", bn: "Bengali", ru: "Russian"
+};
+
 const Tafsir = () => {
   // Editions the user downloaded via Settings — detected from download state, not hardcoded.
   // Re-checked on focus so downloading an edition in Settings and returning here
@@ -107,7 +113,7 @@ const Tafsir = () => {
     return () => window.removeEventListener("focus", refresh);
   }, []);
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { t: ti18n } = useI18n();
   const { toast } = useToast();
 
@@ -126,7 +132,14 @@ const Tafsir = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
   const [currentSurahTafsir, setCurrentSurahTafsir] = useState<SurahTafsir | null>(null);
-  const [selectedEdition, setSelectedEdition] = useState<string>("en-tafisr-ibn-kathir");
+  const [selectedEdition, setSelectedEdition] = useState<string>(() => {
+    // Manual choice wins forever; otherwise match the app language (English fallback)
+    try {
+      const saved = localStorage.getItem('preferred-tafsir-edition');
+      if (saved && TAFSIR_EDITIONS.some(e => e.id === saved)) return saved;
+    } catch { /* ignore */ }
+    return TAFSIR_EDITIONS.find(e => e.language === TAFSIR_LANG_BY_APP[language])?.id ?? TAFSIR_EDITIONS[0].id;
+  });
   const [tafsirLoading, setTafsirLoading] = useState(false);
   const [bookmarks, setBookmarks] = useState<Array<{ surah: number, surahName: string }>>([]);
   const [searchTafsirQuery, setSearchTafsirQuery] = useState("");
@@ -160,6 +173,15 @@ const Tafsir = () => {
 
     fetchSurahs();
   }, []);
+
+  // Language resolves asynchronously after mount — keep the default edition
+  // following the app language until the user picks one manually.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('preferred-tafsir-edition')) return;
+    } catch { /* ignore */ }
+    setSelectedEdition(TAFSIR_EDITIONS.find(e => e.language === TAFSIR_LANG_BY_APP[language])?.id ?? TAFSIR_EDITIONS[0].id);
+  }, [language]);
 
   // Update filtered surahs whenever search query or surahs list changes (with debounce)
   useEffect(() => {
@@ -415,6 +437,13 @@ const Tafsir = () => {
     });
   };
 
+  // Manual pick: persists and wins over the language default forever
+  const chooseEdition = (id: string) => {
+    setSelectedEdition(id);
+    try { localStorage.setItem('preferred-tafsir-edition', id); } catch { /* ignore */ }
+    if (selectedSurah) handleSurahSelect(selectedSurah);
+  };
+
   const filteredTafsirs = useMemo(() => {
     if (!currentSurahTafsir?.tafsirs) return [];
     if (!searchTafsirQuery) return currentSurahTafsir.tafsirs;
@@ -480,10 +509,7 @@ const Tafsir = () => {
                     {TAFSIR_EDITIONS.map((edition) => (
                       <DropdownMenuItem
                         key={edition.id}
-                        onClick={() => {
-                          setSelectedEdition(edition.id);
-                          if (selectedSurah) handleSurahSelect(selectedSurah);
-                        }}
+                        onClick={() => chooseEdition(edition.id)}
                         className={cn("flex items-center justify-between", selectedEdition === edition.id && "bg-emerald-50 text-emerald-700")}
                       >
                         <div className="flex flex-col">
@@ -584,10 +610,7 @@ const Tafsir = () => {
                   </div>
                   <Select
                     value={selectedEdition}
-                    onValueChange={(value) => {
-                      setSelectedEdition(value);
-                      if (selectedSurah) handleSurahSelect(selectedSurah);
-                    }}
+                    onValueChange={(value) => chooseEdition(value)}
                   >
                     <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 text-slate-700">
                       <SelectValue placeholder={t('chooseTafsir')} />
@@ -790,10 +813,7 @@ const Tafsir = () => {
                       {TAFSIR_EDITIONS.map((edition) => (
                         <DropdownMenuItem
                           key={edition.id}
-                          onClick={() => {
-                            setSelectedEdition(edition.id);
-                            if (selectedSurah) handleSurahSelect(selectedSurah);
-                          }}
+                          onClick={() => chooseEdition(edition.id)}
                           className={cn("flex items-center justify-between py-3 rounded-xl", selectedEdition === edition.id && "bg-emerald-50 text-emerald-700")}
                         >
                           <div className="flex flex-col">

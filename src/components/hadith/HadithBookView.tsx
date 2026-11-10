@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, Users, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, Users, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,8 @@ export function HadithBookView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [remoteCollectionData, setRemoteCollectionData] = useState<HadithCollection | null>(null);
   const [metadataLoading, setMetadataLoading] = useState(true);
+  const [metadataError, setMetadataError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const staticCollectionData = useMemo(() => {
     return collection ? getCollectionByName(collection) : null;
@@ -29,6 +31,7 @@ export function HadithBookView() {
       }
 
       setMetadataLoading(true);
+      setMetadataError(false);
       try {
         const metadata = await getHadithCollectionMetadata(collection);
         if (isMounted) {
@@ -38,6 +41,7 @@ export function HadithBookView() {
         console.warn(`Failed to load metadata for ${collection}:`, error);
         if (isMounted) {
           setRemoteCollectionData(null);
+          setMetadataError(true);
         }
       } finally {
         if (isMounted) {
@@ -51,7 +55,16 @@ export function HadithBookView() {
     return () => {
       isMounted = false;
     };
-  }, [collection]);
+  }, [collection, retryCount]);
+
+  // One automatic retry — the gz loader occasionally loses a race right
+  // after a service-worker update; a single deferred retry covers it.
+  useEffect(() => {
+    if (metadataError && retryCount === 0) {
+      const t = setTimeout(() => setRetryCount(1), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [metadataError, retryCount]);
 
   const collectionData = remoteCollectionData ?? staticCollectionData;
 
@@ -214,6 +227,25 @@ const BookCard = memo(function BookCard({ book, collection, navigate }: BookCard
             className="pl-10 rounded-xl border-border/50 focus:border-primary/50"
           />
         </div>
+
+        {/* Load failure — real error with a retry, never a silent empty list */}
+        {metadataError && filteredBooks.length === 0 && (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Couldn't load the book list
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Check your connection and try again.
+              </p>
+              <Button onClick={() => setRetryCount(c => c + 1)} className="rounded-xl">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Chapters/Sections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -87,6 +87,7 @@
   "arabicScriptStyle": "Style de calligraphie arabe",
   "appearance": "Apparence",
   "language": "Langue",
+  "languageContentNote": "L'interface est entièrement traduite dans les 8 langues. Les contenus longs (histoires, livres, audio) sont traduits progressivement.",
   "darkMode": "Mode sombre",
   "man": "Homme",
   "woman": "Femme",

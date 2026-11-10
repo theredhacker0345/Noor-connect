@@ -87,6 +87,7 @@
   "arabicScriptStyle": "아랍어 스크립트 스타일",
   "appearance": "외관",
   "language": "언어",
+  "languageContentNote": "인터페이스는 8개 언어 모두 완전히 번역되어 있습니다. 긴 형태의 콘텐츠(이야기, 책, 오디오)는 점진적으로 번역되고 있습니다.",
   "darkMode": "다크 모드",
   "man": "남성",
   "woman": "여성",

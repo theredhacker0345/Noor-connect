@@ -9,9 +9,12 @@ import { getHadithBookData } from "@/lib/hadith";
 import type { EnhancedHadith } from "@/data/hadith-collections";
 import { getCollectionByName } from "@/data/hadith-collections";
 import { getGradeBadgeClass } from "@/lib/hadith-utils";
+import i18n from "@/lib/i18n-new";
+import { useI18n } from "@/hooks/useI18n";
 import { useHadithBookmarks } from "@/hooks/useHadithBookmarks";
 
 export function HadithDetail() {
+  useI18n(); // subscribe to language changes
   const { collection, book, hadithNumber } = useParams<{ collection: string; book: string; hadithNumber: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -194,7 +197,7 @@ export function HadithDetail() {
               </p>
             </div>
 
-            {hadith.englishTranslation && (
+            {!i18n.language?.startsWith("ar") && hadith.englishTranslation && (
               <div>
                 <h3 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Translation</h3>
                 <p className="text-base text-foreground leading-relaxed whitespace-pre-wrap">

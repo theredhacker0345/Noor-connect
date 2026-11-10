@@ -1,36 +1,18 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, Sparkles, RefreshCw, Bookmark } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CollectionCard } from "./CollectionCard";
 import { getAllCollections, HadithCollection } from "@/data/hadith-collections";
-import { getDailyHadith as getDailyHadithFromCollections } from "@/lib/hadith";
-import { motion } from "framer-motion";
 import { goBackOrFallback } from "@/lib/navigation";
 
 export function HadithCollections() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const allCollections = useMemo(() => getAllCollections(), []);
-  const [dailyHadith, setDailyHadith] = useState<{ title: string; content: string; arabic: string; subtitle: string; reference: string; reflection: string } | null>(null);
-
-  useEffect(() => {
-    getDailyHadithFromCollections().then(h => {
-      if (h) {
-        setDailyHadith({
-          title: "Hadith of the Day",
-          content: h.englishTranslation || "",
-          arabic: h.arabic || "",
-          subtitle: h.collection,
-          reference: `#${h.hadithNumber}`,
-          reflection: `Narrated by: ${h.narrator || "Unknown"}`,
-        });
-      }
-    });
-  }, []);
 
   const filteredCollections = useMemo(() => {
     if (!searchTerm) return allCollections;
@@ -77,78 +59,6 @@ export function HadithCollections() {
             <Bookmark className="w-5 h-5" />
           </Button>
         </div>
-
-        {/* Daily Hadith Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative overflow-hidden rounded-[32px] shadow-2xl shadow-primary/20 mb-8"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary/60" />
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-[20px] translate-y-1/2 -translate-x-1/2" />
-          <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-[1px]" />
-          
-          <div className="relative z-10 p-8">
-            {dailyHadith ? (
-              <>
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-4 h-4 text-primary-foreground/80" />
-                  <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
-                    {dailyHadith.title}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto h-7 w-7 rounded-full hover:bg-white/10"
-                    onClick={() => {
-                      getDailyHadithFromCollections().then(h => {
-                        if (h) {
-                          setDailyHadith({
-                            title: "Hadith of the Day",
-                            content: h.englishTranslation || "",
-                            arabic: h.arabic || "",
-                            subtitle: h.collection,
-                            reference: `#${h.hadithNumber}`,
-                            reflection: `Narrated by: ${h.narrator || "Unknown"}`,
-                          });
-                        }
-                      });
-                    }}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-primary-foreground/80" />
-                  </Button>
-                </div>
-                
-                <div className="bg-black/20 backdrop-blur-md rounded-2xl p-6 border border-white/5 mb-4">
-                  {dailyHadith.arabic && (
-                    <p className="text-white/90 text-xl md:text-2xl font-arabic text-right leading-loose mb-4" dir="rtl">
-                      {dailyHadith.arabic}
-                    </p>
-                  )}
-                  <p className="text-white/90 text-base font-medium leading-relaxed mb-4">
-                    {dailyHadith.content}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-white/10 text-white/80 border-white/10 text-xs">
-                      {dailyHadith.subtitle}
-                    </Badge>
-                    <span className="text-white/50 text-xs font-medium">{dailyHadith.reference}</span>
-                  </div>
-                </div>
-                
-                <p className="text-white/60 text-sm italic">
-                  {dailyHadith.reflection}
-                </p>
-              </>
-            ) : (
-              <div className="flex items-center justify-center py-8">
-                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              </div>
-            )}
-          </div>
-        </motion.div>
 
         {/* Search Bar */}
         <div className="relative max-w-md mx-auto mb-8">

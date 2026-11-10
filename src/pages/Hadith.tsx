@@ -8,6 +8,7 @@ import { getDailyHadith as getDailyHadithFromCollections } from "@/lib/hadith";
 import { getAllCollections } from "@/data/hadith-collections";
 import { PageTransition } from "@/components/PageTransition";
 import { useI18n } from "@/hooks/useI18n";
+import i18n from "@/lib/i18n-new";
 import type { HadithItem } from '@/data/hadith.json';
 
 interface HadithData {
@@ -208,8 +209,8 @@ const Hadith = () => {
                     {hadith.hadith || t('noHadithText')}
                   </blockquote>
  
-                  {/* Translation */}
-                  {hadith.translation && (
+                  {/* Translation — hidden for Arabic readers (matn is the content) */}
+                  {!i18n.language?.startsWith("ar") && hadith.translation && (
                     <p className="text-base leading-relaxed text-center opacity-80 font-serif italic px-2">
                       {hadith.translation}
                     </p>
