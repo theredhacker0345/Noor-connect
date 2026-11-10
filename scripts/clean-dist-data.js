@@ -147,13 +147,16 @@ for (const compressTarget of compressTargets) {
 // intentional *.json.gz files produced above.
 {
   const keptGzPrefixes = compressTargets.map(t => t.path + path.sep);
+  // The Hadith Verifier's prebuilt manifest is intentionally shipped gzipped
+  // (runtime decompresses via gzip-loader) — never treat it as a dead copy.
+  const keptGzFiles = new Set([path.join(distDir, 'data', 'hadith-index-manifest.json.gz')]);
   const toRemove = [];
   const walk = (dir) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, e.name);
       if (e.isDirectory()) {
         walk(full);
-      } else if (e.name.endsWith('.br') || (e.name.endsWith('.gz') && !keptGzPrefixes.some(p => full.startsWith(p)))) {
+      } else if (e.name.endsWith('.br') || (e.name.endsWith('.gz') && !keptGzFiles.has(full) && !keptGzPrefixes.some(p => full.startsWith(p)))) {
         toRemove.push(full);
       }
     }
