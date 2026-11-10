@@ -56,6 +56,7 @@ for (const col of collections) {
       c: col,
       b: String(h.bookNumber ?? ""),
       n: String(h.hadithNumber ?? ""),
+      s: set.size,
       ...(h.grade ? { g: h.grade } : {}),
     });
     counted++;
