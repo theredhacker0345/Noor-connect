@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Share2, Loader2, RefreshCw, Library, Bookmark } from "lucide-react";
+import { ArrowLeft, BookOpen, Share2, Loader2, RefreshCw, Library, Bookmark, ScanSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -245,6 +245,15 @@ const Hadith = () => {
               >
                 <Library className="w-4 h-4 me-2 text-[#C9860A]" />
                 {t('browse')}
+              </Button>
+              <Button
+                onClick={() => navigate("/hadith/verify")}
+                className="bg-card text-foreground hover:bg-muted/50 border border-border/40 shadow-sm rounded-xl h-12 w-12"
+                variant="outline"
+                size="icon"
+                title={t("verifyTitle")}
+              >
+                <ScanSearch className="w-4 h-4 text-[#C9860A]" />
               </Button>
               <Button
                 onClick={() => navigate("/hadith/bookmarks")}
