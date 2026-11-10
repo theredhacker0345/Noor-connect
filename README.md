@@ -1,6 +1,6 @@
 # 🌙 Noor Connect - Your Ultimate Islamic Companion
 
-**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.5.1 | **Privacy-First** | **No Copyright Nasheed Partner**
+**License**: GPL-3.0-or-later | **Status**: Stable | **Version**: 2.6.0 | **Privacy-First** | **No Copyright Nasheed Partner**
 
 **Noor Connect** is a comprehensive, privacy-focused Islamic application built as a hybrid Progressive Web App (PWA) with native mobile capabilities. It offers a complete Islamic toolkit without compromising your privacy — no tracking, no analytics, all data stays on your device.
 
@@ -20,26 +20,18 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ---
 
-## 🆕 What's New in v2.5.1
+## 🆕 What's New in v2.6.0
 
-### 🌙 Ramadan & Eid Calendar Overhaul
-- **One shared Hijri calendar**: the service worker and the app's offline fallback now use the same tabular Hijri math (verified exact on the known 1447 dates) — the old SW estimate fired Eid al-Adha a month early and went dead after 2026
-- **Reliable event notifications**: 1 Ramadan, both Eids and Arafah are scheduled days ahead as native Android alarms — no more depending on the service worker waking up
-- **Hijri adjustment everywhere**: the ±2-day moon-sighting setting now drives Eid detection, the offline fallback, the event engine and the scheduled notifications
-- **Eid al-Adha prep added**: preparation notification on Dhul Hijjah 8–9 (incl. Arafah) + the checklist opens directly — previously only Eid al-Fitr had one; now translated in all 8 languages
-- **Ramadan Mode off-season**: a "Ramadan begins in N days" hero with a get-ready list in the final 30 days
-- Fixed the Eid popup's "View Prayer Times" opening a 404, and the Eid-prep toast now lands on the checklist itself
+### 🔍 Hadith Verification (new)
+- **Paste a hadith → get its source & grade**: matched against all ~52,000 hadiths of the 16 collections, entirely on-device (~15–30 ms scans, no network, text never leaves your phone)
+- **Arabic AND English**: pastes in either language match — Arabic matn and English translations both indexed
+- **Live results** update as you type, with honest strength labels (Strong / Likely / Possible), share + copy-citation, recent-check history — and every shown match is exactly confirmed against the real hadith text
 
-### 🛡️ Privacy & Permissions Page Rework
-- **Location permission fixed on Android**: a new native bridge reads the real Android runtime permission (the browser APIs couldn't see it — stuck status, silent request failures in the APK), with a "denied forever" vs "not asked yet" distinction
-- **Status refreshes itself** when you return from the OS settings; redesigned with rounded cards and full dark-mode support
-
-### 🚨 Critical Android Fixes (found & reported by Daniel)
-- **Crash loop fixed**: with all reminders on, up to 750 simultaneous alarms vs Android's 500 cap — reminders now use a 7-day window with a hard batch cap
-- **Status-bar overlap fixed** on Pixel / Android 15+
-- **Hadith/Seerah/Qisas loading fixed** on servers that auto-decompress `.gz` files
-
----
+### 📖 Hadith & Reading
+- Hadith library pages retry automatically and show clear error states instead of rendering silently empty
+- **Arabic-first reading**: with Arabic UI, the authentic matn stands alone without the English translation
+- Tafsir opens in the edition matching your app language; manual edition choice now persists
+- Language settings note clarifies interface vs progressive content translation
 
 ## 🗂️ Feature Index
 

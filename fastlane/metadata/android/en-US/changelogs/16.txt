@@ -1,0 +1,1 @@
+NEW: Hadith Verification — paste any hadith to find its source and authenticity grade. ~52,000 hadiths matched entirely on-device, in Arabic and English, with live results and honest similarity labels. Plus: hadith pages retry with clear errors; Arabic-first reading; tafsir follows your app language; pre-Ramadan countdown; alarm and status-bar fixes.

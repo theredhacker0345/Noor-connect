@@ -31,6 +31,20 @@ const STORAGE_KEYS = {
 // Changelog data - ordered from newest to oldest
 export const CHANGELOG_DATA: VersionChangelog[] = [
   {
+    version: '2.6.0',
+    date: '2026-11-10',
+    title: 'Hadith Verification — check any hadith\u2019s grade & source on-device',
+    changes: [
+      { type: 'feature', description: 'Hadith Verification: paste any hadith and instantly find its source (collection, book, number) and authenticity grade. Matches against all ~52,000 hadiths on your device — no server, your text never leaves your phone.' },
+      { type: 'feature', description: 'Works in Arabic AND English: pastes in either language are matched (Arabic matn + English translations). Live results update automatically as you type, with similarity strength shown honestly (Strong / Likely / Possible) and every displayed match confirmed against the real text.' },
+      { type: 'fix', description: 'Hadith library pages no longer render silently empty after a failed load — they retry automatically and show a clear error with a Retry button.' },
+      { type: 'improvement', description: 'Arabic-first hadith reading: with the app in Arabic, the authentic Arabic matn stands alone without the English translation. Tafsir now opens in the edition matching your app language, and a manually chosen edition finally persists.' },
+      { type: 'improvement', description: 'Ramadan & Eid dates unified on one accurate Hijri calendar (the old estimate fired Eid al-Adha a month early and broke after 2026), with preparation reminders for both Eids and a pre-Ramadan countdown hero.' },
+      { type: 'fix', description: 'Location permission on Android now really works (real runtime-permission bridge), the Privacy page refreshes itself when you return from OS settings, and it got the app\u2019s current card design with dark-mode support.' },
+      { type: 'fix', description: 'Critical Android fixes (found & reported by Daniel): alarm-overflow crash loop and content hiding under the status bar on Pixel / Android 15+.' },
+    ],
+  },
+  {
     version: '2.5.1',
     date: '2026-11-05',
     title: 'Ramadan & Eid Calendar Overhaul + Critical Android Fixes',

@@ -8,11 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-11-10
+
 ### 🔍 Hadith Verifier (new feature)
 
 - **Paste a hadith → get its source and grade**: a new "Hadith Verification" screen compares pasted text against **all 52,328 hadiths** in the app's 16 collections and returns the closest matches with collection, book, hadith number, authenticity grade and a link that opens the exact hadith in the reader.
-- **Runs entirely on-device**: the match uses a 4.8 MB prebuilt MinHash fingerprint index (one-time download, ~15–30 ms per scan) — no server, no API, the pasted text never leaves the phone. Normalization strips diacritics and unifies letter forms, so freshly typed text without diacritics still matches at 100%, and half-missing texts still rank their true source at the top.
-- Honest UX throughout: similarity strength labels (Strong / Likely / Possible) instead of false certainty, an explicit note that computational matches are pointers — not scholarly verdicts — and a clear "no close match" state.
+- **Runs entirely on-device**: the match uses a prebuilt MinHash fingerprint index (one-time download, ~15–30 ms per scan) — no server, no API, the pasted text never leaves the phone. Normalization strips diacritics and unifies letter forms, so freshly typed text without diacritics still matches at 100%, and half-missing texts still rank their true source at the top.
+- **Works in Arabic AND English**: a second index over the English translations (~47,000 hadiths) is matched automatically when the paste is in English — results from both corpora merge, so a paste can surface the Arabic matn and its English translation.
+- **Live verification**: results re-compute automatically as you type, with a progress bar for the one-time index download, recent-check history, and share / copy-citation on every match.
+- Honest UX throughout: similarity strength labels (Strong / Likely / Possible) instead of false certainty, an explicit note that computational matches are pointers — not scholarly verdicts — and a clear "no close match" state. Every displayed match is **exactly confirmed against the real hadith text**, never just estimated.
 
 ### 📖 Hadith Library Fixes
 
