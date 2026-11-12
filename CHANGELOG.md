@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Live verification**: results re-compute automatically as you type, with a progress bar for the one-time index download, recent-check history, and share / copy-citation on every match.
 - Honest UX throughout: similarity strength labels (Strong / Likely / Possible) instead of false certainty, an explicit note that computational matches are pointers — not scholarly verdicts — and a clear "no close match" state. Every displayed match is **exactly confirmed against the real hadith text**, never just estimated.
 
+### 🕌 Linux Adhan Scheduler (desktop)
+
+- **The adhan now fires while the app is closed on Linux**: the desktop build schedules every prayer for the next 7 days as **systemd user timers** (no root needed) that play the bundled adhan audio via mpv — the Linux equivalent of the Android NativeAdhanScheduler. Survives reboots (Persistent=true), auto-regenerates whenever the app opens or adhan settings change, and honours the per-prayer toggles. Requires mpv for audio playback (declared in the deb dependencies).
+
 ### 📖 Hadith Library Fixes
 
 - **Collection and book pages could silently render empty** after a transient data-load failure (the static fallback carries no books) — both now retry automatically and show a real error card with a Retry button instead of a blank list or a misleading "Book Not Found".

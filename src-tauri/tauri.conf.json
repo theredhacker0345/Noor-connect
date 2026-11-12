@@ -29,6 +29,10 @@
     "category": "Education",
     "shortDescription": "Privacy-first Islamic companion: Quran, prayer times, Qibla, hadith & more",
     "longDescription": "Noor Connect — a privacy-first Islamic companion. Prayer times, Quran with tafsir, a 52,000+ hadith library with on-device verification, Qibla, duas, nasheeds and more — fully offline after install.",
-    "linux": {}
+    "linux": {
+      "deb": {
+        "depends": ["mpv"]
+      }
+    }
   }
 }

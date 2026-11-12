@@ -32,6 +32,7 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 - **Arabic-first reading**: with Arabic UI, the authentic matn stands alone without the English translation
 - Tafsir opens in the edition matching your app language; manual edition choice now persists
 - Language settings note clarifies interface vs progressive content translation
+- **Linux adhan scheduler**: prayers are scheduled as systemd user timers for the next 7 days \u2014 the adhan fires while the app is closed, survives reboots, no root needed
 
 ## 🗂️ Feature Index
 

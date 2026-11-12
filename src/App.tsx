@@ -307,6 +307,12 @@ function AppShell() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
+      // Linux desktop (Tauri): schedule adhan as systemd user timers so the
+      // adhan fires while the app is closed — the desktop equivalent of the
+      // Android NativeAdhanScheduler. No-ops on web/Android.
+      import("@/lib/desktop-adhan").then(({ scheduleDesktopAdhanIfChanged }) => {
+        scheduleDesktopAdhanIfChanged().catch(() => { /* best-effort */ });
+      });
       const storedAnimationPreference = localStorage.getItem("animations_enabled");
       const isLowEndDeviceCheck = isLowEndDevice();
       let isAnimationDisabled: boolean;
