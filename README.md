@@ -22,17 +22,41 @@ We're proud to partner with **[No Copyright Nasheed](https://nocopyrightnasheed.
 
 ## 🆕 What's New in v2.6.0
 
-### 🔍 Hadith Verification (new)
-- **Paste a hadith → get its source & grade**: matched against all ~52,000 hadiths of the 16 collections, entirely on-device (~15–30 ms scans, no network, text never leaves your phone)
-- **Arabic AND English**: pastes in either language match — Arabic matn and English translations both indexed
-- **Live results** update as you type, with honest strength labels (Strong / Likely / Possible), share + copy-citation, recent-check history — and every shown match is exactly confirmed against the real hadith text
+### 🔍 Hadith Verification (new feature)
+- **Paste a hadith → get its source and grade**: the new Hadith Verification screen matches pasted text against **all ~52,328 hadiths** of the 16 collections and returns the closest matches with collection, book, hadith number, authenticity grade and a link that opens the exact hadith in the reader
+- **Runs entirely on-device**: matching uses a prebuilt MinHash fingerprint index (~15–30 ms scans) — no server, no API, the pasted text never leaves your phone. Normalization strips diacritics and unifies letter forms, so freshly typed text without diacritics still matches at 100%, and half-missing texts still rank their true source at the top
+- **Works in Arabic AND English**: a second index over the English translations (~47,000 hadiths) is matched automatically when the paste is in English — results from both corpora merge, so one paste can surface the Arabic matn and its English translation
+- **Live verification**: results re-compute automatically as you type, with a progress bar for the one-time index download, recent-check history, and share / copy-citation on every match
+- **Honest results**: similarity strength labels (Strong / Likely / Possible) instead of false certainty, every displayed match is **exactly confirmed against the real hadith text** (never just estimated), random text is reliably rejected, and the screen states plainly that computational matches are pointers — not scholarly verdicts
 
-### 📖 Hadith & Reading
-- Hadith library pages retry automatically and show clear error states instead of rendering silently empty
-- **Arabic-first reading**: with Arabic UI, the authentic matn stands alone without the English translation
-- Tafsir opens in the edition matching your app language; manual edition choice now persists
-- Language settings note clarifies interface vs progressive content translation
-- **Linux adhan scheduler**: prayers are scheduled as systemd user timers for the next 7 days — the adhan fires while the app is closed, survives reboots, no root needed
+### 📖 Hadith Library & Reading
+- **Silent-empty load failures fixed**: the collections and book pages could render a blank book list after a transient data-load failure (the built-in fallback carries no books) — both now retry automatically and show a real error card with a Retry button instead of a blank screen or a misleading "Book Not Found"
+- **Duplicated "Hadith of the Day" card removed** from the collections page (the daily-hadith page directly above already shows one, in a different design)
+- **Arabic-first reading**: with the app language set to Arabic, the English translation is hidden and the authentic Arabic matn stands alone — it's already in the dataset, so this adds zero size
+- **Tafsir auto-select**: with no stored preference, the commentary edition matching your app language opens by default (Arabic users get Ibn Kathir Arabic) — and a manually chosen edition now **persists**, where it previously reset on every visit
+- **Language settings note** (all 8 languages) makes clear the interface is fully translated while long-form content is progressively translated
+
+### 🕌 Linux Desktop (.deb) — with Adhan Scheduler
+- **Noor Connect is now a real Debian app**: a native Tauri package (88 MB) with the entire site embedded — fully offline, app-menu icon, proper install/uninstall via apt. Targets Debian 12/13 and Hidayah OS; no Electron
+- **Linux adhan scheduler**: every prayer for the next 7 days is scheduled as a **systemd user timer** (no root needed) playing the bundled adhan audio via mpv — the adhan fires **while the app is closed** and survives reboots. Regenerates automatically on app start and when adhan settings change, honouring the per-prayer toggles
+- Launch-tested on Debian 13 via WSLg; the scheduler is verified in real systemd (timers visible in `systemctl --user list-timers`)
+
+### 🌙 Ramadan & Eid Calendar Fixes
+- **One accurate Hijri calendar shared by everything**: the service worker and the app's offline fallback use the same tabular Hijri math (verified exact against known 1447 dates) — replacing an estimate that **fired Eid al-Adha a month early** (April 29 instead of ~May 27) and **silently died after 2026**
+- **Eid al-Adha preparation reminders added** (Dhul Hijjah 8–9, including the Day of Arafah) — previously only Eid al-Fitr had one; now translated in all 8 languages
+- **Pre-Ramadan countdown hero**: in the last 30 days before Ramadan, Ramadan Mode shows a "Ramadan begins in N days" hero with a get-ready list, and notes Eid al-Adha during Dhul Hijjah
+
+### 🛡️ Privacy & Permissions Page Rework
+- **Location permission actually works on Android now**: the page used browser APIs that cannot see the Android runtime permission inside the WebView — status stuck, requests silently failing on many devices. A new native bridge reads the real permission state (and can tell "denied forever" from "not asked yet")
+- **The page updates itself** when you return from the OS settings, and was redesigned with the app's current card style and full dark-mode support
+
+### 🚨 Critical Android Fixes (found & reported by Daniel)
+- **Alarm-overflow crash loop fixed**: with all reminders on, up to 750 simultaneous alarms vs Android's hard 500 cap — the app crashed on every launch. Reminders now use a 7-day window with a hard batch cap (worst case ~470)
+- **Status-bar overlap fixed** on Pixel / Android 15+ (edge-to-edge enforcement drew the app under the system status bar)
+- **Hadith/Seerah/Qisas loading fixed** on servers that auto-decompress `.gz` files (was failing with a cryptic fetch error)
+
+### 🙏 Credits
+- **Daniel** joined as a feedback contributor — both critical Android bugs above were found and reported by him. Credited in Settings → About
 
 ## 🗂️ Feature Index
 
