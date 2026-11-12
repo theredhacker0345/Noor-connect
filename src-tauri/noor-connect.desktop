@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Education;Network;
+Comment={{description}}
+Exec=noor-connect
+Icon={{icons[0]}}
+Name=Noor Connect
+Terminal=false
+Type=Application

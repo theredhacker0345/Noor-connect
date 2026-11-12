@@ -1,0 +1,21 @@
+[package]
+name = "noor-connect"
+version = "2.6.0"
+description = "Privacy-first Islamic companion: Quran, prayer times, Qibla, hadith & more"
+authors = ["Ubaid ur Rehman <ubaid0345@proton.me>"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+opt-level = "s"
+panic = "abort"
+strip = true
